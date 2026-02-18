@@ -1,0 +1,38 @@
+[package]
+name = "bearta_plugin"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+# The name of the native library. This is the name which will be used in Python to import the
+# library (i.e. `import string_sum`). If you change this, you must also change the name of the
+# `#[pymodule]` in `src/lib.rs`.
+name = "plugin"
+# "cdylib" is necessary to produce a shared library for Python to import from.
+# Downstream Rust code (including code in `bin/`, `examples/`, and `tests/`) will not be able
+# to `use string_sum;` unless the "rlib" or "lib" crate type is also included, e.g.:
+# crate-type = ["cdylib", "rlib"]
+crate-type= ["cdylib"]
+
+[dependencies]
+bearta_core = { path = "../bearta_core" }
+
+num-traits = "0.2.19"
+serde = { version = "1", features = ["derive"] }
+
+pyo3 = { version = "0.23", features = ["extension-module", "abi3-py38"] }
+pyo3-polars = { version = "0.20", features = ["derive", "dtype-struct", "dtype-decimal", "dtype-array"] }
+
+polars = { version = "0.46.0", features = ["dtype-struct"]}
+polars-arrow = { version = "0.46.0", default-features = false }
+
+# polars = { version = "0.46.0", features = ["dtype-struct"], default-features = false }
+# polars-core = { version = "0.46.0", features = ["dtype-array"], default-features = false }
+# polars-sql = { version = "0.46.0", default-features = false }
+
+# rust-stemmers = "1.2.0"
+
+# [package.metadata.maturin]
+# name = "bearta.plugin"
+# not needed here because of pyproject.toml !?
+
