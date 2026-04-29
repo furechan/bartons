@@ -16,9 +16,21 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
+dependencies = [
+    "polars-talib>=0.1.5",
+]
 
 [dependency-groups]
-dev = ["maturin", "pytest", "build", "polars", "pyarrow", "ipykernel", "invoke"]
+dev = [
+    "maturin",
+    "pytest",
+    "build",
+    "polars",
+    "pyarrow",
+    "ipykernel",
+    "invoke",
+    "numpy>=2.2.6",
+]
 
 
 [tool.maturin]
