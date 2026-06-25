@@ -7,8 +7,10 @@ from typing import Any
 
 # Remote Cargo.toml from which we extract the version of 'polars'
 remote_cargo_url = r"https://raw.githubusercontent.com/MarcoGorelli/cookiecutter-polars-plugins/main/%7B%7B%20cookiecutter.project_slug%20%7D%7D/Cargo.toml"
+# Local Cargo.toml holding the pinned polars dependencies (no workspace root manifest)
+local_cargo_path = "bearta_plugin/Cargo.toml"
 # Packages that should have the same version as the 'polars' package from above
-pinned_packages = ["polars", "polars-arrow", "polars-core"]
+pinned_packages = ["polars", "polars-arrow"]
 
 
 def fetch_url_content(url: str) -> str | None:
@@ -44,7 +46,7 @@ template_polars_version: str = template_cargo_toml["dependencies"]["polars"]["ve
 
 # Load local Cargo.toml as a dict
 local_cargo_toml: dict[str, Any]
-with open("Cargo.toml", mode="rb") as local_cargo_toml_file:
+with open(local_cargo_path, mode="rb") as local_cargo_toml_file:
     try:
         local_cargo_toml = tomllib.load(local_cargo_toml_file)
     except tomllib.TOMLDecodeError as e:
