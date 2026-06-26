@@ -1,4 +1,4 @@
-# Bearta Prototype
+# bartons
 
 ## Maturin Docs
 - [Maturin](https://www.maturin.rs/)

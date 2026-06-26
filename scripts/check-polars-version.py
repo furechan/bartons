@@ -8,7 +8,7 @@ from typing import Any
 # Remote Cargo.toml from which we extract the version of 'polars'
 remote_cargo_url = r"https://raw.githubusercontent.com/MarcoGorelli/cookiecutter-polars-plugins/main/%7B%7B%20cookiecutter.project_slug%20%7D%7D/Cargo.toml"
 # Local Cargo.toml holding the pinned polars dependencies (no workspace root manifest)
-local_cargo_path = "bearta_plugin/Cargo.toml"
+local_cargo_path = "bartons/Cargo.toml"
 # Packages that should have the same version as the 'polars' package from above
 pinned_packages = ["polars", "polars-arrow"]
 

@@ -1,5 +1,5 @@
 [package]
-name = "bearta_plugin"
+name = "bartons"
 version = "0.1.0"
 edition = "2021"
 
@@ -31,6 +31,6 @@ polars-arrow = { version = "0.46.0", default-features = false }
 # rust-stemmers = "1.2.0"
 
 # [package.metadata.maturin]
-# name = "bearta.plugin"
+# name = "bartons.plugin"
 # not needed here because of pyproject.toml !?
 
