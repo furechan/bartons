@@ -36,8 +36,8 @@ dev = [
 
 [tool.maturin]
 python-source = "python"
-python-packages = ["bearta"]
-module-name = "bearta.plugin"
+python-packages = ["bearta_plugin"]
+module-name = "bearta_plugin.plugin"
 manifest-path = "bearta_plugin/Cargo.toml"
 
 # When using a custom module name the name must defined with `tool.maturin.module`

@@ -11,7 +11,7 @@ Results are not numerically identical, but both are valid EMA variants.
 import timeit
 import numpy as np
 import polars as pl
-from bearta.ema import EMA
+from bearta_plugin.ema import EMA
 
 PERIOD = 20
 N = 10_000

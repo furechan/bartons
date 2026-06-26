@@ -15,8 +15,6 @@ name = "plugin"
 crate-type= ["cdylib"]
 
 [dependencies]
-bearta_core = { path = "../bearta_core" }
-
 num-traits = "0.2.19"
 serde = { version = "1", features = ["derive"] }
 

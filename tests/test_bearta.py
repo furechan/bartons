@@ -1,6 +1,6 @@
 import polars as pl
 
-from bearta.ema import EMA
+from bearta_plugin.ema import EMA
 
 
 from polars.testing import assert_frame_equal
