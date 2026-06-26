@@ -8,7 +8,7 @@ requires = ["maturin>=1.0,<2.0", "polars>=1.3.0"]
 # unless `tools.maturin.python-packages` is defined
 
 [project]
-name = "bearta-plugin" 
+name = "bartons"
 version = "0.1.0"
 requires-python = ">=3.11"
 classifiers = [
@@ -36,9 +36,9 @@ dev = [
 
 [tool.maturin]
 python-source = "python"
-python-packages = ["bearta_plugin"]
-module-name = "bearta_plugin.plugin"
-manifest-path = "bearta_plugin/Cargo.toml"
+python-packages = ["bartons"]
+module-name = "bartons.plugin"
+manifest-path = "bartons/Cargo.toml"
 
 # When using a custom module name the name must defined with `tool.maturin.module`
 # The module name match the rust module name in libs.rs with either

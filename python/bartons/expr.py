@@ -8,7 +8,7 @@ PLUGIN_PATH = Path(__file__).parent
 
 
 @pl.api.register_expr_namespace("bt")
-class BeartaExprNamespace:
+class BartonsExprNamespace:
     def __init__(self, expr: pl.Expr):
         self._expr = expr
 
