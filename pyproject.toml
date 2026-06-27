@@ -2,7 +2,7 @@
 
 [build-system]
 build-backend = "maturin"
-requires = ["maturin>=1.0,<2.0", "polars>=1.3.0"]
+requires = ["maturin>=1.0,<2.0"]
 
 # Project name must match python package name
 # unless `tools.maturin.python-packages` is defined
@@ -17,6 +17,10 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
+    # Single source of truth for the polars ABI window — see docs/pyo3-polars-version-lockstep.md.
+    # Derived from the Rust crate pin (polars 0.54.4 → polars-Python 1.42.x). Do not duplicate
+    # this cap in [build-system].requires or [dependency-groups].dev.
+    "polars>=1.42,<1.43",
     "polars-talib>=0.1.5",
 ]
 
@@ -25,7 +29,6 @@ dev = [
     "maturin",
     "pytest",
     "build",
-    "polars",
     "pyarrow",
     "ipykernel",
     "invoke",

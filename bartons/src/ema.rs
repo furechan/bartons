@@ -35,7 +35,7 @@ fn calc_ema(series: &Series, period: i64) -> PolarsResult<Series> {
     let mut count: i64 = 0;
     let mut out = vec![f64::NAN; len];
 
-    for (i, opt_val) in ca.into_iter().enumerate() {
+    for (i, opt_val) in ca.iter().enumerate() {
         let val = opt_val.unwrap_or(f64::NAN);
 
         if val.is_nan() {

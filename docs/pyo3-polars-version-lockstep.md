@@ -44,6 +44,23 @@ Since 2025-07-28 `pyo3-polars` was **archived and vendored into the polars monor
 
 Key consequence: **py-1.40 and py-1.41 are both rs 0.53.0**, so a plugin compiled against polars crate `0.53` is compatible with *two* Python minors → window `polars >=1.40,<1.42`. The window is naturally a **range**, and it is *derived*, not guessed. A plugin on pyo3-polars 0.27.0 (crate `^0.54.4`) → polars-Python `1.42.x`.
 
+## pyo3-polars is the single dial (and it also pins pyo3)
+
+pyo3-polars releases **in lockstep** with the polars crate — since the 2025-07-28 vendoring into the monorepo, each pyo3-polars minor tracks the next polars crate minor 1:1:
+
+| pyo3-polars | polars crate | pyo3 |
+|---|---|---|
+| 0.20 | `^0.46.0` | `^0.23` |
+| 0.26 | `^0.53.0` | `^0.27` |
+| 0.27 | `^0.54.4` | `^0.28` |
+
+So **pick pyo3-polars first** — it names *both* the polars crate (→ the polars-Python window) *and* the pyo3 range. This is a second, narrower lockstep axis that's easy to miss: you cannot independently take the latest pyo3.
+
+- pyo3-polars caret-pins pyo3 (e.g. 0.27 → `pyo3 ^0.28` = `>=0.28,<0.29`). At upgrade time, latest pyo3 may be **ahead** of that cap (it was `0.29` when 0.27 wanted `0.28`) — pin pyo3 to satisfy pyo3-polars's `req`, not to latest.
+- The `extension-module` feature requires **exactly one pyo3 in the build tree**. A direct pyo3 pin that disagrees with pyo3-polars's pulls in two pyo3 copies and the build **fails hard** (pyo3 detects the conflict) — it does not silently pick one.
+
+Read pyo3-polars's pyo3 `req` from the same crates.io `/dependencies` JSON as the polars `req`.
+
 ## Two-way spec: which bound is knowable
 
 - **Lower (`>=`)**: the first `py-` minor whose workspace version is your crate. **Fully known now** from git tags.
