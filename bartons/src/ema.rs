@@ -22,7 +22,7 @@ pub struct EmaKwargs {
 
 fn calc_ema(series: &Series, period: i64) -> PolarsResult<Series> {
     let series = series.cast(&DataType::Float64)?;
-    let ca = series.f64().unwrap();
+    let ca = series.f64()?;
     let len = ca.len();
     let name = "ema";
 
