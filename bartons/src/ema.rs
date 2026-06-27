@@ -33,30 +33,33 @@ fn calc_ema(series: &Series, period: i64) -> PolarsResult<Series> {
     let alpha = 2.0 / (period as f64 + 1.0);
     let mut ema: f64 = f64::NAN;
     let mut count: i64 = 0;
-    let mut out = vec![f64::NAN; len];
+    let mut builder = PrimitiveChunkedBuilder::<Float64Type>::new(name.into(), len);
 
-    for (i, opt_val) in ca.iter().enumerate() {
-        let val = opt_val.unwrap_or(f64::NAN);
-
-        if val.is_nan() {
+    for opt_val in ca.iter() {
+        // A null breaks the current run: reset, emit null, and continue.
+        let Some(val) = opt_val else {
             ema = f64::NAN;
             count = 0;
-        } else if ema.is_nan() {
+            builder.append_null();
+            continue;
+        };
+
+        if count == 0 {
             ema = val;
-            count = 1;
         } else {
             ema += alpha * (val - ema);
-            count += 1;
         }
+        count += 1;
 
+        // Warmup period emits null; otherwise the running EMA value.
         if count >= period {
-            out[i] = ema;
+            builder.append_value(ema);
+        } else {
+            builder.append_null();
         }
     }
 
-    // Convert NaNs in `out` to nulls using a validity bitmap
-    let validity = out.iter().map(|v| !v.is_nan()).collect::<Vec<bool>>();
-    let output = Float64Chunked::from_vec_validity(name.into(), out, Some(validity.into())).into_series();
+    let output = builder.finish().into_series();
 
     Ok(output)
 }
