@@ -21,7 +21,7 @@ series = rng.standard_normal(N).cumsum() + 100
 df = pl.DataFrame({"close": series})
 
 # ---- sanity check -----------------------------------------------------------
-r_bartons = df.with_columns(EMA(pl.col("close"), period=PERIOD))
+r_bartons = df.with_columns(EMA(PERIOD))
 r_polars  = df.with_columns(pl.col("close").ewm_mean(span=PERIOD, adjust=False))
 
 print(f"N={N:,}  period={PERIOD}\n")
@@ -42,5 +42,5 @@ def bench(label, stmt, globs):
     print(f"{label:<22}  min={min(us):7.1f}µs  mean={np.mean(us):7.1f}µs  std={np.std(us):6.1f}µs")
 
 print("Benchmarks (each = mean over 20 runs, repeated 7 times):")
-bench("bartons EMA",   "df.with_columns(EMA(pl.col('close'), period=PERIOD))",                     dict(df=df, EMA=EMA, pl=pl, PERIOD=PERIOD))
+bench("bartons EMA",   "df.with_columns(EMA(PERIOD))",                                             dict(df=df, EMA=EMA, pl=pl, PERIOD=PERIOD))
 bench("polars ewm_mean","df.with_columns(pl.col('close').ewm_mean(span=PERIOD, adjust=False))",    dict(df=df, pl=pl, PERIOD=PERIOD))

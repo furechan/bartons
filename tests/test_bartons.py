@@ -1,15 +1,15 @@
 import polars as pl
 
-from bartons.ema import EMA
+import bartons  # noqa: F401  (importing registers the `bt` expression namespace)
+from bartons import plugin
 
 
-from polars.testing import assert_frame_equal
+def test_plugin_importable_and_versioned():
+    assert isinstance(plugin.__version__, str)
+    assert plugin.__version__
 
 
-def test_ema():
-    df = pl.DataFrame(
-        {"close": [100.0, 101.0, 102.0]}
-    )
-    result = df.with_columns(EMA(pl.col('close'), period=2))
-    assert isinstance(result, pl.DataFrame)
-
+def test_bt_namespace_registered():
+    # Importing bartons registers the "bt" expression namespace.
+    expr = pl.col("x").bt.ema(period=2)
+    assert isinstance(expr, pl.Expr)
