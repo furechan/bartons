@@ -39,3 +39,12 @@ class BartonsExprNamespace:
             kwargs=dict(period=period),
         )
 
+    def wma(self, period: int) -> pl.Expr:
+        return register_plugin_function(
+            function_name="wma_expr",
+            plugin_path=PLUGIN_PATH,
+            is_elementwise=False,
+            args=[self._expr],
+            kwargs=dict(period=period),
+        )
+
