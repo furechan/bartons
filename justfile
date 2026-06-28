@@ -14,9 +14,9 @@ dump:
 test:
     pytest
 
-# Build optimized, then run the EMA benchmark.
-bench: build
-    python scripts/benchmark-ema.py
+# Build optimized, then run a benchmark, e.g. `just bench` (ema) or `just bench sma`.
+bench indicator="ema": build
+    python scripts/benchmark-{{indicator}}.py
 
 clean:
     find bartons -type d -name target -print -exec rm -rf {} +

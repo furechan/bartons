@@ -21,3 +21,21 @@ class BartonsExprNamespace:
             kwargs=dict(period=period),
         )
 
+    def sma(self, period: int) -> pl.Expr:
+        return register_plugin_function(
+            function_name="sma_expr",
+            plugin_path=PLUGIN_PATH,
+            is_elementwise=False,
+            args=[self._expr],
+            kwargs=dict(period=period),
+        )
+
+    def rma(self, period: int) -> pl.Expr:
+        return register_plugin_function(
+            function_name="rma_expr",
+            plugin_path=PLUGIN_PATH,
+            is_elementwise=False,
+            args=[self._expr],
+            kwargs=dict(period=period),
+        )
+
