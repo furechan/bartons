@@ -21,7 +21,6 @@ dependencies = [
     # Derived from the Rust crate pin (polars 0.54.4 → polars-Python 1.42.x). Do not duplicate
     # this cap in [build-system].requires or [dependency-groups].dev.
     "polars>=1.42,<1.43",
-    "polars-talib>=0.1.5",
 ]
 
 [dependency-groups]
@@ -34,6 +33,9 @@ dev = [
     "invoke",
     "numpy>=2.2.6",
     "patchelf>=0.17.2.4",
+    # Benchmark-only: comparison baseline in scripts/benchmark-ema.py.
+    # Needs the TA-Lib C library at runtime (e.g. `apt-get install libta-lib0`).
+    "polars-talib>=0.1.5",
 ]
 
 

@@ -14,9 +14,11 @@ The Python package and distribution are both `bartons`; the Rust module is impor
 ## Build & test
 
 ```sh
-just build   # maturin develop — compiles Rust and installs into .venv
-just test    # pytest
-just clean   # remove Rust target/ and compiled .so files
+just build       # maturin develop --release — optimized build, installed into .venv
+just build-debug # maturin develop — fast unoptimized build (~20x slower at runtime)
+just test        # pytest
+just bench       # build optimized, then run the EMA benchmark
+just clean       # remove Rust target/ and compiled .so files
 ```
 
 Requires the `.venv` to be active. The build tool is `uv`; use `uv sync` to set up the environment.

@@ -26,7 +26,6 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "polars" },
-    { name = "polars-talib" },
 ]
 
 [package.dev-dependencies]
@@ -37,15 +36,13 @@ dev = [
     { name = "maturin" },
     { name = "numpy" },
     { name = "patchelf" },
+    { name = "polars-talib" },
     { name = "pyarrow" },
     { name = "pytest" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "polars", specifier = ">=1.42,<1.43" },
-    { name = "polars-talib", specifier = ">=0.1.5" },
-]
+requires-dist = [{ name = "polars", specifier = ">=1.42,<1.43" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -55,6 +52,7 @@ dev = [
     { name = "maturin" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "patchelf", specifier = ">=0.17.2.4" },
+    { name = "polars-talib", specifier = ">=0.1.5" },
     { name = "pyarrow" },
     { name = "pytest" },
 ]

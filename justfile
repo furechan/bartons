@@ -1,12 +1,22 @@
 
+# Build (optimized) and install into the active .venv. Matches what uv/pip
+# produce, so the installed plugin is never accidentally a slow debug build.
 build:
+    maturin develop --release
+
+# Fast unoptimized build for quick iteration — NOT for benchmarking (~20x slower).
+build-debug:
     maturin develop
 
 dump:
-    tar -ztvf  target/wheels/*.tar.gz  
+    tar -ztvf  target/wheels/*.tar.gz
 
 test:
     pytest
+
+# Build optimized, then run the EMA benchmark.
+bench: build
+    python scripts/benchmark-ema.py
 
 clean:
     find bartons -type d -name target -print -exec rm -rf {} +
