@@ -23,12 +23,14 @@ just clean       # remove Rust target/ and compiled .so files
 
 Requires the `.venv` to be active. The build tool is `uv`; use `uv sync` to set up the environment.
 
-## Adding a new expression
+## Adding a new indicator
 
-1. Add a Rust function in `bartons/src/` annotated with `#[polars_expr(output_type = ...)]`
-2. Register it in `bartons/src/lib.rs` alongside the existing functions
-3. Add a Python wrapper in `python/bartons/` following the pattern in `ema.py`
-4. Optionally expose it via the `BartonsExprNamespace` in `expr.py` (`.bt.<name>()`)
+See [docs/adding-an-indicator.md](docs/adding-an-indicator.md) for the full
+checklist (entry points, naming, conventions, tests). In short: add a Rust
+kernel + `#[polars_expr]` + `#[pyfunction]` in `bartons/src/<name>.rs`, register
+in `bartons/src/lib.rs`, add the `<NAME>()` factory in `python/bartons/<name>.py`
+and a `.bt.<name>()` method in `expr.py`, then mirror `tests/test_ema.py`.
+EMA and SMA are the reference implementations.
 
 ## Key files
 
