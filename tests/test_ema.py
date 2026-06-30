@@ -3,7 +3,7 @@ import pytest
 from helpers import assert_series_equal
 
 from bartons import plugin
-from bartons.ema import EMA
+from bartons.expressions import EMA
 
 
 def ref_ema(xs, period):

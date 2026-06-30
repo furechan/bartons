@@ -3,7 +3,7 @@ import pytest
 from helpers import assert_series_equal
 
 from bartons import plugin
-from bartons.trange import TRANGE
+from bartons.expressions import TRANGE
 
 
 def ref_trange(highs, lows, closes):

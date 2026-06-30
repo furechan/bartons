@@ -1,11 +1,9 @@
 import polars as pl
-from pathlib import Path
 
 from polars.plugins import register_plugin_function
 
-from .typing import IntoExprColumn
-
-PLUGIN_PATH = Path(__file__).parent
+from . import PLUGIN_PATH
+from ..typing import IntoExprColumn
 
 
 def TRANGE(

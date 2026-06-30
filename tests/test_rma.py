@@ -3,7 +3,7 @@ import pytest
 from helpers import assert_series_equal
 
 from bartons import plugin
-from bartons.rma import RMA
+from bartons.expressions import RMA
 
 
 def ref_rma(xs, period):

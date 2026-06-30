@@ -49,12 +49,7 @@ def _import_polars_talib():
 pta = _import_polars_talib()
 
 from bartons.samples import sample_prices, sample_dataset
-from bartons.ema import EMA
-from bartons.sma import SMA
-from bartons.wma import WMA
-from bartons.rsi import RSI
-from bartons.trange import TRANGE
-from bartons.atr import ATR
+from bartons.expressions import EMA, SMA, WMA, RSI, TRANGE, ATR
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
 

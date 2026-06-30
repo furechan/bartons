@@ -21,13 +21,7 @@ import timeit
 import polars as pl
 
 from bartons.samples import sample_prices, sample_dataset
-from bartons.ema import EMA
-from bartons.sma import SMA
-from bartons.rma import RMA
-from bartons.wma import WMA
-from bartons.rsi import RSI
-from bartons.trange import TRANGE
-from bartons.atr import ATR
+from bartons.expressions import EMA, SMA, RMA, WMA, RSI, TRANGE, ATR
 from mintalib.expressions import (
     SMA as M_SMA, EMA as M_EMA, WMA as M_WMA, RMA as M_RMA,
     RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR,

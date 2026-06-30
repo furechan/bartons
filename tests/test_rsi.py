@@ -3,7 +3,7 @@ import pytest
 from helpers import assert_series_equal
 
 from bartons import plugin
-from bartons.rsi import RSI
+from bartons.expressions import RSI
 
 
 def ref_rsi(xs, period):

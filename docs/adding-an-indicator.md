@@ -56,12 +56,22 @@ Copy [bartons/src/ema.rs](../bartons/src/ema.rs). It contains all three symbols.
 - **Do not** register `<name>_expr` — the polars plugin machinery finds it by
   symbol; adding it to the module is wrong.
 
-### 3. Python expression factory — `python/bartons/<name>.py`
+### 3. Python expression factory — `python/bartons/expressions/<name>.py`
 
-Copy [python/bartons/ema.py](../python/bartons/ema.py). Follow the mintalib
-convention: **period first, `src` keyword-only defaulting to `pl.col("close")`**.
+Factories live in the `bartons.expressions` sub-package. Copy
+[python/bartons/expressions/ema.py](../python/bartons/expressions/ema.py): the
+shared `PLUGIN_PATH` (the `bartons` package dir holding the compiled `.so`) is
+imported from the package, and `IntoExprColumn` from the parent. Follow the
+mintalib convention: **period first, `src` keyword-only defaulting to
+`pl.col("close")`**.
 
 ```python
+from polars.plugins import register_plugin_function
+
+from . import PLUGIN_PATH
+from ..typing import IntoExprColumn
+
+
 def <NAME>(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
     if src is None:
         src = pl.col("close")
@@ -71,6 +81,11 @@ def <NAME>(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
         kwargs=dict(period=period),
     )
 ```
+
+Then re-export it from
+[python/bartons/expressions/__init__.py](../python/bartons/expressions/__init__.py)
+(`from .<name> import <NAME>` plus the `__all__` entry) so it is importable as
+`from bartons.expressions import <NAME>`.
 
 ### 4. `.bt` namespace — `python/bartons/expr.py`
 
