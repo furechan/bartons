@@ -2,10 +2,11 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from . import PLUGIN_PATH
+from . import PLUGIN_PATH, wrap_src_expression
 from ..typing import IntoExprColumn
 
 
+@wrap_src_expression
 def RSI(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
     """Wilder's Relative Strength Index.
 

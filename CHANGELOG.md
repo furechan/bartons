@@ -2,6 +2,11 @@
 
 ## 0.1.0
 
+- Make the single-source factories (EMA, SMA, RMA, WMA, RSI) accept their source
+  column as the leading positional argument via a `wrap_src_expression`
+  decorator (adapted from bearta's `wrap_expression`), so they compose with `Expr.pipe`:
+  `pl.col("close").pipe(EMA, 5).pipe(RSI, 14)`. `EMA(5)` and `EMA(5, src=...)`
+  keep working unchanged.
 - Add ATR (Average True Range). `AtrFilter` composes a `TrangeFilter` feeding an
   `RmaFilter` (Wilder's RMA of True Range); a multi-input indicator over high /
   low / close. Exposed as `ATR()` and `plugin.atr` (default period 14). Also
