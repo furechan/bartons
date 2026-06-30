@@ -39,6 +39,7 @@ dev = [
     # Benchmark-only: comparison baseline in scripts/benchmark-ema.py.
     # Needs the TA-Lib C library at runtime (e.g. `apt-get install libta-lib0`).
     "polars-talib>=0.1.5",
+    "mintalib>=0.0.35",
 ]
 
 
