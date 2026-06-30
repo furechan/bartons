@@ -5,58 +5,67 @@ use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 use pyo3::exceptions::PyRuntimeError;
 
+use crate::utils::{run_unary, Filter};
+
 #[derive(Deserialize)]
 pub struct SmaKwargs {
     period: i64,
 }
 
-fn calc_sma(series: &Series, period: i64) -> PolarsResult<Series> {
-    let series = series.cast(&DataType::Float64)?;
-    let ca = series.f64()?;
-    let len = ca.len();
-    let name = "sma";
+/// Streaming SMA filter: feed one `Option<f64>` at a time via [`Filter::next`].
+///
+/// A `None` input breaks the current run (gap reset); output is `None` during
+/// the warmup period, then the rolling mean over the last `period` values.
+pub struct SmaFilter {
+    period: i64,
+    buf: Vec<f64>, // ring buffer of the current run's window
+    idx: usize,    // next write slot == oldest element once full
+    count: i64,
+    sum: f64,
+}
 
-    if period <= 0 {
-        return Err(PolarsError::ComputeError("SMA period must be > 0".into()));
+impl SmaFilter {
+    pub fn new(period: i64) -> Result<Self, String> {
+        if period <= 0 {
+            return Err("SMA period must be > 0".to_string());
+        }
+        Ok(Self {
+            period,
+            buf: vec![0.0; period as usize],
+            idx: 0,
+            count: 0,
+            sum: 0.0,
+        })
     }
+}
 
-    let p = period as usize;
-    let mut buf = vec![0.0f64; p]; // ring buffer of the current run's window
-    let mut idx = 0usize; // next write slot == oldest element once full
-    let mut count: i64 = 0;
-    let mut sum = 0.0f64;
-    let mut builder = PrimitiveChunkedBuilder::<Float64Type>::new(name.into(), len);
-
-    for opt_val in ca.iter() {
-        // A null breaks the current run: reset, emit null, and continue.
-        let Some(val) = opt_val else {
-            count = 0;
-            sum = 0.0;
-            idx = 0;
-            builder.append_null();
-            continue;
+impl Filter for SmaFilter {
+    fn next(&mut self, input: Option<f64>) -> Option<f64> {
+        // A null breaks the current run: reset and emit null.
+        let Some(val) = input else {
+            self.count = 0;
+            self.sum = 0.0;
+            self.idx = 0;
+            return None;
         };
 
-        if count >= period {
-            sum -= buf[idx]; // evict the oldest value
+        if self.count >= self.period {
+            self.sum -= self.buf[self.idx]; // evict the oldest value
         } else {
-            count += 1;
+            self.count += 1;
         }
-        sum += val;
-        buf[idx] = val;
-        idx = (idx + 1) % p;
+        self.sum += val;
+        self.buf[self.idx] = val;
+        self.idx = (self.idx + 1) % self.buf.len();
 
         // Warmup period emits null; otherwise the rolling mean.
-        if count >= period {
-            builder.append_value(sum / period as f64);
-        } else {
-            builder.append_null();
-        }
+        (self.count >= self.period).then_some(self.sum / self.period as f64)
     }
+}
 
-    let output = builder.finish().into_series();
-
-    Ok(output)
+fn calc_sma(series: &Series, period: i64) -> PolarsResult<Series> {
+    let filter = SmaFilter::new(period).map_err(|e| PolarsError::ComputeError(e.into()))?;
+    run_unary(series, "sma", filter)
 }
 
 #[polars_expr(output_type = Float64)]

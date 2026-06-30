@@ -3,42 +3,51 @@ use polars::prelude::*;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 use pyo3::exceptions::PyRuntimeError;
-use itertools::izip;
 
-// True Range:
-//   TR = max(high - low, |high - prev_close|, |low - prev_close|)
-// The first bar (no previous close) uses high - low. A bar with a missing
-// high or low yields null. No period/kwargs — TR is per-bar.
-fn calc_trange(high: &Series, low: &Series, close: &Series) -> PolarsResult<Series> {
-    let high = high.cast(&DataType::Float64)?;
-    let low = low.cast(&DataType::Float64)?;
-    let close = close.cast(&DataType::Float64)?;
-    let h = high.f64()?;
-    let l = low.f64()?;
-    let c = close.f64()?;
-    let name = "trange";
+use crate::utils::run_ternary;
 
-    let mut builder = PrimitiveChunkedBuilder::<Float64Type>::new(name.into(), h.len());
-    let mut prev_close: Option<f64> = None;
+/// Streaming True Range filter: feed one bar's `(high, low, close)` at a time
+/// via [`Self::next`].
+///
+///   TR = max(high - low, |high - prev_close|, |low - prev_close|)
+///
+/// The first bar (no previous close) uses high - low. A bar with a missing
+/// high or low yields `None`. There is no period/warmup — TR is per-bar.
+#[derive(Default)]
+pub struct TrangeFilter {
+    prev_close: Option<f64>,
+}
 
-    for (oh, ol, oc) in izip!(h.iter(), l.iter(), c.iter()) {
-        match (oh, ol) {
-            (Some(hi), Some(lo)) => {
-                let mut tr = hi - lo;
-                if let Some(pc) = prev_close {
-                    tr = tr.max((hi - pc).abs()).max((lo - pc).abs());
-                }
-                builder.append_value(tr);
-            }
-            _ => builder.append_null(),
-        }
-        // The current close becomes the previous close for the next bar.
-        prev_close = oc;
+impl TrangeFilter {
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    let output = builder.finish().into_series();
+    pub fn next(
+        &mut self,
+        high: Option<f64>,
+        low: Option<f64>,
+        close: Option<f64>,
+    ) -> Option<f64> {
+        let tr = match (high, low) {
+            (Some(hi), Some(lo)) => {
+                let mut tr = hi - lo;
+                if let Some(pc) = self.prev_close {
+                    tr = tr.max((hi - pc).abs()).max((lo - pc).abs());
+                }
+                Some(tr)
+            }
+            _ => None,
+        };
+        // The current close becomes the previous close for the next bar.
+        self.prev_close = close;
+        tr
+    }
+}
 
-    Ok(output)
+fn calc_trange(high: &Series, low: &Series, close: &Series) -> PolarsResult<Series> {
+    let mut filter = TrangeFilter::new();
+    run_ternary(high, low, close, "trange", |h, l, c| filter.next(h, l, c))
 }
 
 #[polars_expr(output_type = Float64)]

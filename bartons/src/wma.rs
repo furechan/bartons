@@ -5,66 +5,78 @@ use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 use pyo3::exceptions::PyRuntimeError;
 
+use crate::utils::{run_unary, Filter};
+
 #[derive(Deserialize)]
 pub struct WmaKwargs {
     period: i64,
 }
 
-fn calc_wma(series: &Series, period: i64) -> PolarsResult<Series> {
-    let series = series.cast(&DataType::Float64)?;
-    let ca = series.f64()?;
-    let len = ca.len();
-    let name = "wma";
+/// Streaming WMA filter: feed one `Option<f64>` at a time via [`Filter::next`].
+///
+/// A `None` input breaks the current run (gap reset); output is `None` during
+/// the warmup period, then the linearly-weighted mean (oldest weight 1 ..
+/// newest weight `period`).
+pub struct WmaFilter {
+    period: i64,
+    denom: f64,    // sum of weights 1..period
+    buf: Vec<f64>, // ring buffer of the current run's window
+    idx: usize,    // next write slot == oldest element once full
+    count: i64,
+    rsum: f64, // running simple sum of the window
+    wsum: f64, // running weighted sum (oldest weight 1 .. newest weight period)
+}
 
-    if period <= 0 {
-        return Err(PolarsError::ComputeError("WMA period must be > 0".into()));
+impl WmaFilter {
+    pub fn new(period: i64) -> Result<Self, String> {
+        if period <= 0 {
+            return Err("WMA period must be > 0".to_string());
+        }
+        Ok(Self {
+            period,
+            denom: period as f64 * (period as f64 + 1.0) / 2.0,
+            buf: vec![0.0; period as usize],
+            idx: 0,
+            count: 0,
+            rsum: 0.0,
+            wsum: 0.0,
+        })
     }
+}
 
-    let p = period as usize;
-    let denom = period as f64 * (period as f64 + 1.0) / 2.0; // sum of weights 1..period
-    let mut buf = vec![0.0f64; p]; // ring buffer of the current run's window
-    let mut idx = 0usize; // next write slot == oldest element once full
-    let mut count: i64 = 0;
-    let mut rsum = 0.0f64; // running simple sum of the window
-    let mut wsum = 0.0f64; // running weighted sum (oldest weight 1 .. newest weight period)
-    let mut builder = PrimitiveChunkedBuilder::<Float64Type>::new(name.into(), len);
-
-    for opt_val in ca.iter() {
-        // A null breaks the current run: reset, emit null, and continue.
-        let Some(val) = opt_val else {
-            rsum = 0.0;
-            wsum = 0.0;
-            count = 0;
-            idx = 0;
-            builder.append_null();
-            continue;
+impl Filter for WmaFilter {
+    fn next(&mut self, input: Option<f64>) -> Option<f64> {
+        // A null breaks the current run: reset and emit null.
+        let Some(val) = input else {
+            self.rsum = 0.0;
+            self.wsum = 0.0;
+            self.count = 0;
+            self.idx = 0;
+            return None;
         };
 
-        count += 1;
-        rsum += val;
-        wsum += count as f64 * val;
+        self.count += 1;
+        self.rsum += val;
+        self.wsum += self.count as f64 * val;
 
-        if count > period {
+        if self.count > self.period {
             // Slide the window: drop one from every weight, then evict the oldest.
-            let oldest = buf[idx]; // read before overwriting
-            wsum -= rsum;
-            rsum -= oldest;
-            count -= 1;
+            let oldest = self.buf[self.idx]; // read before overwriting
+            self.wsum -= self.rsum;
+            self.rsum -= oldest;
+            self.count -= 1;
         }
-        buf[idx] = val;
-        idx = (idx + 1) % p;
+        self.buf[self.idx] = val;
+        self.idx = (self.idx + 1) % self.buf.len();
 
         // Warmup period emits null; otherwise the weighted mean.
-        if count >= period {
-            builder.append_value(wsum / denom);
-        } else {
-            builder.append_null();
-        }
+        (self.count >= self.period).then_some(self.wsum / self.denom)
     }
+}
 
-    let output = builder.finish().into_series();
-
-    Ok(output)
+fn calc_wma(series: &Series, period: i64) -> PolarsResult<Series> {
+    let filter = WmaFilter::new(period).map_err(|e| PolarsError::ComputeError(e.into()))?;
+    run_unary(series, "wma", filter)
 }
 
 #[polars_expr(output_type = Float64)]

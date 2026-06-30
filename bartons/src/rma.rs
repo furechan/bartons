@@ -5,58 +5,70 @@ use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 use pyo3::exceptions::PyRuntimeError;
 
+use crate::utils::{run_unary, Filter};
+
 #[derive(Deserialize)]
 pub struct RmaKwargs {
     period: i64,
 }
 
-fn calc_rma(series: &Series, period: i64) -> PolarsResult<Series> {
-    let series = series.cast(&DataType::Float64)?;
-    let ca = series.f64()?;
-    let len = ca.len();
-    let name = "rma";
+/// Streaming RMA (Wilder's) filter: feed one `Option<f64>` at a time via
+/// [`Filter::next`].
+///
+/// A `None` input breaks the current run (gap reset); output is `None` during
+/// the warmup period. The first `period` values are seeded with a simple
+/// average, then Wilder smoothing takes over.
+pub struct RmaFilter {
+    period: i64,
+    alpha: f64, // Wilder smoothing factor
+    value: f64,
+    total: f64,
+    count: i64,
+}
 
-    if period <= 0 {
-        return Err(PolarsError::ComputeError("RMA period must be > 0".into()));
+impl RmaFilter {
+    pub fn new(period: i64) -> Result<Self, String> {
+        if period <= 0 {
+            return Err("RMA period must be > 0".to_string());
+        }
+        Ok(Self {
+            period,
+            alpha: 1.0 / period as f64,
+            value: f64::NAN,
+            total: 0.0,
+            count: 0,
+        })
     }
+}
 
-    let alpha = 1.0 / period as f64; // Wilder smoothing factor
-    let mut rma = f64::NAN;
-    let mut total = 0.0f64;
-    let mut count: i64 = 0;
-    let mut builder = PrimitiveChunkedBuilder::<Float64Type>::new(name.into(), len);
-
-    for opt_val in ca.iter() {
-        // A null breaks the current run: reset, emit null, and continue.
-        let Some(val) = opt_val else {
-            rma = f64::NAN;
-            total = 0.0;
-            count = 0;
-            builder.append_null();
-            continue;
+impl Filter for RmaFilter {
+    fn next(&mut self, input: Option<f64>) -> Option<f64> {
+        // A null breaks the current run: reset and emit null.
+        let Some(val) = input else {
+            self.value = f64::NAN;
+            self.total = 0.0;
+            self.count = 0;
+            return None;
         };
 
-        count += 1;
-        if count <= period {
+        self.count += 1;
+        if self.count <= self.period {
             // Simple-average seeding until `period` values are accumulated.
-            total += val;
-            rma = total / count as f64;
+            self.total += val;
+            self.value = self.total / self.count as f64;
         } else {
-            // Wilder smoothing: rma += (val - rma) / period.
-            rma += alpha * (val - rma);
+            // Wilder smoothing: value += (val - value) / period.
+            self.value += self.alpha * (val - self.value);
         }
 
         // Warmup period emits null; otherwise the running RMA value.
-        if count >= period {
-            builder.append_value(rma);
-        } else {
-            builder.append_null();
-        }
+        (self.count >= self.period).then_some(self.value)
     }
+}
 
-    let output = builder.finish().into_series();
-
-    Ok(output)
+fn calc_rma(series: &Series, period: i64) -> PolarsResult<Series> {
+    let filter = RmaFilter::new(period).map_err(|e| PolarsError::ComputeError(e.into()))?;
+    run_unary(series, "rma", filter)
 }
 
 #[polars_expr(output_type = Float64)]
