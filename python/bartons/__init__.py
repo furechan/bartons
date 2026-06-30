@@ -1,5 +1,5 @@
 from . import expressions
-from .expr import BartonsExprNamespace
+from . import namespace  # noqa: F401 — imported for its side effect: registers the `.bt` namespace
 
-__all__ = ["BartonsExprNamespace", "expressions"]
+__all__ = ["expressions"]
 

@@ -31,13 +31,13 @@ kernel + `#[polars_expr]` + `#[pyfunction]` in `bartons/src/<name>.rs`, register
 in `bartons/src/lib.rs`, add the `<NAME>()` factory in
 `python/bartons/expressions/<name>.py` (re-exported from
 `python/bartons/expressions/__init__.py`) and a `.bt.<name>()` method in
-`expr.py`, then mirror `tests/test_ema.py`.
+`namespace.py`, then mirror `tests/test_ema.py`.
 EMA and SMA are the reference implementations.
 
 ## Key files
 
 - [bartons/src/ema.rs](bartons/src/ema.rs) — reference implementation: EmaKwargs, `calc_ema`, expression + pyfunction wrappers
 - [python/bartons/expressions/ema.py](python/bartons/expressions/ema.py) — Python-side plugin registration; factories live in the `expressions` sub-package (`from bartons.expressions import EMA`)
-- [python/bartons/expr.py](python/bartons/expr.py) — `@pl.api.register_expr_namespace("bt")` class
+- [python/bartons/namespace.py](python/bartons/namespace.py) — `@pl.api.register_expr_namespace("bt")` class (the `.bt` accessor)
 - [pyproject.toml](pyproject.toml) — Maturin config (module name, python-source, manifest-path)
 - [bartons/Cargo.toml](bartons/Cargo.toml) — Rust dependencies (pyo3, pyo3-polars, polars)

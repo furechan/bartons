@@ -87,7 +87,7 @@ Then re-export it from
 (`from .<name> import <NAME>` plus the `__all__` entry) so it is importable as
 `from bartons.expressions import <NAME>`.
 
-### 4. `.bt` namespace — `python/bartons/expr.py`
+### 4. `.bt` namespace — `python/bartons/namespace.py`
 
 Add a method to `BartonsExprNamespace` (source is the receiver expr, so no `src`):
 
