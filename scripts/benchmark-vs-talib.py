@@ -54,6 +54,7 @@ from bartons.sma import SMA
 from bartons.wma import WMA
 from bartons.rsi import RSI
 from bartons.trange import TRANGE
+from bartons.atr import ATR
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
 
@@ -63,6 +64,7 @@ PAIRS = [
     ("WMA(20)", WMA(20),  pta.wma(timeperiod=20)),
     ("RSI(14)", RSI(14),  pta.rsi(timeperiod=14)),
     ("TRANGE",  TRANGE(), pta.trange()),
+    ("ATR(14)", ATR(14),  pta.atr(timeperiod=14)),
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

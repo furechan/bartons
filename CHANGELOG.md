@@ -2,6 +2,10 @@
 
 ## 0.1.0
 
+- Add ATR (Average True Range). `AtrFilter` composes a `TrangeFilter` feeding an
+  `RmaFilter` (Wilder's RMA of True Range); a multi-input indicator over high /
+  low / close. Exposed as `ATR()` and `plugin.atr` (default period 14). Also
+  widen the conftest pyfunction-skip pattern to cover `rsi` and `atr`.
 - Add a `bartons.samples` subpackage with bundled OHLCV sample prices (daily /
   hourly / minute AAPL CSVs). `sample_prices(freq, max_bars=...)` returns a
   polars DataFrame; `sample_dataset(n_tickers, ...)` stacks them into a synthetic

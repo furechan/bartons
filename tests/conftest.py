@@ -19,7 +19,7 @@ except Exception:
     HAS_PYFUNCTION = False
 
 # Tests that invoke the raw pyfunction entry point, e.g. `plugin.sma(series, ...)`.
-_PYFUNC_CALL = re.compile(r"\bplugin\.(ema|sma|rma|wma|trange)\(")
+_PYFUNC_CALL = re.compile(r"\bplugin\.(ema|sma|rma|wma|rsi|atr|trange)\(")
 
 
 def pytest_collection_modifyitems(config, items):

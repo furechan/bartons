@@ -33,6 +33,7 @@ from bartons.rma import RMA
 from bartons.wma import WMA
 from bartons.rsi import RSI
 from bartons.trange import TRANGE
+from bartons.atr import ATR
 
 
 # ── Native polars equivalents ───────────────────────────────────────────────────
@@ -55,6 +56,11 @@ def native_trange() -> pl.Expr:
     )
 
 
+def native_atr(period: int) -> pl.Expr:
+    """ATR = Wilder RMA (ewm_mean alpha = 1/period) of the native True Range."""
+    return native_trange().ewm_mean(alpha=1.0 / period, adjust=False)
+
+
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
 
 PAIRS = [
@@ -64,6 +70,7 @@ PAIRS = [
     ("WMA(20)", WMA(20),  pl.col("close").rolling_mean(20, weights=list(range(1, 21)))),
     ("RSI(14)", RSI(14),  native_rsi(14)),
     ("TRANGE",  TRANGE(), native_trange()),
+    ("ATR(14)", ATR(14),  native_atr(14)),
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

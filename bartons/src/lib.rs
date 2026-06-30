@@ -6,6 +6,7 @@ mod rma;
 mod wma;
 mod rsi;
 mod trange;
+mod atr;
 
 use pyo3::prelude::*;
 use pyo3_polars::PolarsAllocator;
@@ -23,5 +24,6 @@ fn plugin(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(wma::wma, m)?)?;
     m.add_function(wrap_pyfunction!(rsi::rsi, m)?)?;
     m.add_function(wrap_pyfunction!(trange::trange, m)?)?;
+    m.add_function(wrap_pyfunction!(atr::atr, m)?)?;
     Ok(())
 }

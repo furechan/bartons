@@ -27,9 +27,10 @@ from bartons.rma import RMA
 from bartons.wma import WMA
 from bartons.rsi import RSI
 from bartons.trange import TRANGE
+from bartons.atr import ATR
 from mintalib.expressions import (
     SMA as M_SMA, EMA as M_EMA, WMA as M_WMA, RMA as M_RMA,
-    RSI as M_RSI, TRANGE as M_TRANGE,
+    RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR,
 )
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
@@ -41,6 +42,7 @@ PAIRS = [
     ("RMA(20)", RMA(20),  M_RMA(20)),
     ("RSI(14)", RSI(14),  M_RSI(14)),
     ("TRANGE",  TRANGE(), M_TRANGE()),
+    ("ATR(14)", ATR(14),  M_ATR(14)),
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
