@@ -36,10 +36,20 @@ dev = [
     "invoke",
     "numpy>=2.2.6",
     "patchelf>=0.17.2.4",
-    # Benchmark-only: comparison baseline in scripts/benchmark-ema.py.
-    # Needs the TA-Lib C library at runtime (e.g. `apt-get install libta-lib0`).
+    # Benchmark-only: comparison baselines in scripts/benchmark-*.py.
+    # `ta-lib` bundles its own libta-lib C library in the wheel; preloading it
+    # (RTLD_GLOBAL) also resolves polars-talib's undefined TA_* symbols, so no
+    # system libta-lib install is required.
     "polars-talib>=0.1.5",
+    "ta-lib>=0.6.7",
     "mintalib>=0.0.35",
+]
+
+# Only needed to refresh the bundled sample prices via scripts/update-samples.py.
+# Kept out of the default dev sync; install with `uv sync --group samples`.
+samples = [
+    "pandas",
+    "yfinance",
 ]
 
 
@@ -48,6 +58,11 @@ python-source = "python"
 python-packages = ["bartons"]
 module-name = "bartons.plugin"
 manifest-path = "bartons/Cargo.toml"
+# Bundled sample-price CSVs are data, not Python — list them so maturin ships
+# them in both the sdist and the wheel.
+include = [
+    { path = "python/bartons/samples/*-prices.csv", format = ["sdist", "wheel"] },
+]
 
 # When using a custom module name the name must defined with `tool.maturin.module`
 # The module name match the rust module name in libs.rs with either

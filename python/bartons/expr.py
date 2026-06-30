@@ -48,3 +48,12 @@ class BartonsExprNamespace:
             kwargs=dict(period=period),
         )
 
+    def rsi(self, period: int) -> pl.Expr:
+        return register_plugin_function(
+            function_name="rsi_expr",
+            plugin_path=PLUGIN_PATH,
+            is_elementwise=False,
+            args=[self._expr],
+            kwargs=dict(period=period),
+        )
+

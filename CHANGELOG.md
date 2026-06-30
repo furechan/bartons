@@ -2,6 +2,16 @@
 
 ## 0.1.0
 
+- Add a `bartons.samples` subpackage with bundled OHLCV sample prices (daily /
+  hourly / minute AAPL CSVs). `sample_prices(freq, max_bars=...)` returns a
+  polars DataFrame; `sample_dataset(n_tickers, ...)` stacks them into a synthetic
+  multi-ticker frame for `.over()` benchmarks. `scripts/update-samples.py`
+  refreshes the CSVs via yfinance (optional `samples` dependency group). Ported
+  from python-dev's `barcalc`.
+- Add RSI (Wilder's Relative Strength Index). `RsiFilter` composes two
+  `RmaFilter`s for the smoothed average gain/loss and emits
+  `100 * avg_gain / (avg_gain + avg_loss)`; a flat run yields `0`, matching
+  TA-Lib. Exposed as `RSI()`, `.bt.rsi()`, and `plugin.rsi` (default period 14).
 - Refactor all indicator kernels onto a streaming-filter pattern. Each indicator
   is now a polars-free struct (`EmaFilter`, `SmaFilter`, `RmaFilter`, `WmaFilter`,
   `TrangeFilter`) with a `new` constructor and a `next` step method, holding its

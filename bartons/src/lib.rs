@@ -4,6 +4,7 @@ mod ema;
 mod sma;
 mod rma;
 mod wma;
+mod rsi;
 mod trange;
 
 use pyo3::prelude::*;
@@ -20,6 +21,7 @@ fn plugin(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sma::sma, m)?)?;
     m.add_function(wrap_pyfunction!(rma::rma, m)?)?;
     m.add_function(wrap_pyfunction!(wma::wma, m)?)?;
+    m.add_function(wrap_pyfunction!(rsi::rsi, m)?)?;
     m.add_function(wrap_pyfunction!(trange::trange, m)?)?;
     Ok(())
 }
