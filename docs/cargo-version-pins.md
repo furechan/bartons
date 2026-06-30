@@ -86,7 +86,7 @@ The [`check-bindings`](../.claude/commands/check-bindings.md) skill audits these
 
 ## Scope: this is the Cargo side only
 
-This doc covers the compile-time crate pins. The **Python `polars` cap** in [`pyproject.toml`](../pyproject.toml) is a *separate* constraint — it governs which Python `polars` the built `.so` runs against at the FFI guard, not what compiles. The crate ↔ Python-package correspondence is tabulated in [`polars-ffi-version-table.md`](polars-ffi-version-table.md); the rationale for the exact `pyproject` cap is currently under review.
+This doc covers the compile-time crate pins. The **Python `polars` cap** in [`pyproject.toml`](../pyproject.toml) is a *separate* constraint — it governs which Python `polars` the built `.so` runs against at the FFI guard, not what compiles. The crate ↔ Python-package correspondence is tabulated in [`polars-ffi-version-table.md`](polars-ffi-version-table.md). The current cap is `polars>=1.0,<1.43`: the lower bound is the oldest engine in the verified range and the upper bound is the current test ceiling (one past the `0.54.4`/`1.42.x` build), **not** a hard ABI limit — it is widened as newer polars is verified by the nox `compat` matrix (see [`test-compat-helpers.md`](test-compat-helpers.md)).
 
 ## Related
 
