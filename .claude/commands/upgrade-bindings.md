@@ -6,7 +6,7 @@ allowed-tools: Read, Bash, Grep, Glob, Edit
 
 Upgrade the **version lock-in** of this native polars plugin to the latest mutually-compatible set, deriving the numbers from upstream machine-readable sources — never guess. **Propose the new settings and get explicit approval BEFORE recompiling.**
 
-Read the derivation method in [docs/pyo3-polars-version-lockstep.md](../../docs/pyo3-polars-version-lockstep.md) before starting. Optional argument `$1` = a target polars-Python version to upgrade toward (e.g. `1.42`); if absent, target the latest stable release.
+Read the derivation method in [docs/pyo3-polars-version-lockstep.md](../../archive/pyo3-polars-version-lockstep.md) before starting. Optional argument `$1` = a target polars-Python version to upgrade toward (e.g. `1.42`); if absent, target the latest stable release.
 
 ## Step 1 — current state
 
@@ -40,7 +40,7 @@ Present a clear before → after table for every changed pin across both files:
 - **`[build-system].requires`** — must **not** carry a polars bound. maturin compiles the Rust crate; the Rust `polars` comes from Cargo/crates.io, and the runtime version handshake happens at *import* time, not build time. polars-Python is not needed to build at all — if a `polars` entry exists here, **remove it**.
 - **`[dependency-groups].dev`** — must **not** pin polars. Installing the project (editable) into the dev env already pulls polars in, constrained by the `[project].dependencies` cap. A bare `polars` line is redundant — **remove it**; leave the cap to flow transitively.
 
-Rationale: one cap = one place to update and no chance of the three drifting out of sync. (See [docs/pyo3-polars-version-lockstep.md](../../docs/pyo3-polars-version-lockstep.md) "resolver model".)
+Rationale: one cap = one place to update and no chance of the three drifting out of sync. (See [docs/pyo3-polars-version-lockstep.md](../../archive/pyo3-polars-version-lockstep.md) "resolver model".)
 
 State the derived ABI window in one line (e.g. "crate 0.54 → polars-Python >=1.42,<1.43"). Then **stop and ask the user to approve** the proposed pins. Do not edit files until they confirm.
 

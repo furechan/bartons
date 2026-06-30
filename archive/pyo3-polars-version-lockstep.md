@@ -1,5 +1,9 @@
 # pyo3-polars Version Lockstep
 
+> [!WARNING]
+> **LEGACY / INCOMPLETE — DO NOT USE AS REFERENCE (as of 2026-06-30).**
+> This document is **speculative**: it argues a model for deriving a `polars >=x,<y` pin but has not been validated against the guard's actual behaviour. We are currently re-establishing the facts from first-hand source analysis. The verified, fact-only material lives in [`polars-ffi-version-table.md`](../docs/polars-ffi-version-table.md) (the version data) and [`polars-ffi-version-guard.md`](../docs/polars-ffi-version-guard.md) (what the runtime guard actually does). The pin/lockstep conclusions below are **on hold pending review** and should not be relied on.
+
 How a native polars plugin (Rust, built with `pyo3-polars`) is coupled to a polars version window, why that coupling exists, and how to derive the correct `polars >=x,<y` cap from **machine-readable** sources instead of guessing. Applies to any polars plugin (`polars_talib`, custom Rust expression plugins), and frames the trade against the pure-Python `map_batches` alternative used by barcalc.
 
 ## TL;DR
@@ -95,6 +99,8 @@ At plugin build/release time, derive the cap from the pinned crate instead of ha
 
 ## Related
 
+- [`polars-ffi-version-table.md`](../docs/polars-ffi-version-table.md) — verified FFI-version ↔ Rust-crate ↔ Python-package table and the method to regenerate it.
+- [`polars-ffi-version-guard.md`](../docs/polars-ffi-version-guard.md) — what the runtime FFI version guard actually does, where its code lives, and when it was introduced.
 - [`polars-plugin-abi-compatibility.md`](polars-plugin-abi-compatibility.md) — companion note on the ABI coupling itself, the `PYPOLARS_VERSION` runtime check, and the editable-install rebuild workflow for internal plugins.
 - `~/Projects/python-dev/docs/barcalc/native-migration.md` — barcalc's `map_batches` + numba choice and the GIL/`.over()` cost it pays to avoid all of the above.
 - `polars_talib` linking fragility: its prebuilt wheel leaves TA-Lib C symbols undefined (no `DT_NEEDED`), requiring an `RTLD_GLOBAL` preload of the bundled `libta-lib`; same class as upstream issues "undefined symbol `TA_CDL3BLACKCROWS_Lookback`" (Linux) and "`_TA_ACOS` not found in flat namespace" (macOS).

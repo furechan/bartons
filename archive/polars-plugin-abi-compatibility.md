@@ -1,5 +1,9 @@
 # Polars Plugin ABI Compatibility
 
+> [!WARNING]
+> **LEGACY / INCOMPLETE — DO NOT USE AS REFERENCE (as of 2026-06-30).**
+> This note predates the first-hand source analysis of the FFI version guard. Parts of it are inaccurate — notably its "strict `PYPOLARS_VERSION` match" description of the runtime check and its approximate Python↔Rust version table. The verified, fact-only material lives in [`polars-ffi-version-table.md`](../docs/polars-ffi-version-table.md) and [`polars-ffi-version-guard.md`](../docs/polars-ffi-version-guard.md). Retained for historical context only.
+
 The core problem with Polars Rust plugins (via pyo3-polars): **the compiled `.so` is tightly coupled to the exact Polars version it was built against.**
 
 ## Why the coupling exists

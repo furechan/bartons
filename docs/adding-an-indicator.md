@@ -96,7 +96,10 @@ Python reference oracle**:
 - integer input is cast (not panicked);
 - invalid period raises.
 
-Use `polars.testing.assert_series_equal(..., check_exact=False, rel_tol=1e-12)`.
+Use `assert_series_equal(..., check_exact=False, rel_tol=1e-12)` imported from
+[tests/helpers.py](../tests/helpers.py) — a portable shim, **not**
+`polars.testing`, so the suite runs across the full supported polars range. See
+[test-compat-helpers.md](test-compat-helpers.md) for why.
 
 ### 6. Build & verify
 
@@ -130,7 +133,7 @@ build is ~20x slower and misleading.
 - **NaN** is used only as the kernel's "unseeded" marker, never as a stand-in for
   a null input (nulls come through the `Option` from `ca.iter()`).
 - **Single polars cap**: the `polars >=x,<y` window lives only in
-  `[project].dependencies` — see [pyo3-polars-version-lockstep.md](pyo3-polars-version-lockstep.md).
+  `[project].dependencies` — see [pyo3-polars-version-lockstep.md](../archive/pyo3-polars-version-lockstep.md).
 - **Release builds**: `just build` is release; only `just build-debug` is the slow
   debug build. Benchmark with `just bench`.
 - Many indicators have a native polars equivalent (`ewm_mean`, `rolling_mean`).

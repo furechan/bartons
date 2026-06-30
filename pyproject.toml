@@ -17,16 +17,19 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-    # Single source of truth for the polars ABI window — see docs/pyo3-polars-version-lockstep.md.
-    # Derived from the Rust crate pin (polars 0.54.4 → polars-Python 1.42.x). Do not duplicate
-    # this cap in [build-system].requires or [dependency-groups].dev.
-    "polars>=1.42,<1.43",
+    # Widened compatibility window, verified by the noxfile `compat` matrix: the plugin
+    # (built against crate 0.54.4) runs correctly on every polars engine in this range via
+    # the stable FFI (0,1) + Arrow C boundary. See docs/polars-ffi-version-table.md and
+    # docs/polars-ffi-version-guard.md. (Upper bound is the current test ceiling, not a hard
+    # ABI limit — extend as newer polars is verified.)
+    "polars>=1.0,<1.43",
 ]
 
 [dependency-groups]
 dev = [
     "maturin",
     "pytest",
+    "nox",
     "build",
     "pyarrow",
     "ipykernel",

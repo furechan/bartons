@@ -5,7 +5,7 @@ allowed-tools: Read, Bash, Grep, Glob
 
 You are auditing the **version lock-in** that keeps this native polars plugin (Rust, built with `pyo3-polars`) ABI-compatible with the polars-Python it runs against. This is a **read-only review** — do not edit any files. Gather the facts, lay them out, flag problems, then discuss next steps with the user.
 
-Background on *why* this coupling exists and how the version window is derived: read [docs/pyo3-polars-version-lockstep.md](../../docs/pyo3-polars-version-lockstep.md) and [docs/polars-plugin-abi-compatibility.md](../../docs/polars-plugin-abi-compatibility.md) first.
+Background on *why* this coupling exists and how the version window is derived: read [docs/pyo3-polars-version-lockstep.md](../../archive/pyo3-polars-version-lockstep.md) and [docs/polars-plugin-abi-compatibility.md](../../archive/polars-plugin-abi-compatibility.md) first.
 
 ## Where the settings live — gather all of these
 

@@ -1,6 +1,6 @@
 import polars as pl
 import pytest
-from polars.testing import assert_series_equal
+from helpers import assert_series_equal
 
 from bartons import plugin
 from bartons.sma import SMA
