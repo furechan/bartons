@@ -1,10 +1,6 @@
-from pathlib import Path
-
 import polars as pl
 
-from polars.plugins import register_plugin_function
-
-PLUGIN_PATH = Path(__file__).parent
+from . import expressions as xp
 
 
 @pl.api.register_expr_namespace("bt")
@@ -13,47 +9,16 @@ class BartonsExprNamespace:
         self._expr = expr
 
     def ema(self, period: int) -> pl.Expr:
-        return register_plugin_function(
-            function_name="ema_expr",
-            plugin_path=PLUGIN_PATH,
-            is_elementwise=False,
-            args=[self._expr],
-            kwargs=dict(period=period),
-        )
+        return xp.EMA(period, src=self._expr)
 
     def sma(self, period: int) -> pl.Expr:
-        return register_plugin_function(
-            function_name="sma_expr",
-            plugin_path=PLUGIN_PATH,
-            is_elementwise=False,
-            args=[self._expr],
-            kwargs=dict(period=period),
-        )
+        return xp.SMA(period, src=self._expr)
 
     def rma(self, period: int) -> pl.Expr:
-        return register_plugin_function(
-            function_name="rma_expr",
-            plugin_path=PLUGIN_PATH,
-            is_elementwise=False,
-            args=[self._expr],
-            kwargs=dict(period=period),
-        )
+        return xp.RMA(period, src=self._expr)
 
     def wma(self, period: int) -> pl.Expr:
-        return register_plugin_function(
-            function_name="wma_expr",
-            plugin_path=PLUGIN_PATH,
-            is_elementwise=False,
-            args=[self._expr],
-            kwargs=dict(period=period),
-        )
+        return xp.WMA(period, src=self._expr)
 
     def rsi(self, period: int) -> pl.Expr:
-        return register_plugin_function(
-            function_name="rsi_expr",
-            plugin_path=PLUGIN_PATH,
-            is_elementwise=False,
-            args=[self._expr],
-            kwargs=dict(period=period),
-        )
-
+        return xp.RSI(period, src=self._expr)

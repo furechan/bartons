@@ -2,6 +2,11 @@
 
 ## 0.1.0
 
+- Make the `.bt` namespace methods delegate to the expression factories
+  (`xp.EMA(period, src=self._expr)`, …) instead of re-implementing the
+  `register_plugin_function` call. The FFI wiring now lives in one place per
+  indicator (the factory); `namespace.py` no longer imports `register_plugin_function`
+  or `PLUGIN_PATH`.
 - Add `///` doc comments to every eager pyfunction (EMA, SMA, RMA, WMA, RSI,
   TRANGE, ATR), so PyO3 surfaces them as `__doc__` and `help(bartons.plugin.<name>)`
   shows the signature plus an Args/Returns description.

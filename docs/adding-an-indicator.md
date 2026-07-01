@@ -108,14 +108,15 @@ Then re-export it from
 
 ### 4. `.bt` namespace — `python/bartons/namespace.py`
 
-Add a method to `BartonsExprNamespace` (source is the receiver expr, so no `src`):
+Add a method to `BartonsExprNamespace` that **delegates to the factory**
+(imported as `from . import expressions as xp`), routing the receiver expression
+in as `src`. This keeps the `register_plugin_function` wiring in exactly one place
+— the factory. Single-source indicators only; TRANGE/ATR are multi-input and have
+no `.bt` method.
 
 ```python
 def <name>(self, period: int) -> pl.Expr:
-    return register_plugin_function(
-        function_name="<name>_expr", plugin_path=PLUGIN_PATH,
-        is_elementwise=False, args=[self._expr], kwargs=dict(period=period),
-    )
+    return xp.<NAME>(period, src=self._expr)
 ```
 
 ### 5. Tests — `tests/test_<name>.py`
