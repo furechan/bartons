@@ -15,6 +15,12 @@ and is declared in `bartons/src/indicators/mod.rs`; the shared `Filter` trait an
 `bartons/src/lib.rs` is the `#[pymodule]` glue that registers each eager pyfunction
 flat as `bartons.plugin.<name>`.
 
+The flat layout is deliberate — a `plugin.indicators` submodule was built and
+rejected (`import bartons.plugin.indicators` needs a manual `sys.modules` hack that
+isn't worth it for a private module). See
+[docs/considered-alternatives.md](docs/considered-alternatives.md) for that and
+other deferred designs.
+
 The Python package and distribution are both `bartons`; the Rust module is imported as `bartons.plugin`. The name `bartons` was chosen to avoid colliding with the separate `bearta` TA library. Polars expressions are registered via `polars.plugins.register_plugin_function`.
 
 ## Build & test
