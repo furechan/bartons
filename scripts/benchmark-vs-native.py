@@ -93,35 +93,38 @@ def bench_combined(
 
 
 def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, number: int) -> None:
-    print(f"  {'indicator':<12}  {'bartons':>10}  {'native':>10}  {'ratio':>7}")
-    print("  " + "-" * 47)
-    ratios = []
+    hdr = f"  {'indicator':<12}  {'bartons':>10}  {'native':>10}  {'ratio':>7}"
+    print(hdr)
+    print("  " + "-" * (len(hdr) - 2))
+    bs, ns, ratios = [], [], []
     for name, b_expr, n_expr in pairs:
         try:
             t_b = runner(df, b_expr, repeat=repeat, number=number)
             t_n = runner(df, n_expr, repeat=repeat, number=number)
         except Exception as e:
-            print(f"  {name:<12}  {'':>10}  {'':>10}  skipped ({e})")
+            print(f"  {name:<12}  skipped ({e})")
             continue
-        ratio = t_b / t_n
-        ratios.append(ratio)
-        print(f"  {name:<12}  {fmt_ms(t_b):>10}  {fmt_ms(t_n):>10}  {ratio:>7.2f}")
+        bs.append(t_b); ns.append(t_n); ratios.append(t_b / t_n)
+        print(f"  {name:<12}  {fmt_ms(t_b):>10}  {fmt_ms(t_n):>10}  {t_b / t_n:>7.2f}")
     if len(ratios) > 1:
-        avg = sum(ratios) / len(ratios)
-        print(f"\n  Average ratio (bartons/native): {avg:.2f}")
+        def mean(xs):
+            return sum(xs) / len(xs)
+
+        # Average and combined: two summary rows, column-aligned with the rows above.
+        print("  " + "-" * (len(hdr) - 2))
+        print(f"  {'Average':<12}  {fmt_ms(mean(bs)):>10}  {fmt_ms(mean(ns)):>10}  {mean(ratios):>7.2f}")
 
         # Combined: all indicators in one select (alias so names stay unique).
         # Shows whether each backend parallelises / CSEs across expressions vs
         # the one-by-one sum above.
         b_exprs = [b.alias(n) for n, b, _ in pairs]
         n_exprs = [e.alias(n) for n, _, e in pairs]
-        print("  " + "-" * 47)
         try:
             t_b = bench_combined(df, b_exprs, over=over, repeat=repeat, number=number)
             t_n = bench_combined(df, n_exprs, over=over, repeat=repeat, number=number)
             print(f"  {'ALL combined':<12}  {fmt_ms(t_b):>10}  {fmt_ms(t_n):>10}  {t_b / t_n:>7.2f}")
         except Exception as e:
-            print(f"  {'ALL combined':<12}  {'':>10}  {'':>10}  skipped ({e})")
+            print(f"  {'ALL combined':<12}  skipped ({e})")
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 

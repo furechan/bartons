@@ -6,6 +6,14 @@ stays inside the polars engine, wrapping the C TA-Lib. Two scenarios: single sym
 an "ALL combined" row — every indicator in one df.select(), showing how each backend
 parallelises / CSEs across expressions vs the one-by-one sum.
 
+The `talib` column is raw polars_talib, which represents warmup/gaps as NaN in the
+values buffer (no validity bitmap) — numpy-style, not polars nulls. bartons instead
+emits real nulls inline. So `talib+null` is the apples-to-apples column: raw talib
+plus `.fill_nan(None)` to produce the same null-correct output bartons does. `r(raw)`
+compares against raw talib, `r(fair)` against talib+null (both bartons/other, <1 =
+bartons faster). Note talib still can't handle *interior* nulls even with fill_nan;
+this only equalises the warmup-null representation on clean data.
+
 RMA has no TA-Lib equivalent (Wilder smoothing isn't exposed standalone), so it is
 covered only in benchmark-vs-mintalib.py.
 
@@ -88,35 +96,43 @@ def bench_combined(
 
 
 def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, number: int) -> None:
-    print(f"  {'indicator':<12}  {'bartons':>10}  {'talib-ext':>10}  {'ratio':>7}")
-    print("  " + "-" * 48)
-    ratios = []
+    hdr = f"  {'indicator':<12}  {'bartons':>10}  {'talib':>10}  {'talib+null':>10}  {'r(raw)':>7}  {'r(fair)':>7}"
+    print(hdr)
+    print("  " + "-" * (len(hdr) - 2))
+    bs, ts, ns, r_raw, r_fair = [], [], [], [], []
     for name, b_expr, t_expr in pairs:
         try:
             t_b = runner(df, b_expr, repeat=repeat, number=number)
             t_t = runner(df, t_expr, repeat=repeat, number=number)
+            t_n = runner(df, t_expr.fill_nan(None), repeat=repeat, number=number)
         except Exception as e:
-            print(f"  {name:<12}  {'':>10}  {'':>10}  skipped ({e})")
+            print(f"  {name:<12}  skipped ({e})")
             continue
-        ratio = t_b / t_t
-        ratios.append(ratio)
-        print(f"  {name:<12}  {fmt_ms(t_b):>10}  {fmt_ms(t_t):>10}  {ratio:>7.2f}")
-    if len(ratios) > 1:
-        avg = sum(ratios) / len(ratios)
-        print(f"\n  Average ratio (bartons/talib-ext): {avg:.2f}")
+        bs.append(t_b); ts.append(t_t); ns.append(t_n)
+        r_raw.append(t_b / t_t)
+        r_fair.append(t_b / t_n)
+        print(f"  {name:<12}  {fmt_ms(t_b):>10}  {fmt_ms(t_t):>10}  {fmt_ms(t_n):>10}  {t_b / t_t:>7.2f}  {t_b / t_n:>7.2f}")
+    if len(r_raw) > 1:
+        def mean(xs):
+            return sum(xs) / len(xs)
+
+        # Average and combined: two summary rows, column-aligned with the rows above.
+        print("  " + "-" * (len(hdr) - 2))
+        print(f"  {'Average':<12}  {fmt_ms(mean(bs)):>10}  {fmt_ms(mean(ts)):>10}  {fmt_ms(mean(ns)):>10}  {mean(r_raw):>7.2f}  {mean(r_fair):>7.2f}")
 
         # Combined: all indicators in one select (alias so names stay unique).
         # Shows whether each backend parallelises / CSEs across expressions vs
         # the one-by-one sum above.
         b_exprs = [b.alias(n) for n, b, _ in pairs]
         t_exprs = [t.alias(n) for n, _, t in pairs]
-        print("  " + "-" * 48)
+        n_exprs = [t.fill_nan(None).alias(n) for n, _, t in pairs]
         try:
             t_b = bench_combined(df, b_exprs, over=over, repeat=repeat, number=number)
             t_t = bench_combined(df, t_exprs, over=over, repeat=repeat, number=number)
-            print(f"  {'ALL combined':<12}  {fmt_ms(t_b):>10}  {fmt_ms(t_t):>10}  {t_b / t_t:>7.2f}")
+            t_n = bench_combined(df, n_exprs, over=over, repeat=repeat, number=number)
+            print(f"  {'ALL combined':<12}  {fmt_ms(t_b):>10}  {fmt_ms(t_t):>10}  {fmt_ms(t_n):>10}  {t_b / t_t:>7.2f}  {t_b / t_n:>7.2f}")
         except Exception as e:
-            print(f"  {'ALL combined':<12}  {'':>10}  {'':>10}  skipped ({e})")
+            print(f"  {'ALL combined':<12}  skipped ({e})")
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
