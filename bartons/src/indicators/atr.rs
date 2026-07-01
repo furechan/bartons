@@ -54,6 +54,16 @@ fn atr_expr(inputs: &[Series], kwargs: AtrKwargs) -> PolarsResult<Series> {
     calc_atr(&inputs[0], &inputs[1], &inputs[2], kwargs.period)
 }
 
+/// Average True Range (Wilder's).
+///
+/// Args:
+///     high: high prices.
+///     low: low prices.
+///     close: close prices.
+///     period: smoothing period (default 14).
+///
+/// Returns:
+///     A Float64 series; null during the warmup period.
 #[pyfunction]
 #[pyo3(signature = (high, low, close, *, period=14))]
 pub fn atr(high: PySeries, low: PySeries, close: PySeries, period: i64) -> PyResult<PySeries> {

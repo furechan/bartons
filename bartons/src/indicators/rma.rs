@@ -76,6 +76,14 @@ fn rma_expr(inputs: &[Series], kwargs: RmaKwargs) -> PolarsResult<Series> {
     calc_rma(&inputs[0], kwargs.period)
 }
 
+/// Wilder's running moving average (SMMA / Wilder smoothing).
+///
+/// Args:
+///     series: input values.
+///     period: smoothing period (default 20).
+///
+/// Returns:
+///     A Float64 series; null during the warmup period.
 #[pyfunction]
 #[pyo3(signature = (series, *, period=20))]
 pub fn rma(series: PySeries, period: i64) -> PyResult<PySeries> {

@@ -73,6 +73,14 @@ fn sma_expr(inputs: &[Series], kwargs: SmaKwargs) -> PolarsResult<Series> {
     calc_sma(&inputs[0], kwargs.period)
 }
 
+/// Simple moving average.
+///
+/// Args:
+///     series: input values.
+///     period: window length (default 20).
+///
+/// Returns:
+///     A Float64 series; null during the warmup period.
 #[pyfunction]
 #[pyo3(signature = (series, *, period=20))]
 pub fn sma(series: PySeries, period: i64) -> PyResult<PySeries> {

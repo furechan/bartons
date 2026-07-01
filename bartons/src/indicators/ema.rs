@@ -68,6 +68,14 @@ fn ema_expr(inputs: &[Series], kwargs: EmaKwargs) -> PolarsResult<Series> {
     calc_ema(&inputs[0], kwargs.period)
 }
 
+/// Exponential moving average.
+///
+/// Args:
+///     series: input values.
+///     period: averaging period (default 20).
+///
+/// Returns:
+///     A Float64 series; null during the warmup period.
 #[pyfunction]
 #[pyo3(signature = (series, *, period=20))]
 pub fn ema(series: PySeries, period: i64) -> PyResult<PySeries> {

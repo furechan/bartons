@@ -42,8 +42,18 @@ Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It conta
   }
   ```
   `output_type` must be declared (polars needs the dtype at plan time).
-- **Eager pyfunction** (optional but EMA has one):
+- **Eager pyfunction** (optional but EMA has one). Precede it with a `///` doc
+  comment (Args/Returns) — PyO3 surfaces it as the function's `__doc__`, so
+  `help(bartons.plugin.<name>)` works:
   ```rust
+  /// <One-line description>.
+  ///
+  /// Args:
+  ///     series: input values.
+  ///     period: averaging period (default 20).
+  ///
+  /// Returns:
+  ///     A Float64 series; null during the warmup period.
   #[pyfunction]
   #[pyo3(signature = (series, *, period=20))]
   pub fn <name>(series: PySeries, period: i64) -> PyResult<PySeries> { … }

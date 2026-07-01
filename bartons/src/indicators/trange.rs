@@ -55,6 +55,15 @@ fn trange_expr(inputs: &[Series]) -> PolarsResult<Series> {
     calc_trange(&inputs[0], &inputs[1], &inputs[2])
 }
 
+/// True Range over high / low / close.
+///
+/// Args:
+///     high: high prices.
+///     low: low prices.
+///     close: close prices.
+///
+/// Returns:
+///     A Float64 series; the first row is null (no prior close).
 #[pyfunction]
 #[pyo3(signature = (high, low, close))]
 pub fn trange(high: PySeries, low: PySeries, close: PySeries) -> PyResult<PySeries> {

@@ -84,6 +84,14 @@ fn wma_expr(inputs: &[Series], kwargs: WmaKwargs) -> PolarsResult<Series> {
     calc_wma(&inputs[0], kwargs.period)
 }
 
+/// Weighted moving average (linearly weighted).
+///
+/// Args:
+///     series: input values.
+///     period: window length (default 20).
+///
+/// Returns:
+///     A Float64 series; null during the warmup period.
 #[pyfunction]
 #[pyo3(signature = (series, *, period=20))]
 pub fn wma(series: PySeries, period: i64) -> PyResult<PySeries> {

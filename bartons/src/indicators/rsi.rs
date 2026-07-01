@@ -77,6 +77,14 @@ fn rsi_expr(inputs: &[Series], kwargs: RsiKwargs) -> PolarsResult<Series> {
     calc_rsi(&inputs[0], kwargs.period)
 }
 
+/// Wilder's Relative Strength Index.
+///
+/// Args:
+///     series: input values.
+///     period: smoothing period (default 14).
+///
+/// Returns:
+///     A Float64 series in 0..=100; null during the warmup period.
 #[pyfunction]
 #[pyo3(signature = (series, *, period=14))]
 pub fn rsi(series: PySeries, period: i64) -> PyResult<PySeries> {

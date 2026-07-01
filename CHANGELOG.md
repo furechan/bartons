@@ -2,6 +2,9 @@
 
 ## 0.1.0
 
+- Add `///` doc comments to every eager pyfunction (EMA, SMA, RMA, WMA, RSI,
+  TRANGE, ATR), so PyO3 surfaces them as `__doc__` and `help(bartons.plugin.<name>)`
+  shows the signature plus an Args/Returns description.
 - Move the Rust indicator kernels into a `bartons/src/indicators/` source module
   (`lib.rs` now `mod indicators;`); cross-kernel refs use `super::`. No API
   change — the eager functions stay exposed flat at `bartons.plugin.<name>`.
