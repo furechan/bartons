@@ -9,6 +9,19 @@ its behaviour the suite uses, using only stable Series API (`len`, `name`,
 
 from __future__ import annotations
 
+import polars as pl
+import pytest
+
+# The eager plugin.<name> functions marshal a Series into the Rust #[pyfunction]
+# via PySeries._export, which pyo3-polars 0.27 requires and polars only exposes
+# from 1.28. The expression / .bt path doesn't use it and works across the full
+# supported range, so guard only the direct-call tests. See
+# docs/test-compat-helpers.md.
+requires_pyfunction = pytest.mark.skipif(
+    not hasattr(pl.Series("x", [1.0])._s, "_export"),
+    reason="eager plugin.<name> needs polars >= 1.28 (PySeries._export)",
+)
+
 
 def assert_series_equal(
     got,

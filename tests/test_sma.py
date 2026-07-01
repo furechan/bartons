@@ -1,6 +1,6 @@
 import polars as pl
 import pytest
-from helpers import assert_series_equal
+from helpers import assert_series_equal, requires_pyfunction
 
 from bartons import plugin
 from bartons.expressions import SMA
@@ -71,6 +71,7 @@ def test_sma_namespace(xs, period):
 
 
 @pytest.mark.parametrize("xs,period", CASES)
+@requires_pyfunction
 def test_sma_pyfunction(xs, period):
     s = pl.Series("x", xs, dtype=pl.Float64)
     got = plugin.sma(s, period=period)
@@ -79,6 +80,7 @@ def test_sma_pyfunction(xs, period):
     )
 
 
+@requires_pyfunction
 def test_pyfunction_matches_expression():
     """Both entry points share calc_sma, so they must agree element-for-element."""
     xs = [10.0, 11.0, None, 20.0, 21.0, 22.0]
@@ -88,6 +90,7 @@ def test_pyfunction_matches_expression():
     assert_series_equal(expr_out, func_out, check_names=False)
 
 
+@requires_pyfunction
 def test_integer_input_is_cast():
     """Non-f64 input is cast to Float64 rather than panicking."""
     s = pl.Series("x", [1, 2, 3, 4], dtype=pl.Int64)
@@ -104,6 +107,7 @@ def test_invalid_period_expression():
         df.select(SMA(0, src=pl.col("x")).alias("sma"))
 
 
+@requires_pyfunction
 def test_invalid_period_pyfunction():
     s = pl.Series("x", [1.0, 2.0, 3.0], dtype=pl.Float64)
     with pytest.raises(Exception):

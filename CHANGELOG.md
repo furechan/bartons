@@ -2,6 +2,13 @@
 
 ## 0.1.0
 
+- Replace the `tests/conftest.py` source-grepping skip hook with an explicit
+  `@requires_pyfunction` marker (defined in `tests/helpers.py`) on the eager
+  direct-call tests. The marker skips when `PySeries._export` is absent — the
+  eager `plugin.<name>` surface needs it (polars ≥ 1.28 with pyo3-polars 0.27),
+  while the expression / `.bt` path is unaffected and runs across the full
+  supported range. `conftest.py` removed; verified on the polars 1.22 compat
+  session (eager tests skip, everything else passes).
 - Make the `.bt` namespace methods delegate to the expression factories
   (`xp.EMA(period, src=self._expr)`, …) instead of re-implementing the
   `register_plugin_function` call. The FFI wiring now lives in one place per

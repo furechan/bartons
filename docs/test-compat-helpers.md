@@ -35,26 +35,38 @@ the subset of behaviour the suite uses (`check_names` / `check_dtype` /
 from helpers import assert_series_equal
 ```
 
-## `tests/conftest.py` — skip direct `#[pyfunction]` calls on old engines
+## `tests/helpers.py` — `@requires_pyfunction` marker
 
 pyo3-polars marshals a `Series` into a raw `#[pyfunction]` (the
-`plugin.<name>(series, ...)` surface) via `PySeries._export`, a polars *Python*
-API that only exists in newer releases. On polars 1.0–1.4 those calls raise
+`plugin.<name>(series, ...)` surface) via `PySeries._export`, a *private* polars
+Python API. With the pinned **pyo3-polars 0.27**, that method is only present
+from **polars 1.28** (1.27 lacks it); on older engines those calls raise
 `AttributeError`.
 
 The registered-expression surfaces (`<NAME>()` and `.bt.<name>()`) do **not**
-use `_export` and work across the full range. So [tests/conftest.py](../tests/conftest.py)
-skips *only* the direct-call tests, and *only* when `PySeries._export` is absent
-— detected once at collection time:
+use `_export` — the host engine marshals the Series internally over the stable
+plugin FFI — so they work across the full supported range. Only the eager
+direct-call tests need guarding.
+
+[tests/helpers.py](../tests/helpers.py) exports a marker that skips a test when
+`_export` is absent:
 
 ```python
-HAS_PYFUNCTION = hasattr(pl.Series("x", [1.0])._s, "_export")
+requires_pyfunction = pytest.mark.skipif(
+    not hasattr(pl.Series("x", [1.0])._s, "_export"),
+    reason="eager plugin.<name> needs polars >= 1.28 (PySeries._export)",
+)
 ```
 
-On polars 1.42 `HAS_PYFUNCTION` is `True`, so nothing is skipped. On an older
-`compat` engine the direct-call tests are skipped with the reason
-`pyo3-polars #[pyfunction] marshalling needs polars with PySeries._export`,
-while the expression-path tests still run.
+Each eager test is decorated with `@requires_pyfunction`. On polars ≥ 1.28 the
+condition is false so nothing is skipped; on an older `compat` engine those tests
+skip while the expression-path tests still run. The condition is a *capability
+probe*, not a version comparison, so it stays correct even if a pyo3-polars
+upgrade moves the boundary — the "≥ 1.28" figure is specific to pyo3-polars 0.27.
+
+> Earlier this was a `conftest.py` hook that auto-detected direct-call tests by
+> grepping each test's source for `plugin.<name>(`. It was replaced with the
+> explicit marker: simpler, and no fragile source inspection.
 
 ## When can these be removed?
 
@@ -64,8 +76,9 @@ the versions that need them:
 - `helpers.py` — once the floor includes `rel_tol` / `abs_tol` in
   `polars.testing.assert_series_equal`; revert the imports back to
   `polars.testing`.
-- `conftest.py` — once the floor has `PySeries._export` (polars ≥ 1.5); delete
-  the file and the direct-call tests run everywhere.
+- the `@requires_pyfunction` marker (in `helpers.py`) — once the floor has
+  `PySeries._export` (polars ≥ 1.28 with pyo3-polars 0.27); drop the marker and
+  its `@requires_pyfunction` decorators, and the direct-call tests run everywhere.
 
 Until then, raising the floor is the only correct way to drop them — never by
 pinning the dev env to an old engine.
