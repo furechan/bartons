@@ -29,6 +29,15 @@ just clean       # remove Rust target/ and compiled .so files
 
 Requires the `.venv` to be active. The build tool is `uv`; use `uv sync` to set up the environment.
 
+## Type checking
+
+`ty` (Astral's type checker, https://github.com/astral-sh/ty) is the project's
+designated type checker. Note the expression factories in
+`python/bartons/expressions/` are the statically-checkable surface; the `.bt`
+accessor is registered at runtime via `@pl.api.register_expr_namespace` and is
+invisible to any type checker unless a `.pyi` stub declares `bt: BartonsExprNamespace`
+on `pl.Expr`.
+
 ## Adding a new indicator
 
 See [docs/adding-an-indicator.md](docs/adding-an-indicator.md) for the full
