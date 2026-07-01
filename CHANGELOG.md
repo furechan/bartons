@@ -2,6 +2,9 @@
 
 ## 0.1.0
 
+- Move the Rust indicator kernels into a `bartons/src/indicators/` source module
+  (`lib.rs` now `mod indicators;`); cross-kernel refs use `super::`. No API
+  change — the eager functions stay exposed flat at `bartons.plugin.<name>`.
 - Make the single-source factories (EMA, SMA, RMA, WMA, RSI) accept their source
   column as the leading positional argument via a `wrap_src_expression`
   decorator (adapted from bearta's `wrap_expression`), so they compose with `Expr.pipe`:

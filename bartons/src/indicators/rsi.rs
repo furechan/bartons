@@ -5,7 +5,7 @@ use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 use pyo3::exceptions::PyRuntimeError;
 
-use crate::rma::RmaFilter;
+use super::rma::RmaFilter;
 use crate::utils::{run_unary, Filter};
 
 #[derive(Deserialize)]
