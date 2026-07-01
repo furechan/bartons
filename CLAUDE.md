@@ -9,6 +9,12 @@ One crate, one Python package:
 - `bartons/` — PyO3 `cdylib` crate, compiles to `python/bartons/plugin.abi3.so`
 - `python/bartons/` — Python package wrapping the compiled plugin
 
+Rust source layout: each indicator's kernel lives in `bartons/src/indicators/<name>.rs`
+and is declared in `bartons/src/indicators/mod.rs`; the shared `Filter` trait and
+`run_unary`/`run_ternary` drivers are in `bartons/src/utils.rs` (crate root); and
+`bartons/src/lib.rs` is the `#[pymodule]` glue that registers each eager pyfunction
+flat as `bartons.plugin.<name>`.
+
 The Python package and distribution are both `bartons`; the Rust module is imported as `bartons.plugin`. The name `bartons` was chosen to avoid colliding with the separate `bearta` TA library. Polars expressions are registered via `polars.plugins.register_plugin_function`.
 
 ## Build & test
@@ -27,8 +33,9 @@ Requires the `.venv` to be active. The build tool is `uv`; use `uv sync` to set 
 
 See [docs/adding-an-indicator.md](docs/adding-an-indicator.md) for the full
 checklist (entry points, naming, conventions, tests). In short: add a Rust
-kernel + `#[polars_expr]` + `#[pyfunction]` in `bartons/src/<name>.rs`, register
-in `bartons/src/lib.rs`, add the `<NAME>()` factory in
+kernel + `#[polars_expr]` + `#[pyfunction]` in `bartons/src/indicators/<name>.rs`,
+declare it with `pub mod <name>;` in `bartons/src/indicators/mod.rs`, register the
+pyfunction in `bartons/src/lib.rs`, add the `<NAME>()` factory in
 `python/bartons/expressions/<name>.py` (re-exported from
 `python/bartons/expressions/__init__.py`) and a `.bt.<name>()` method in
 `namespace.py`, then mirror `tests/test_ema.py`.
@@ -36,7 +43,7 @@ EMA and SMA are the reference implementations.
 
 ## Key files
 
-- [bartons/src/ema.rs](bartons/src/ema.rs) — reference implementation: EmaKwargs, `calc_ema`, expression + pyfunction wrappers
+- [bartons/src/indicators/ema.rs](bartons/src/indicators/ema.rs) — reference implementation: EmaKwargs, `calc_ema`, expression + pyfunction wrappers
 - [python/bartons/expressions/ema.py](python/bartons/expressions/ema.py) — Python-side plugin registration; factories live in the `expressions` sub-package (`from bartons.expressions import EMA`)
 - [python/bartons/namespace.py](python/bartons/namespace.py) — `@pl.api.register_expr_namespace("bt")` class (the `.bt` accessor)
 - [pyproject.toml](pyproject.toml) — Maturin config (module name, python-source, manifest-path)

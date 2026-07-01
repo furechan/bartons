@@ -1,6 +1,6 @@
 # Adding an indicator
 
-Every indicator touches ~6 files across Rust and Python. EMA is the reference
+Every indicator touches ~7 files across Rust and Python. EMA is the reference
 implementation — copy it. This is the checklist; substitute `<name>` (lower,
 e.g. `sma`) and `<NAME>` (upper, e.g. `SMA`).
 
@@ -23,9 +23,9 @@ load time. There is no compile-time check on it.
 
 ## Steps
 
-### 1. Rust kernel — `bartons/src/<name>.rs`
+### 1. Rust kernel — `bartons/src/indicators/<name>.rs`
 
-Copy [bartons/src/ema.rs](../bartons/src/ema.rs). It contains all three symbols.
+Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It contains all three symbols.
 
 - **Kwargs struct** — `#[derive(Deserialize)] pub struct <NAME>Kwargs { period: i64, … }`.
 - **Kernel** `fn calc_<name>(series: &Series, …) -> PolarsResult<Series>`:
@@ -49,10 +49,13 @@ Copy [bartons/src/ema.rs](../bartons/src/ema.rs). It contains all three symbols.
   pub fn <name>(series: PySeries, period: i64) -> PyResult<PySeries> { … }
   ```
 
-### 2. Register — `bartons/src/lib.rs`
+### 2. Register
 
-- Add `mod <name>;` at the top.
-- Add `m.add_function(wrap_pyfunction!(<name>::<name>, m)?)?;` in the `#[pymodule]`.
+- In `bartons/src/indicators/mod.rs`, add `pub mod <name>;` alongside the other
+  kernel modules.
+- In `bartons/src/lib.rs`, add
+  `m.add_function(wrap_pyfunction!(indicators::<name>::<name>, m)?)?;` in the
+  `#[pymodule]`.
 - **Do not** register `<name>_expr` — the polars plugin machinery finds it by
   symbol; adding it to the module is wrong.
 
