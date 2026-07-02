@@ -4,52 +4,7 @@ from helpers import assert_series_equal
 
 from bartons import plugin
 from bartons.expressions import RSI
-
-
-def ref_rsi(xs, period):
-    """Independent oracle mirroring calc_rsi: bar-to-bar gains/losses each
-    smoothed with a Wilder average (simple-average seed, then alpha = 1/period),
-    RSI = 100 * avg_gain / (avg_gain + avg_loss); a flat run yields 0. Output is
-    null until the first delta plus the averages' warmup; a null resets the run."""
-    alpha = 1.0 / period
-
-    def rma_next(s, x):
-        if x is None:
-            s["val"], s["total"], s["count"] = None, 0.0, 0
-            return None
-        s["count"] += 1
-        if s["count"] <= period:
-            s["total"] += x
-            s["val"] = s["total"] / s["count"]
-        else:
-            s["val"] += alpha * (x - s["val"])
-        return s["val"] if s["count"] >= period else None
-
-    prev = None
-    gain = dict(val=None, total=0.0, count=0)
-    loss = dict(val=None, total=0.0, count=0)
-    out = []
-    for x in xs:
-        if x is None:
-            prev = None
-            rma_next(gain, None)
-            rma_next(loss, None)
-            out.append(None)
-            continue
-        if prev is None:
-            prev = x
-            out.append(None)
-            continue
-        delta = x - prev
-        prev = x
-        ag = rma_next(gain, max(delta, 0.0))
-        al = rma_next(loss, max(-delta, 0.0))
-        if ag is None or al is None:
-            out.append(None)
-        else:
-            denom = ag + al
-            out.append(0.0 if denom == 0.0 else 100.0 * ag / denom)
-    return out
+from refimpl import ref_rsi
 
 
 # (values, period) — covers warmup nulls (delta + average), a steady uptrend

@@ -4,28 +4,7 @@ from helpers import assert_series_equal
 
 from bartons import plugin
 from bartons.expressions import EMA
-
-
-def ref_ema(xs, period):
-    """Independent oracle mirroring calc_ema: seed on the first valid value,
-    emit null during warmup (count < period), and reset the run on a null."""
-    alpha = 2.0 / (period + 1.0)
-    ema = None
-    count = 0
-    out = []
-    for x in xs:
-        if x is None:
-            ema = None
-            count = 0
-            out.append(None)
-            continue
-        if count == 0:
-            ema = x
-        else:
-            ema += alpha * (x - ema)
-        count += 1
-        out.append(ema if count >= period else None)
-    return out
+from refimpl import ref_ema
 
 
 # (values, period) — covers warmup nulls, a mid-series null reset + re-warmup,

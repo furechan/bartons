@@ -121,8 +121,11 @@ def <name>(self, period: int) -> pl.Expr:
 
 ### 5. Tests — `tests/test_<name>.py`
 
-Copy [tests/test_ema.py](../tests/test_ema.py). Cover, against an **independent
-Python reference oracle**:
+Copy [tests/test_ema.py](../tests/test_ema.py). Add a `ref_<name>` **independent
+Python reference oracle** to [tests/refimpl.py](../tests/refimpl.py) (all oracles
+live there, one importable module, so composite indicators reuse the
+primitives — e.g. `ref_atr` is `ref_rma` of `ref_trange`), then
+`from refimpl import ref_<name>` in the test. Cover, against that oracle:
 
 - all three surfaces (`<NAME>()` expression, `.bt.<name>()`, `plugin.<name>()`)
   and that they agree;

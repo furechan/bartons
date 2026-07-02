@@ -4,52 +4,7 @@ from helpers import assert_series_equal
 
 from bartons import plugin
 from bartons.expressions import ATR
-
-
-def ref_trange(highs, lows, closes):
-    """TR = max(h-l, |h-prev_close|, |l-prev_close|), first bar = h-l, null when
-    high or low is missing."""
-    out = []
-    prev_close = None
-    for h, l, c in zip(highs, lows, closes):
-        if h is None or l is None:
-            out.append(None)
-        else:
-            tr = h - l
-            if prev_close is not None:
-                tr = max(tr, abs(h - prev_close), abs(l - prev_close))
-            out.append(tr)
-        prev_close = c
-    return out
-
-
-def ref_rma(xs, period):
-    """Wilder smoothing with simple-average seed; null during warmup, reset on null."""
-    alpha = 1.0 / period
-    rma = None
-    total = 0.0
-    count = 0
-    out = []
-    for x in xs:
-        if x is None:
-            rma = None
-            total = 0.0
-            count = 0
-            out.append(None)
-            continue
-        count += 1
-        if count <= period:
-            total += x
-            rma = total / count
-        else:
-            rma += alpha * (x - rma)
-        out.append(rma if count >= period else None)
-    return out
-
-
-def ref_atr(highs, lows, closes, period):
-    """ATR is Wilder's RMA of the True Range — mirrors calc_atr (trange -> rma)."""
-    return ref_rma(ref_trange(highs, lows, closes), period)
+from refimpl import ref_atr
 
 
 # (highs, lows, closes, period) — covers warmup, a flat series (ATR 0), a

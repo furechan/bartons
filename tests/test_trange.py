@@ -4,23 +4,7 @@ from helpers import assert_series_equal
 
 from bartons import plugin
 from bartons.expressions import TRANGE
-
-
-def ref_trange(highs, lows, closes):
-    """Independent oracle: TR = max(h-l, |h-prev_close|, |l-prev_close|), first
-    bar = h-l, null when high or low is missing."""
-    out = []
-    prev_close = None
-    for h, l, c in zip(highs, lows, closes):
-        if h is None or l is None:
-            out.append(None)
-        else:
-            tr = h - l
-            if prev_close is not None:
-                tr = max(tr, abs(h - prev_close), abs(l - prev_close))
-            out.append(tr)
-        prev_close = c
-    return out
+from refimpl import ref_trange
 
 
 # (highs, lows, closes)

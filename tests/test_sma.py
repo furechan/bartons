@@ -4,23 +4,7 @@ from helpers import assert_series_equal
 
 from bartons import plugin
 from bartons.expressions import SMA
-
-
-def ref_sma(xs, period):
-    """Independent oracle mirroring calc_sma: rolling mean of the last `period`
-    values, null during warmup (fewer than `period` seen), reset on a null."""
-    out = []
-    window = []
-    for x in xs:
-        if x is None:
-            window = []
-            out.append(None)
-            continue
-        window.append(x)
-        if len(window) > period:
-            window.pop(0)
-        out.append(sum(window) / period if len(window) == period else None)
-    return out
+from refimpl import ref_sma
 
 
 # (values, period) — covers warmup nulls, a mid-series null reset + re-warmup,

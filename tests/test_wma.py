@@ -4,29 +4,7 @@ from helpers import assert_series_equal
 
 from bartons import plugin
 from bartons.expressions import WMA
-
-
-def ref_wma(xs, period):
-    """Independent oracle: weighted mean of the last `period` values (oldest
-    weight 1 .. newest weight `period`); null during warmup, reset on a null.
-    Computed directly (not incrementally) to catch kernel bugs."""
-    wdiv = period * (period + 1) / 2
-    out = []
-    window = []
-    for x in xs:
-        if x is None:
-            window = []
-            out.append(None)
-            continue
-        window.append(x)
-        if len(window) > period:
-            window.pop(0)
-        if len(window) == period:
-            wsum = sum((i + 1) * window[i] for i in range(period))
-            out.append(wsum / wdiv)
-        else:
-            out.append(None)
-    return out
+from refimpl import ref_wma
 
 
 # (values, period) — covers warmup nulls, a mid-series null reset + re-warmup,

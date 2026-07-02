@@ -2,6 +2,15 @@
 
 ## 0.1.0
 
+- Centralize the per-indicator Python reference oracles into one importable
+  `tests/refimpl.py` (`ref_ema`/`ref_sma`/`ref_rma`/`ref_wma`/`ref_rsi`/
+  `ref_trange`/`ref_atr`); the test files now `from refimpl import ref_<name>`
+  instead of each defining its own inline. Kills the cross-file duplication
+  (`ref_rma`/`ref_trange` had been copy-pasted into `test_atr.py`, and Wilder
+  smoothing was inlined a third time inside `test_rsi.py`): `ref_atr` now composes
+  `ref_rma ∘ ref_trange` and `ref_rsi` reuses `ref_rma`. Behaviour is unchanged
+  (166 tests pass); the oracles stay dep-free hand-rolled Python so the lean
+  `compat`/`rt` matrix keeps installing only the wheel + pytest + polars.
 - Raise the supported `polars` floor from `>=1.0` to `>=1.28`, in both
   `pyproject.toml` and the nox `compat` matrix. The eager `bartons.plugin.<name>`
   pyfunctions marshal a Series into Rust via pyo3-polars 0.27's private

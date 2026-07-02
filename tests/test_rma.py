@@ -4,32 +4,7 @@ from helpers import assert_series_equal
 
 from bartons import plugin
 from bartons.expressions import RMA
-
-
-def ref_rma(xs, period):
-    """Independent oracle mirroring calc_rma: simple-average seed for the first
-    `period` values, then Wilder smoothing (alpha = 1/period); null during
-    warmup, reset on a null."""
-    alpha = 1.0 / period
-    rma = None
-    total = 0.0
-    count = 0
-    out = []
-    for x in xs:
-        if x is None:
-            rma = None
-            total = 0.0
-            count = 0
-            out.append(None)
-            continue
-        count += 1
-        if count <= period:
-            total += x
-            rma = total / count
-        else:
-            rma += alpha * (x - rma)
-        out.append(rma if count >= period else None)
-    return out
+from refimpl import ref_rma
 
 
 # (values, period) — covers warmup nulls, a mid-series null reset + re-warmup,
