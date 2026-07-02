@@ -17,12 +17,20 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-    # Widened compatibility window, verified by the noxfile `compat` matrix: the plugin
+    # Compatibility window verified by the noxfile `compat` matrix: the plugin
     # (built against crate 0.54.4) runs correctly on every polars engine in this range via
     # the stable FFI (0,1) + Arrow C boundary. See docs/polars-ffi-version-table.md and
     # docs/polars-ffi-version-guard.md. (Upper bound is the current test ceiling, not a hard
     # ABI limit — extend as newer polars is verified.)
-    "polars>=1.0,<1.43",
+    #
+    # Lower bound is 1.28, not 1.0: the eager `bartons.plugin.<name>` pyfunctions marshal a
+    # Series into Rust via pyo3-polars 0.27, which calls the private `PySeries._export` —
+    # only present from polars 1.28. On older engines those calls raise
+    # `AttributeError: 'PySeries' object has no attribute '_export'`. The expression path
+    # (`EMA()`, `.bt.ema()`) needs no `_export` and would work on older polars, but the
+    # package floors at 1.28 so its whole public API is usable; the `compat` matrix tests
+    # `[1.28, 1.43)`. See docs/test-compat-helpers.md.
+    "polars>=1.28,<1.43",
 ]
 
 [dependency-groups]

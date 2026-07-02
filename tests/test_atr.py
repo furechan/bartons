@@ -1,6 +1,6 @@
 import polars as pl
 import pytest
-from helpers import assert_series_equal, requires_pyfunction
+from helpers import assert_series_equal
 
 from bartons import plugin
 from bartons.expressions import ATR
@@ -121,7 +121,6 @@ def test_atr_accepts_column_names_and_exprs():
 
 
 @pytest.mark.parametrize("highs,lows,closes,period", CASES)
-@requires_pyfunction
 def test_atr_pyfunction(highs, lows, closes, period):
     h = pl.Series("high", highs, dtype=pl.Float64)
     l = pl.Series("low", lows, dtype=pl.Float64)
@@ -133,7 +132,6 @@ def test_atr_pyfunction(highs, lows, closes, period):
     )
 
 
-@requires_pyfunction
 def test_pyfunction_matches_expression():
     """Both entry points share calc_atr, so they must agree element-for-element."""
     highs, lows, closes, period = CASES[2]  # the null-reset case
@@ -143,7 +141,6 @@ def test_pyfunction_matches_expression():
     assert_series_equal(expr_out, func_out, check_names=False)
 
 
-@requires_pyfunction
 def test_integer_input_is_cast():
     """Non-f64 input is cast to Float64 rather than panicking."""
     h = pl.Series("high", [10, 12, 11, 13], dtype=pl.Int64)
@@ -163,7 +160,6 @@ def test_invalid_period_expression():
         df.select(ATR(0).alias("atr"))
 
 
-@requires_pyfunction
 def test_invalid_period_pyfunction():
     h = pl.Series("high", [10.0, 12.0, 11.0], dtype=pl.Float64)
     l = pl.Series("low", [8.0, 9.0, 9.0], dtype=pl.Float64)

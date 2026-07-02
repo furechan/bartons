@@ -64,17 +64,18 @@ def _wheel(session: nox.Session) -> str:
     return _WHEEL
 
 
-# One representative polars per *distinct engine crate version* across [1.0, 1.43) —
+# One representative polars per *distinct engine crate version* across [1.28, 1.43) —
 # every distinct FFI/Arrow boundary in the supported range (patch releases within a
 # crate group share the engine, so testing one per group is complete). The plugin is
 # built once against crate 0.54.4 (→ polars 1.42) and run against all of them.
-# version -> crate:  1.0.0→0.41.2  1.1.0→0.41.3  1.6.0→0.42.0  1.7.0→0.43.0
-# 1.7.1→0.43.1  1.13.0→0.44.2  1.17.1→0.45.1  1.22.0→0.46.0  1.30.0→0.48.1
-# 1.32.0→0.49.1  1.32.1→0.50.0  1.34.0→0.51.0  1.38.1→0.52.0  1.39.0→0.53.0  1.42.0→0.54.4
+# Floor is 1.28: the eager plugin.<name> pyfunctions need PySeries._export, which
+# polars only exposes from 1.28 (see docs/test-compat-helpers.md). 1.28.0 also
+# represents engine crate 0.46.0, whose group spans polars 1.22–1.29.
+# version -> crate:  1.28.0→0.46.0  1.30.0→0.48.1  1.32.0→0.49.1  1.32.1→0.50.0
+# 1.34.0→0.51.0  1.38.1→0.52.0  1.39.0→0.53.0  1.42.0→0.54.4
 # (1.36.0 is also crate 0.52.0 but its polars-runtime-32 wheel was yanked, so use 1.38.1.)
 COMPAT_VERSIONS = [
-    "1.0.0", "1.1.0", "1.6.0", "1.7.0", "1.7.1", "1.13.0", "1.17.1", "1.22.0",
-    "1.30.0", "1.32.0", "1.32.1", "1.34.0", "1.38.1", "1.39.0", "1.42.0",
+    "1.28.0", "1.30.0", "1.32.0", "1.32.1", "1.34.0", "1.38.1", "1.39.0", "1.42.0",
 ]
 
 

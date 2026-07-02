@@ -1,26 +1,14 @@
 """Version-portable test helpers.
 
 `polars.testing.assert_series_equal` gained the `rel_tol`/`abs_tol` keywords only
-in a later polars release, so calling it with those kwargs raises `TypeError` on
-older engines (polars 1.0–1.4). This drop-in replacement reproduces the subset of
-its behaviour the suite uses, using only stable Series API (`len`, `name`,
-`dtype`, `to_list`) so it works across the whole supported polars range.
+in polars 1.32.3, so calling it with those kwargs raises `TypeError` on the older
+engines the `compat` matrix still covers (polars 1.28–1.32.2). This drop-in
+replacement reproduces the subset of its behaviour the suite uses, using only
+stable Series API (`len`, `name`, `dtype`, `to_list`) so it works across the whole
+supported polars range. See docs/test-compat-helpers.md.
 """
 
 from __future__ import annotations
-
-import polars as pl
-import pytest
-
-# The eager plugin.<name> functions marshal a Series into the Rust #[pyfunction]
-# via PySeries._export, which pyo3-polars 0.27 requires and polars only exposes
-# from 1.28. The expression / .bt path doesn't use it and works across the full
-# supported range, so guard only the direct-call tests. See
-# docs/test-compat-helpers.md.
-requires_pyfunction = pytest.mark.skipif(
-    not hasattr(pl.Series("x", [1.0])._s, "_export"),
-    reason="eager plugin.<name> needs polars >= 1.28 (PySeries._export)",
-)
 
 
 def assert_series_equal(

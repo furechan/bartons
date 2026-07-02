@@ -1,6 +1,6 @@
 import polars as pl
 import pytest
-from helpers import assert_series_equal, requires_pyfunction
+from helpers import assert_series_equal
 
 from bartons import plugin
 from bartons.expressions import TRANGE
@@ -71,7 +71,6 @@ def test_trange_accepts_column_names_and_exprs():
 
 
 @pytest.mark.parametrize("highs,lows,closes", CASES)
-@requires_pyfunction
 def test_trange_pyfunction(highs, lows, closes):
     h = pl.Series("high", highs, dtype=pl.Float64)
     l = pl.Series("low", lows, dtype=pl.Float64)
@@ -82,7 +81,6 @@ def test_trange_pyfunction(highs, lows, closes):
     )
 
 
-@requires_pyfunction
 def test_pyfunction_matches_expression():
     highs, lows, closes = CASES[0]
     df = _df(highs, lows, closes)
@@ -91,7 +89,6 @@ def test_pyfunction_matches_expression():
     assert_series_equal(expr_out, func_out, check_names=False)
 
 
-@requires_pyfunction
 def test_integer_input_is_cast():
     """Non-f64 input is cast to Float64 rather than panicking."""
     h = pl.Series("high", [10, 12, 11], dtype=pl.Int64)

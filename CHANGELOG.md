@@ -2,6 +2,21 @@
 
 ## 0.1.0
 
+- Raise the supported `polars` floor from `>=1.0` to `>=1.28`, in both
+  `pyproject.toml` and the nox `compat` matrix. The eager `bartons.plugin.<name>`
+  pyfunctions marshal a Series into Rust via pyo3-polars 0.27's private
+  `PySeries._export`, which polars only exposes from 1.28; on older engines they
+  raise `AttributeError: 'PySeries' object has no attribute '_export'`. The
+  expression path (`EMA()`, `.bt.ema()`) would work lower, but the package now
+  floors at 1.28 so its whole public API is usable. `COMPAT_VERSIONS` drops the
+  seven sub-1.28 entries and swaps `1.22.0` → `1.28.0` (both engine crate 0.46.0),
+  keeping one representative per distinct engine crate across `[1.28, 1.43)`.
+- Remove the `@requires_pyfunction` marker (and its decorators across the eager
+  tests). With the `compat` floor now at 1.28, `PySeries._export` is always
+  present, so the marker's `skipif` was permanently false. The
+  `assert_series_equal` shim in `tests/helpers.py` stays — its `rel_tol`/`abs_tol`
+  gate only clears at polars 1.32.3, so the 1.28–1.32.2 compat sessions still need
+  it.
 - Replace the `tests/conftest.py` source-grepping skip hook with an explicit
   `@requires_pyfunction` marker (defined in `tests/helpers.py`) on the eager
   direct-call tests. The marker skips when `PySeries._export` is absent — the
