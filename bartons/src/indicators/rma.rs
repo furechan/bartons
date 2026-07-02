@@ -15,8 +15,9 @@ pub struct RmaKwargs {
 /// Streaming RMA (Wilder's) filter: feed one `Option<f64>` at a time via
 /// [`Filter::next`].
 ///
-/// A `None` input breaks the current run (gap reset); output is `None` during
-/// the warmup period. The first `period` values are seeded with a simple
+/// A `None` input is skipped: it emits `None` but carries the running average
+/// across the gap (matching polars/pandas `ewm` and mintalib). Output is `None`
+/// during the warmup period. The first `period` values are seeded with a simple
 /// average, then Wilder smoothing takes over.
 pub struct RmaFilter {
     period: i64,
@@ -43,11 +44,8 @@ impl RmaFilter {
 
 impl Filter for RmaFilter {
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
-        // A null breaks the current run: reset and emit null.
+        // A null is skipped: emit null but carry the running state across the gap.
         let Some(val) = input else {
-            self.value = f64::NAN;
-            self.total = 0.0;
-            self.count = 0;
             return None;
         };
 

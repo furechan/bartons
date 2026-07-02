@@ -7,8 +7,8 @@ from bartons.expressions import EMA
 from refimpl import ref_ema
 
 
-# (values, period) — covers warmup nulls, a mid-series null reset + re-warmup,
-# leading nulls, a flat series, and period == 1.
+# (values, period) — covers warmup nulls, a mid-series null (skipped: the EMA
+# carries across the gap), leading nulls, a flat series, and period == 1.
 CASES = [
     ([100.0, 101.0, 102.0], 2),
     ([1.0, 2.0, 3.0, 4.0, 5.0], 2),

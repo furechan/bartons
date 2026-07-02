@@ -4,9 +4,10 @@ use itertools::izip;
 /// A streaming unary filter: fed one `Option<f64>` at a time, emitting one
 /// `Option<f64>` per input.
 ///
-/// Implementors own their warmup and null-reset semantics. By convention a
-/// `None` input breaks the current run (gap reset), and a `None` output is
-/// emitted while warming up.
+/// Implementors own their warmup and null semantics. A `None` output is emitted
+/// while warming up; on a `None` input the recursive filters (EMA, RMA) skip —
+/// emitting `None` but carrying their running state across the gap — while the
+/// windowed filters (SMA, WMA) reset the window.
 pub(crate) trait Filter {
     fn next(&mut self, input: Option<f64>) -> Option<f64>;
 }

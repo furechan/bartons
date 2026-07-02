@@ -19,7 +19,8 @@ pub struct AtrKwargs {
 ///
 /// ATR is Wilder's RMA of the True Range, so this composes a [`TrangeFilter`]
 /// feeding an [`RmaFilter`]. A bar with a missing high or low yields a `None`
-/// true range, which resets the RMA run; output is `None` during the warmup.
+/// true range, which the RMA skips — carrying ATR across the missing bar
+/// (matching mintalib); output is `None` during the warmup.
 pub struct AtrFilter {
     trange: TrangeFilter,
     rma: RmaFilter,

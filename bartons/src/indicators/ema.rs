@@ -14,7 +14,8 @@ pub struct EmaKwargs {
 
 /// Streaming EMA filter: feed one `Option<f64>` at a time via [`Filter::next`].
 ///
-/// A `None` input breaks the current run (gap reset); output is `None` during
+/// A `None` input is skipped: it emits `None` but carries the running EMA across
+/// the gap (matching polars/pandas `ewm` and mintalib). Output is `None` during
 /// the warmup period, then the running EMA value.
 pub struct EmaFilter {
     period: i64,
@@ -39,10 +40,8 @@ impl EmaFilter {
 
 impl Filter for EmaFilter {
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
-        // A null breaks the current run: reset and emit null.
+        // A null is skipped: emit null but carry the running state across the gap.
         let Some(val) = input else {
-            self.value = f64::NAN;
-            self.count = 0;
             return None;
         };
 

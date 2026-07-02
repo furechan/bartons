@@ -8,8 +8,8 @@ from refimpl import ref_rsi
 
 
 # (values, period) — covers warmup nulls (delta + average), a steady uptrend
-# (RSI 100), an oscillating series, a mid-series null reset + re-warm, a flat
-# series (RSI 0), and period == 1.
+# (RSI 100), an oscillating series, a mid-series null (skipped: averages and prev
+# carry across the gap), a flat series (RSI 0), and period == 1.
 CASES = [
     ([1.0, 2.0, 3.0, 4.0, 5.0], 2),
     ([10.0, 11.0, 10.0, 11.0, 10.0, 11.0], 2),

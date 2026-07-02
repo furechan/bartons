@@ -19,8 +19,10 @@ pub struct RsiKwargs {
 /// Splits each bar-to-bar change into gains and losses, smooths each with a
 /// Wilder average ([`RmaFilter`]), and emits
 /// `100 * avg_gain / (avg_gain + avg_loss)`. A flat run (no gains or losses)
-/// yields `0.0`, matching TA-Lib. A `None` input breaks the current run (gap
-/// reset); output is `None` until the first delta plus the averages' warmup.
+/// yields `0.0`, matching TA-Lib. A `None` input is skipped entirely — all state
+/// (the gain/loss averages and the previous price) carries across the gap, so the
+/// next bar measures the real change across it; output is `None` until the first
+/// delta plus the averages' warmup.
 pub struct RsiFilter {
     prev: Option<f64>,
     gain: RmaFilter,
@@ -39,15 +41,14 @@ impl RsiFilter {
 
 impl Filter for RsiFilter {
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
-        // A null breaks the current run: reset prev and both averages.
+        // A null is skipped entirely: emit null but carry all state across the gap
+        // — the gain/loss averages (feeding them None would be a no-op now) and
+        // `prev`, so the next valid bar measures the real change across the gap.
         let Some(price) = input else {
-            self.prev = None;
-            self.gain.next(None);
-            self.loss.next(None);
             return None;
         };
 
-        // First value of a run: store it, no delta to measure yet.
+        // First value of the series: store it, no delta to measure yet.
         let Some(prev) = self.prev.replace(price) else {
             return None;
         };

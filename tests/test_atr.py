@@ -8,7 +8,7 @@ from refimpl import ref_atr
 
 
 # (highs, lows, closes, period) — covers warmup, a flat series (ATR 0), a
-# mid-series null reset + re-warm, and period == 1.
+# mid-series missing bar (skipped: ATR carries across it), and period == 1.
 CASES = [
     (
         [10.0, 12.0, 11.0, 13.0, 14.0, 12.0],
@@ -89,7 +89,7 @@ def test_atr_pyfunction(highs, lows, closes, period):
 
 def test_pyfunction_matches_expression():
     """Both entry points share calc_atr, so they must agree element-for-element."""
-    highs, lows, closes, period = CASES[2]  # the null-reset case
+    highs, lows, closes, period = CASES[2]  # the null-skip case
     df = _df(highs, lows, closes)
     expr_out = df.select(ATR(period).alias("atr"))["atr"]
     func_out = plugin.atr(df["high"], df["low"], df["close"], period=period)

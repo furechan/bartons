@@ -2,6 +2,19 @@
 
 ## 0.1.0
 
+- **Behavior change — nulls now skip instead of reset in the recursive
+  indicators.** EMA, RMA (and therefore RSI and ATR, which smooth with the shared
+  `RmaFilter`) previously treated a `None` input as a hard break: clear state,
+  emit null, re-warm afterward. They now *skip* it — emit null for that row but
+  carry the running average across the gap — matching polars/pandas `ewm` and
+  mintalib. The windowed indicators (SMA, WMA) are unchanged; their window-reset
+  already matches mintalib. RSI additionally keeps `prev` across the gap so the
+  next bar measures the real change across it (BRIDGE); this **diverges from
+  mintalib**, which re-seeds `prev` — chosen for consistency with the MA skip
+  semantics (a null is ignored uniformly across all indicators) rather than
+  copying mintalib's internal inconsistency. Filed upstream against mintalib to
+  align its RSI. Verified kernel == oracle across all cases (166 tests pass), and
+  EMA/RMA/ATR values == mintalib.
 - Centralize the per-indicator Python reference oracles into one importable
   `tests/refimpl.py` (`ref_ema`/`ref_sma`/`ref_rma`/`ref_wma`/`ref_rsi`/
   `ref_trange`/`ref_atr`); the test files now `from refimpl import ref_<name>`

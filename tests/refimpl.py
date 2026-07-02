@@ -7,8 +7,10 @@ in one importable module (not inline in each test file), so nothing is duplicate
 and the composite indicators reuse the primitives: `ref_atr` is `ref_rma` of
 `ref_trange`, and `ref_rsi` smooths its gains/losses with `ref_rma`.
 
-By convention a `None` input breaks the current run (gap reset) and the output is
-`None` during warmup.
+The output is `None` during warmup. A `None` input is skipped by the recursive
+oracles (EMA, RMA — and thus RSI, ATR): they emit `None` but carry their running
+state across the gap, matching mintalib/polars. The windowed oracles (SMA, WMA)
+reset their window on a `None`.
 """
 
 from __future__ import annotations
@@ -16,15 +18,14 @@ from __future__ import annotations
 
 def ref_ema(xs, period):
     """EMA: seed on the first valid value, then alpha = 2/(period+1) smoothing;
-    null during warmup (count < period), reset the run on a null."""
+    null during warmup (count < period). A null is skipped: emit null but carry
+    the running EMA across the gap."""
     alpha = 2.0 / (period + 1.0)
     ema = None
     count = 0
     out = []
     for x in xs:
         if x is None:
-            ema = None
-            count = 0
             out.append(None)
             continue
         if count == 0:
@@ -55,7 +56,8 @@ def ref_sma(xs, period):
 
 def ref_rma(xs, period):
     """Wilder's RMA: simple-average seed for the first `period` values, then
-    smoothing with alpha = 1/period; null during warmup, reset on a null."""
+    smoothing with alpha = 1/period; null during warmup. A null is skipped: emit
+    null but carry the running average across the gap."""
     alpha = 1.0 / period
     rma = None
     total = 0.0
@@ -63,9 +65,6 @@ def ref_rma(xs, period):
     out = []
     for x in xs:
         if x is None:
-            rma = None
-            total = 0.0
-            count = 0
             out.append(None)
             continue
         count += 1
@@ -121,19 +120,18 @@ def ref_trange(highs, lows, closes):
 def ref_rsi(xs, period):
     """Wilder's RSI: bar-to-bar gains and losses each smoothed with `ref_rma`
     (alpha = 1/period), RSI = 100 * avg_gain / (avg_gain + avg_loss); a flat run
-    yields 0. Output is null until the first delta plus the averages' warmup; a
-    null resets the run.
+    yields 0. Output is null until the first delta plus the averages' warmup.
 
-    Gains/losses carry a `None` at every null bar and at the first bar of each run
-    (no delta yet); feeding those to `ref_rma` resets/holds its warmup exactly as
-    the kernel does, so the two Wilder averages need no bespoke state here.
+    A null is skipped entirely: gains/losses carry a `None` at every null bar
+    (which `ref_rma` skips) while `prev` is kept, so the next valid bar measures
+    the real change across the gap. The `None` at the first bar of the series (no
+    delta yet) holds the averages in warmup.
     """
     gains = []
     losses = []
     prev = None
     for x in xs:
         if x is None:
-            prev = None
             gains.append(None)
             losses.append(None)
             continue
