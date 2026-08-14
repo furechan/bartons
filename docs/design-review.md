@@ -8,8 +8,10 @@ indicators as they stood at that date.
 library. Three rough edges are worth fixing, and two more are decisions to
 record rather than defects to repair.
 
-**Status:** items 1 and 2 have since been implemented — see the resolution note
-under each. Item 3 is still open, as are the recorded decisions below.
+**Status:** all three items have since been acted on — see the resolution note
+under each. Items 1 and 2 were implemented as proposed; item 3's pyfunction half
+was implemented differently (the helper it asks for already exists upstream) and
+its kernel half was deliberately declined. The recorded decisions below stand.
 
 ## Why the design holds up
 
@@ -73,7 +75,11 @@ decide deliberately whether length-1 broadcast should be supported.
 
 **Resolved.** `run_ternary` opens with `check_len!(a, b, c)?` — a variadic macro
 over `utils::check_lengths` — and sizes its builder from the checked length. A
-mismatch raises `ShapeMismatch` naming the disagreeing series and both lengths.
+mismatch raises `InvalidOperation` naming the disagreeing series and both
+lengths. (The review says `ShapeMismatch`; that was the original choice, later
+changed — `PyPolarsErr` maps `InvalidOperation` to the builtin `ValueError`,
+while `ShapeMismatch` maps to a `ShapeError` class in a module Python cannot
+import. See item 3.)
 
 On the open question: **length-1 inputs are a mismatch, not a broadcast.** Plugin
 inputs arrive un-broadcast, so `pl.lit(100.0)` as an input is now a loud error
@@ -96,21 +102,66 @@ same four-line match into `PyRuntimeError`. Two small moves:
 Each pyfunction body then drops to three lines. Incidentally, `PyValueError`
 fits an invalid `period` better than `PyRuntimeError`.
 
-**Open — triaged into [BACKLOG.md](../BACKLOG.md)** as three separate entries,
-since the pieces carry different risk: the `to_pyseries` helper gives up nothing,
-the kernel error needs a design call, and the `PyValueError` switch changes
-behavior.
+**Resolved for the pyfunction half**, though not in the shape proposed here. The
+kernel half is **declined**, see below.
 
-Two corrections to the above. The count is **six**, not seven, for the kernel
-half — TRANGE has no period to validate, so it has neither the
-`Result<Self, String>` nor the `map_err`. And the first proposal has a cost this
-review missed: `polars_bail!` inside `new()` puts a polars type in every kernel
-constructor, discarding the polars-independence that the `String` error was
-introduced to buy (see the CHANGELOG entry "Move period validation out of the
-kernels"). A local `KernelError` with `impl From<KernelError> for PolarsError`
-reaches the same call sites — `?` applies the conversion, so the `map_err`
-disappears entirely — while keeping the kernels polars-free. That impl compiles;
-the orphan rule permits it because the local type is the trait's parameter.
+The `to_pyseries` helper this review asks for **was not written**:
+`pyo3_polars::error::PyPolarsErr` already exists, maps 14 `PolarsError` variants
+onto Python exceptions, and implements `From<_> for PyErr` — so `?` alone
+replaces the four-line match, and the variant classification survives to Python
+instead of being flattened by `e.to_string()`. The review missed that the
+dependency already ships this.
+
+That also reframed the `PyValueError` remark. It was never a matter of picking a
+nicer exception type at the end: `PyPolarsErr` maps `InvalidOperation` to the
+builtin `ValueError` automatically. What was needed was for the error to *carry*
+its classification, so each `calc_*` now raises `InvalidOperation` rather than
+`ComputeError` for a bad period. The chain went from
+`String → ComputeError → RuntimeError`, discarding at each hop information that
+was exact at the first, to `String → InvalidOperation → ValueError`, which
+preserves it.
+
+`check_lengths` was moved to `InvalidOperation` for the same reason. The literal
+`ShapeMismatch` maps to a `ShapeError` whose module (`exceptions`) does not exist
+as far as Python is concerned — not importable, not on `bartons.plugin`, not
+`polars.exceptions.ShapeError` — so it is catchable only as bare `Exception`.
+Only the variants landing on builtins (`ValueError`, `IndexError`, `IOError`,
+`AssertionError`) are usable by callers.
+
+One limit is structural: only the **eager** path benefits. Polars' plugin FFI
+catches whatever a `#[polars_expr]` returns and re-wraps it, so `EMA(0)` inside a
+`select` still surfaces as `polars.exceptions.ComputeError` with the message
+intact, regardless of the variant. That boundary is not ours.
+
+First, a correction: the count is **six**, not seven, for the kernel half. TRANGE
+has no period to validate, so it has neither the `Result<Self, String>` nor the
+`map_err`.
+
+### The kernel error stays as it is — decided, not deferred
+
+This review's first proposal — `polars_bail!` inside `new()` — is **rejected
+outright**. It puts a polars type in every kernel constructor, discarding the
+polars-independence the `String` error was introduced to buy (see the CHANGELOG
+entry "Move period validation out of the kernels"). That independence is real
+and still holds: no polars type appears in any filter struct or any of its
+impls, and the `Filter` trait is `Option<f64>` in, `Option<f64>` out. The filters
+are streaming abstractions that happen to be driven by polars, not polars
+abstractions.
+
+A middle option was considered and also declined: a local `KernelError` with
+`impl From<KernelError> for PolarsError` in `utils.rs` (which compiles — the
+orphan rule permits it, since the local type is the trait's parameter). That
+would keep the kernels polars-free *and* let `?` collapse each
+`.map_err(|e| PolarsError::ComputeError(e.into()))?` to a bare `?`.
+
+It was declined because the explicit `map_err` is doing work: it **makes the
+boundary visible**. Every crossing from kernel-land into polars-land is spelled
+out where it happens. A `From` impl declares the conversion once and makes the
+six crossings silent. In a design whose central claim is that the kernels are
+independent, a visible seam is worth more than six lines of saved noise.
+
+So the repetition here is deliberate. Treat it as belonging with the recorded
+decisions below rather than as a defect to repair.
 
 ## Decisions to record, not defects
 

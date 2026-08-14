@@ -3,9 +3,9 @@ use itertools::izip;
 
 /// Check that every input series has the same length, returning that length.
 ///
-/// `check_len!(a, b, c)?` yields the shared length, or a `ShapeMismatch` naming
-/// the first series that disagrees. Variadic sugar over [`check_lengths`], which
-/// holds the actual logic.
+/// `check_len!(a, b, c)?` yields the shared length, or an `InvalidOperation`
+/// naming the first series that disagrees. Variadic sugar over [`check_lengths`],
+/// which holds the actual logic.
 macro_rules! check_len {
     ($($series:expr),+ $(,)?) => {
         $crate::utils::check_lengths(&[$($series),+])
@@ -17,6 +17,12 @@ macro_rules! check_len {
 /// Plugin inputs arrive un-broadcast, so a length-1 series is a genuine
 /// mismatch rather than a scalar to stretch — `pl.lit(100.0)` as an input is an
 /// error here, not a broadcast.
+///
+/// Raises `InvalidOperation`, not the more literal `ShapeMismatch`, because
+/// `PyPolarsErr` maps the former to Python's builtin `ValueError` and the latter
+/// to a `ShapeError` class that lives in a module Python cannot import — so it
+/// would be catchable only as bare `Exception`. Nothing but the Python boundary
+/// reads these variants, and the expression path flattens them anyway.
 pub(crate) fn check_lengths(inputs: &[&Series]) -> PolarsResult<usize> {
     let Some((first, rest)) = inputs.split_first() else {
         return Ok(0);
@@ -26,7 +32,7 @@ pub(crate) fn check_lengths(inputs: &[&Series]) -> PolarsResult<usize> {
     for series in rest {
         if series.len() != len {
             polars_bail!(
-                ShapeMismatch:
+                InvalidOperation:
                 "input lengths differ: '{}' has {} rows but '{}' has {}",
                 first.name(), len, series.name(), series.len()
             );

@@ -1,9 +1,9 @@
 use pyo3::prelude::*;
 use polars::prelude::*;
 use serde::Deserialize;
+use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
-use pyo3::exceptions::PyRuntimeError;
 
 use crate::utils::{run_unary, Filter};
 
@@ -66,7 +66,7 @@ impl Filter for SmaFilter {
 }
 
 fn calc_sma(series: &Series, period: i64) -> PolarsResult<Series> {
-    let filter = SmaFilter::new(period).map_err(|e| PolarsError::ComputeError(e.into()))?;
+    let filter = SmaFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
     run_unary(series, "sma", filter)
 }
 
@@ -88,11 +88,6 @@ fn sma_expr(inputs: &[Series], kwargs: SmaKwargs) -> PolarsResult<Series> {
 pub fn sma(series: PySeries, period: i64) -> PyResult<PySeries> {
     let series: Series = series.into();
 
-    let result = match calc_sma(&series, period) {
-        Ok(s) => s,
-        Err(e) => return Err(PyRuntimeError::new_err(e.to_string())),
-    };
-
-    let result: PySeries = PySeries(result);
-    Ok(result)
+    let result = calc_sma(&series, period).map_err(PyPolarsErr::from)?;
+    Ok(PySeries(result))
 }

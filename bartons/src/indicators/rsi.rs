@@ -1,9 +1,9 @@
 use pyo3::prelude::*;
 use polars::prelude::*;
 use serde::Deserialize;
+use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
-use pyo3::exceptions::PyRuntimeError;
 
 use super::rma::RmaFilter;
 use crate::utils::{run_unary, Filter};
@@ -71,7 +71,7 @@ impl Filter for RsiFilter {
 }
 
 fn calc_rsi(series: &Series, period: i64) -> PolarsResult<Series> {
-    let filter = RsiFilter::new(period).map_err(|e| PolarsError::ComputeError(e.into()))?;
+    let filter = RsiFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
     run_unary(series, "rsi", filter)
 }
 
@@ -93,11 +93,6 @@ fn rsi_expr(inputs: &[Series], kwargs: RsiKwargs) -> PolarsResult<Series> {
 pub fn rsi(series: PySeries, period: i64) -> PyResult<PySeries> {
     let series: Series = series.into();
 
-    let result = match calc_rsi(&series, period) {
-        Ok(s) => s,
-        Err(e) => return Err(PyRuntimeError::new_err(e.to_string())),
-    };
-
-    let result: PySeries = PySeries(result);
-    Ok(result)
+    let result = calc_rsi(&series, period).map_err(PyPolarsErr::from)?;
+    Ok(PySeries(result))
 }

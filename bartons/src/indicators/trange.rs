@@ -1,8 +1,8 @@
 use pyo3::prelude::*;
 use polars::prelude::*;
+use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
-use pyo3::exceptions::PyRuntimeError;
 
 use super::Hlc;
 use crate::utils::{run_ternary, Filter};
@@ -70,11 +70,6 @@ pub fn trange(high: PySeries, low: PySeries, close: PySeries) -> PyResult<PySeri
     let low: Series = low.into();
     let close: Series = close.into();
 
-    let result = match calc_trange(&high, &low, &close) {
-        Ok(s) => s,
-        Err(e) => return Err(PyRuntimeError::new_err(e.to_string())),
-    };
-
-    let result: PySeries = PySeries(result);
-    Ok(result)
+    let result = calc_trange(&high, &low, &close).map_err(PyPolarsErr::from)?;
+    Ok(PySeries(result))
 }

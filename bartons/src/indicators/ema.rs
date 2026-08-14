@@ -1,9 +1,9 @@
 use pyo3::prelude::*;
 use polars::prelude::*;
 use serde::Deserialize;
+use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
-use pyo3::exceptions::PyRuntimeError;
 
 use crate::utils::{run_unary, Filter};
 
@@ -60,7 +60,7 @@ impl Filter for EmaFilter {
 }
 
 fn calc_ema(series: &Series, period: i64) -> PolarsResult<Series> {
-    let filter = EmaFilter::new(period).map_err(|e| PolarsError::ComputeError(e.into()))?;
+    let filter = EmaFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
     run_unary(series, "ema", filter)
 }
 
@@ -82,11 +82,6 @@ fn ema_expr(inputs: &[Series], kwargs: EmaKwargs) -> PolarsResult<Series> {
 pub fn ema(series: PySeries, period: i64) -> PyResult<PySeries> {
     let series: Series = series.into();
 
-    let result = match calc_ema(&series, period) {
-        Ok(s) => s,
-        Err(e) => return Err(PyRuntimeError::new_err(e.to_string())),
-    };
-
-    let result: PySeries = PySeries(result);
-    Ok(result)
+    let result = calc_ema(&series, period).map_err(PyPolarsErr::from)?;
+    Ok(PySeries(result))
 }

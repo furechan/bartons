@@ -83,5 +83,5 @@ def test_invalid_period_expression():
 
 def test_invalid_period_pyfunction():
     s = pl.Series("x", [1.0, 2.0, 3.0], dtype=pl.Float64)
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="period must be > 0"):
         plugin.wma(s, period=0)

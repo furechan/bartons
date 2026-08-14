@@ -1,9 +1,9 @@
 use pyo3::prelude::*;
 use polars::prelude::*;
 use serde::Deserialize;
+use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
-use pyo3::exceptions::PyRuntimeError;
 
 use crate::utils::{run_unary, Filter};
 
@@ -77,7 +77,7 @@ impl Filter for WmaFilter {
 }
 
 fn calc_wma(series: &Series, period: i64) -> PolarsResult<Series> {
-    let filter = WmaFilter::new(period).map_err(|e| PolarsError::ComputeError(e.into()))?;
+    let filter = WmaFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
     run_unary(series, "wma", filter)
 }
 
@@ -99,11 +99,6 @@ fn wma_expr(inputs: &[Series], kwargs: WmaKwargs) -> PolarsResult<Series> {
 pub fn wma(series: PySeries, period: i64) -> PyResult<PySeries> {
     let series: Series = series.into();
 
-    let result = match calc_wma(&series, period) {
-        Ok(s) => s,
-        Err(e) => return Err(PyRuntimeError::new_err(e.to_string())),
-    };
-
-    let result: PySeries = PySeries(result);
-    Ok(result)
+    let result = calc_wma(&series, period).map_err(PyPolarsErr::from)?;
+    Ok(PySeries(result))
 }

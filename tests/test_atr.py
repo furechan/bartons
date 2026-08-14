@@ -114,7 +114,7 @@ def test_mismatched_lengths_raise():
     h = pl.Series("high", [10.0, 12.0, 11.0], dtype=pl.Float64)
     l = pl.Series("low", [8.0, 9.0], dtype=pl.Float64)
     c = pl.Series("close", [9.0, 11.0, 10.0], dtype=pl.Float64)
-    with pytest.raises(RuntimeError, match="input lengths differ"):
+    with pytest.raises(ValueError, match="input lengths differ"):
         plugin.atr(h, l, c, period=2)
 
 
@@ -128,5 +128,5 @@ def test_invalid_period_pyfunction():
     h = pl.Series("high", [10.0, 12.0, 11.0], dtype=pl.Float64)
     l = pl.Series("low", [8.0, 9.0, 9.0], dtype=pl.Float64)
     c = pl.Series("close", [9.0, 11.0, 10.0], dtype=pl.Float64)
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="period must be > 0"):
         plugin.atr(h, l, c, period=0)

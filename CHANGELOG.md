@@ -2,6 +2,24 @@
 
 ## 0.1.0
 
+- **Behavior change — the eager `bartons.plugin.<name>` functions now raise
+  `ValueError`, not `RuntimeError`.** An invalid `period`, or mismatched input
+  lengths on TRANGE/ATR, previously surfaced as a bare `RuntimeError` because
+  each pyfunction ended in a hand-rolled
+  `match … PyRuntimeError::new_err(e.to_string())` that discarded the
+  `PolarsError` variant. Those seven blocks are replaced by
+  `.map_err(PyPolarsErr::from)?` — `pyo3-polars` already ships the mapping from
+  14 `PolarsError` variants onto Python exceptions, so the classification now
+  survives to Python. To make it land on a *useful* class, the errors carry
+  `InvalidOperation` (→ builtin `ValueError`) rather than `ComputeError` or
+  `ShapeMismatch`, whose pyo3-polars classes live in a module Python cannot
+  import and are catchable only as bare `Exception`. The full chain went from
+  `String → ComputeError → RuntimeError` to `String → InvalidOperation →
+  ValueError`. The expression path is unchanged: polars' plugin FFI re-wraps
+  whatever a `#[polars_expr]` returns, so `EMA(0)` in a `select` still raises
+  `polars.exceptions.ComputeError`. The seven `test_invalid_period_pyfunction`
+  tests asserted only `pytest.raises(Exception)` and so would not have noticed
+  either behavior; they now assert `ValueError` and match the message.
 - **Removed — the `.bt` expression namespace.** `pl.col("close").bt.ema(20)` no
   longer exists; use `EMA(20, src=pl.col("close"))` or
   `pl.col("close").pipe(EMA, 20)`, which are equivalent and, unlike `.bt`,
@@ -33,7 +51,7 @@
   first input while `izip!` stopped at the shortest, so unequal inputs produced a
   short result with no error. It now validates up front via a new variadic
   `check_len!(a, b, c)?` macro (a thin wrapper over `utils::check_lengths`),
-  raising `ShapeMismatch` naming the series that disagrees and the two lengths.
+  raising an error naming the series that disagrees and the two lengths.
   A length-1 input is treated as a mismatch, not a scalar to broadcast — plugin
   inputs arrive un-broadcast, so `pl.lit(100.0)` as an input is now a loud error
   instead of a silent one-row result.
