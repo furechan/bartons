@@ -23,9 +23,9 @@ load time. There is no compile-time check on it.
 
 ## Steps
 
-### 1. Rust kernel — `bartons/src/indicators/<name>.rs`
+### 1. Rust kernel — `rust/src/indicators/<name>.rs`
 
-Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It contains all three symbols.
+Copy [rust/src/indicators/ema.rs](../rust/src/indicators/ema.rs). It contains all three symbols.
 
 - **Kwargs struct** — `#[derive(Deserialize)] pub struct <NAME>Kwargs { period: i64, … }`.
 - **Kernel** `fn calc_<name>(series: &Series, …) -> PolarsResult<Series>`:
@@ -61,9 +61,9 @@ Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It conta
 
 ### 2. Register
 
-- In `bartons/src/indicators/mod.rs`, add `pub mod <name>;` alongside the other
+- In `rust/src/indicators/mod.rs`, add `pub mod <name>;` alongside the other
   kernel modules.
-- In `bartons/src/lib.rs`, add
+- In `rust/src/lib.rs`, add
   `m.add_function(wrap_pyfunction!(indicators::<name>::<name>, m)?)?;` in the
   `#[pymodule]`.
 - **Do not** register `<name>_expr` — the polars plugin machinery finds it by

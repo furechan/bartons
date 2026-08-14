@@ -65,7 +65,7 @@ samples = [
 python-source = "python"
 python-packages = ["bartons"]
 module-name = "bartons.plugin"
-manifest-path = "bartons/Cargo.toml"
+manifest-path = "rust/Cargo.toml"
 # Bundled sample-price CSVs are data, not Python — list them so maturin ships
 # them in both the sdist and the wheel.
 include = [

@@ -1,7 +1,7 @@
 # Design review: the `Filter` + driver-loop core
 
 Review of the `Filter` trait and the `run_unary` / `run_ternary` drivers in
-[bartons/src/utils.rs](../bartons/src/utils.rs), 2026-08-14. Covers all seven
+[rust/src/utils.rs](../rust/src/utils.rs), 2026-08-14. Covers all seven
 indicators as they stood at that date.
 
 **Verdict: keep the loop-over-`Filter` design.** It is the right core for this

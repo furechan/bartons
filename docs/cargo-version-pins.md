@@ -1,8 +1,8 @@
 # Cargo.toml Version Pins
 
-How to choose and set the Rust crate versions in [`bartons/Cargo.toml`](../bartons/Cargo.toml) for the plugin. This is the **compile-time** side: these pins fully determine the `.so` that gets built, independent of the Python `polars` installed in the venv (see [`polars-ffi-version-guard.md`](polars-ffi-version-guard.md) for the separate runtime concern).
+How to choose and set the Rust crate versions in [`rust/Cargo.toml`](../rust/Cargo.toml) for the plugin. This is the **compile-time** side: these pins fully determine the `.so` that gets built, independent of the Python `polars` installed in the venv (see [`polars-ffi-version-guard.md`](polars-ffi-version-guard.md) for the separate runtime concern).
 
-Facts below are read from `bartons/Cargo.toml`, `bartons/Cargo.lock`, and the crates.io dependencies API.
+Facts below are read from `rust/Cargo.toml`, `rust/Cargo.lock`, and the crates.io dependencies API.
 
 ## What is pinned and why
 
@@ -41,7 +41,7 @@ For `pyo3-polars 0.27.0` this returns:
 
 ## Current pins (verified snapshot)
 
-`bartons/Cargo.toml`:
+`rust/Cargo.toml`:
 
 ```toml
 pyo3 = { version = "0.28", features = ["extension-module", "abi3-py38"] }
@@ -50,7 +50,7 @@ polars = { version = "0.54.4", features = ["dtype-struct"] }
 polars-arrow = { version = "0.54.4", default-features = false }
 ```
 
-Resolved in `bartons/Cargo.lock`:
+Resolved in `rust/Cargo.lock`:
 
 | crate | resolved |
 |---|---|
@@ -80,7 +80,7 @@ polars = { version = "0.54.4", features = ["dtype-struct", "bigidx"] }
 1. Choose the `pyo3-polars` version (e.g. latest, or whichever you target).
 2. `GET https://crates.io/api/v1/crates/pyo3-polars/<ver>/dependencies` → note the `polars`, `polars-arrow`, and `pyo3` reqs.
 3. Set `polars` and `polars-arrow` to the **exact** version the `polars` caret targets; set `pyo3` within the `pyo3` caret.
-4. `cargo build` (or `just build`). Confirm the resolved versions in `bartons/Cargo.lock` match step 2 — that is the source of truth for what got compiled in.
+4. `cargo build` (or `just build`). Confirm the resolved versions in `rust/Cargo.lock` match step 2 — that is the source of truth for what got compiled in.
 
 The [`check-bindings`](../.claude/commands/check-bindings.md) skill audits these pins for mutual consistency; [`upgrade-bindings`](../.claude/commands/upgrade-bindings.md) derives a newer set from upstream and rebuilds after approval.
 

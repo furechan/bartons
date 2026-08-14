@@ -6,13 +6,17 @@ Polars plugin providing financial/technical analysis expressions, implemented in
 
 One crate, one Python package:
 
-- `bartons/` — PyO3 `cdylib` crate, compiles to `python/bartons/plugin.abi3.so`
+- `rust/` — PyO3 `cdylib` crate, compiles to `python/bartons/plugin.abi3.so`
 - `python/bartons/` — Python package wrapping the compiled plugin
 
-Rust source layout: each indicator's kernel lives in `bartons/src/indicators/<name>.rs`
-and is declared in `bartons/src/indicators/mod.rs`; the shared `Filter` trait and
-`run_unary`/`run_ternary` drivers are in `bartons/src/utils.rs` (crate root); and
-`bartons/src/lib.rs` is the `#[pymodule]` glue that registers each eager pyfunction
+The two source roots are named for their language, not the project, so the split
+is visible at the repo root. The crate's Cargo package is still `bartons`; its
+`[lib] name = "plugin"` is what makes the compiled module `bartons.plugin`.
+
+Rust source layout: each indicator's kernel lives in `rust/src/indicators/<name>.rs`
+and is declared in `rust/src/indicators/mod.rs`; the shared `Filter` trait and
+`run_unary`/`run_ternary` drivers are in `rust/src/utils.rs` (crate root); and
+`rust/src/lib.rs` is the `#[pymodule]` glue that registers each eager pyfunction
 flat as `bartons.plugin.<name>`.
 
 The flat layout is deliberate — a `plugin.indicators` submodule was built and
@@ -54,17 +58,17 @@ namespace was retired partly because it could not be typed at all; see
 
 See [docs/adding-an-indicator.md](docs/adding-an-indicator.md) for the full
 checklist (entry points, naming, conventions, tests). In short: add a Rust
-kernel + `#[polars_expr]` + `#[pyfunction]` in `bartons/src/indicators/<name>.rs`,
-declare it with `pub mod <name>;` in `bartons/src/indicators/mod.rs`, register the
-pyfunction in `bartons/src/lib.rs`, add the `<NAME>()` factory in
+kernel + `#[polars_expr]` + `#[pyfunction]` in `rust/src/indicators/<name>.rs`,
+declare it with `pub mod <name>;` in `rust/src/indicators/mod.rs`, register the
+pyfunction in `rust/src/lib.rs`, add the `<NAME>()` factory in
 `python/bartons/indicators/<name>.py` (re-exported from
 `python/bartons/indicators/__init__.py`), then mirror `tests/test_ema.py`.
 EMA and SMA are the reference implementations.
 
 ## Key files
 
-- [bartons/src/indicators/ema.rs](bartons/src/indicators/ema.rs) — reference implementation: EmaKwargs, `calc_ema`, expression + pyfunction wrappers
+- [rust/src/indicators/ema.rs](rust/src/indicators/ema.rs) — reference implementation: EmaKwargs, `calc_ema`, expression + pyfunction wrappers
 - [python/bartons/indicators/ema.py](python/bartons/indicators/ema.py) — Python-side plugin registration; factories live in the `indicators` sub-package (`from bartons.indicators import EMA`)
 - [python/bartons/prelude.py](python/bartons/prelude.py) — shared factory machinery: `PLUGIN_PATH` and the `wrap_src_indicator` decorator (mirrors `bearta.prelude`)
 - [pyproject.toml](pyproject.toml) — Maturin config (module name, python-source, manifest-path)
-- [bartons/Cargo.toml](bartons/Cargo.toml) — Rust dependencies (pyo3, pyo3-polars, polars)
+- [rust/Cargo.toml](rust/Cargo.toml) — Rust dependencies (pyo3, pyo3-polars, polars)

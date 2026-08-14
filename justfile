@@ -19,6 +19,6 @@ bench indicator="ema": build
     python scripts/benchmark-{{indicator}}.py
 
 clean:
-    find bartons -type d -name target -print -exec rm -rf {} +
+    find rust -type d -name target -print -exec rm -rf {} +
     find python -type f -name "*.so" -print -delete
     touch pyproject.toml
