@@ -2,6 +2,20 @@
 
 ## 0.1.0
 
+- Generalize the `Filter` trait over its input shape with an associated
+  `type Input`, so the multi-input indicators join the same contract as the
+  single-series ones. `TrangeFilter` and `AtrFilter` had an inherent `next` while
+  `run_ternary` took a closure, leaving the two drivers with nothing in common
+  and every ternary call site repeating a `|h, l, c| filter.next(h, l, c)`
+  adapter. They now `impl Filter` with `type Input = Hlc` — a new
+  `(Option<f64>, Option<f64>, Option<f64>)` alias, spelled `utils::Triple` on the
+  driver side (which is arity-generic and assumes nothing about what the three
+  series mean) and re-aliased as `indicators::Hlc` on the kernel side (which
+  does). `run_ternary` is `run_ternary<F: Filter<Input = Triple>>`, and both call
+  sites collapse to
+  `run_ternary(h, l, c, name, filter)`. `AtrFilter::next` now passes the bar
+  straight through to its inner `TrangeFilter` instead of unpacking and
+  respreading it. Internal only — no behavior or API change.
 - **Behavior change — nulls now skip instead of reset in the recursive
   indicators.** EMA, RMA (and therefore RSI and ATR, which smooth with the shared
   `RmaFilter`) previously treated a `None` input as a hard break: clear state,

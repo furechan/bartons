@@ -43,6 +43,8 @@ impl RmaFilter {
 }
 
 impl Filter for RmaFilter {
+    type Input = Option<f64>;
+
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         // A null is skipped: emit null but carry the running state across the gap.
         let Some(val) = input else {

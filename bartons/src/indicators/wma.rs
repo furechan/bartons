@@ -45,6 +45,8 @@ impl WmaFilter {
 }
 
 impl Filter for WmaFilter {
+    type Input = Option<f64>;
+
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         // A null breaks the current run: reset and emit null.
         let Some(val) = input else {

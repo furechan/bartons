@@ -4,10 +4,11 @@ use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 use pyo3::exceptions::PyRuntimeError;
 
-use crate::utils::run_ternary;
+use super::Hlc;
+use crate::utils::{run_ternary, Filter};
 
 /// Streaming True Range filter: feed one bar's `(high, low, close)` at a time
-/// via [`Self::next`].
+/// via [`Filter::next`].
 ///
 ///   TR = max(high - low, |high - prev_close|, |low - prev_close|)
 ///
@@ -22,13 +23,12 @@ impl TrangeFilter {
     pub fn new() -> Self {
         Self::default()
     }
+}
 
-    pub fn next(
-        &mut self,
-        high: Option<f64>,
-        low: Option<f64>,
-        close: Option<f64>,
-    ) -> Option<f64> {
+impl Filter for TrangeFilter {
+    type Input = Hlc;
+
+    fn next(&mut self, (high, low, close): Hlc) -> Option<f64> {
         let tr = match (high, low) {
             (Some(hi), Some(lo)) => {
                 let mut tr = hi - lo;
@@ -46,8 +46,7 @@ impl TrangeFilter {
 }
 
 fn calc_trange(high: &Series, low: &Series, close: &Series) -> PolarsResult<Series> {
-    let mut filter = TrangeFilter::new();
-    run_ternary(high, low, close, "trange", |h, l, c| filter.next(h, l, c))
+    run_ternary(high, low, close, "trange", TrangeFilter::new())
 }
 
 #[polars_expr(output_type = Float64)]

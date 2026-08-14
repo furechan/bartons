@@ -40,6 +40,8 @@ impl RsiFilter {
 }
 
 impl Filter for RsiFilter {
+    type Input = Option<f64>;
+
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         // A null is skipped entirely: emit null but carry all state across the gap
         // — the gain/loss averages (feeding them None would be a no-op now) and

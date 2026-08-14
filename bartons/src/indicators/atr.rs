@@ -7,6 +7,7 @@ use pyo3::exceptions::PyRuntimeError;
 
 use super::rma::RmaFilter;
 use super::trange::TrangeFilter;
+use super::Hlc;
 use crate::utils::{run_ternary, Filter};
 
 #[derive(Deserialize)]
@@ -15,7 +16,7 @@ pub struct AtrKwargs {
 }
 
 /// Streaming ATR filter: feed one bar's `(high, low, close)` at a time via
-/// [`Self::next`].
+/// [`Filter::next`].
 ///
 /// ATR is Wilder's RMA of the True Range, so this composes a [`TrangeFilter`]
 /// feeding an [`RmaFilter`]. A bar with a missing high or low yields a `None`
@@ -33,21 +34,20 @@ impl AtrFilter {
             rma: RmaFilter::new(period)?,
         })
     }
+}
 
-    pub fn next(
-        &mut self,
-        high: Option<f64>,
-        low: Option<f64>,
-        close: Option<f64>,
-    ) -> Option<f64> {
-        let tr = self.trange.next(high, low, close);
+impl Filter for AtrFilter {
+    type Input = Hlc;
+
+    fn next(&mut self, hlc: Hlc) -> Option<f64> {
+        let tr = self.trange.next(hlc);
         self.rma.next(tr)
     }
 }
 
 fn calc_atr(high: &Series, low: &Series, close: &Series, period: i64) -> PolarsResult<Series> {
-    let mut filter = AtrFilter::new(period).map_err(|e| PolarsError::ComputeError(e.into()))?;
-    run_ternary(high, low, close, "atr", |h, l, c| filter.next(h, l, c))
+    let filter = AtrFilter::new(period).map_err(|e| PolarsError::ComputeError(e.into()))?;
+    run_ternary(high, low, close, "atr", filter)
 }
 
 #[polars_expr(output_type = Float64)]
