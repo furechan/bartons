@@ -2,6 +2,12 @@
 
 ## 0.1.0
 
+- Make the wrapped single-source factories statically checkable. `wrap_src_indicator`
+  is now typed `Callable[P, R] -> SrcIndicator[P, R]`, where `SrcIndicator` is a
+  `Protocol` declaring both call forms as `__call__` overloads (canonical first,
+  expression-first second). Previously the decorator carried no annotations, so
+  a checker saw `EMA` and friends as opaque and checked nothing about them —
+  `x: int = EMA(20)` passed. Ported from `bearta.prelude`.
 - Move the shared factory machinery out of `bartons/indicators/__init__.py` into
   a new `bartons.prelude` module, and rename `wrap_src_expression` to
   `wrap_src_indicator` (matching `bearta.prelude`, which holds the same pieces

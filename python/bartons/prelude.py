@@ -10,15 +10,42 @@ Mirrors ``bearta.prelude``, which plays the same role there.
 import functools
 import inspect
 from pathlib import Path
+from typing import Callable, ParamSpec, Protocol, TypeVar, cast, overload
 
 import polars as pl
 
-__all__ = ["PLUGIN_PATH", "wrap_src_indicator"]
+__all__ = ["PLUGIN_PATH", "SrcIndicator", "wrap_src_indicator"]
 
 PLUGIN_PATH = Path(__file__).parent
 
+P = ParamSpec("P")
+R = TypeVar("R")
+R_co = TypeVar("R_co", covariant=True)
 
-def wrap_src_indicator(factory):
+
+class SrcIndicator(Protocol[P, R_co]):
+    """Call signature of a factory wrapped by :func:`wrap_src_indicator`.
+
+    Wrapping is a runtime trick — the decorator returns an untyped ``*args,
+    **kwargs`` wrapper — so without this the factories would be opaque to a type
+    checker. Declaring the two forms as overloads keeps them checkable::
+
+        EMA(20, src=pl.col("close"))          # canonical
+        EMA(pl.col("close"), 20)              # expression-first
+        pl.col("close").pipe(EMA, 20)         # and therefore pipe
+
+    Ported from ``bearta.prelude``.
+    """
+
+    # Canonical form first — editors list overloads in declaration order, and the
+    # params-first signature is the one to show and to prefer when both match.
+    @overload
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R_co: ...
+    @overload
+    def __call__(self, src: pl.Expr, /, *args: P.args, **kwargs: P.kwargs) -> R_co: ...
+
+
+def wrap_src_indicator(factory: Callable[P, R]) -> SrcIndicator[P, R]:
     """Single-source indicator decorator: route a leading ``pl.Expr`` to ``src``.
 
     The native signature is ``FACTORY(period, *, src=...)``. When the first
@@ -55,4 +82,4 @@ def wrap_src_indicator(factory):
             args = args[1:]
         return factory(*args, **kwargs)
 
-    return wrapper
+    return cast(SrcIndicator[P, R], wrapper)
