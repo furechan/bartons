@@ -2,7 +2,7 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from . import PLUGIN_PATH
+from ..prelude import PLUGIN_PATH
 from ..typing import IntoExprColumn
 
 

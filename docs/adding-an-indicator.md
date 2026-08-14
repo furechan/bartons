@@ -74,23 +74,23 @@ Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It conta
 Factories live in the `bartons.indicators` sub-package. Copy
 [python/bartons/indicators/ema.py](../python/bartons/indicators/ema.py): the
 shared `PLUGIN_PATH` (the `bartons` package dir holding the compiled `.so`) is
-imported from the package, and `IntoExprColumn` from the parent. Follow the
-mintalib convention: **period first, `src` keyword-only defaulting to
-`pl.col("close")`**.
+imported from [`bartons.prelude`](../python/bartons/prelude.py), and
+`IntoExprColumn` from the parent. Follow the mintalib convention: **period
+first, `src` keyword-only defaulting to `pl.col("close")`**.
 
-For a single-source factory, wrap it with `@wrap_src_expression` (also from the
-package) so it accepts its source column as the leading positional argument and
+For a single-source factory, wrap it with `@wrap_src_indicator` (also from the
+prelude) so it accepts its source column as the leading positional argument and
 composes with `Expr.pipe` (`pl.col("close").pipe(EMA, 5)`). Multi-input
 factories (TRANGE/ATR) take their columns explicitly and are *not* wrapped.
 
 ```python
 from polars.plugins import register_plugin_function
 
-from . import PLUGIN_PATH, wrap_src_expression
+from ..prelude import PLUGIN_PATH, wrap_src_indicator
 from ..typing import IntoExprColumn
 
 
-@wrap_src_expression
+@wrap_src_indicator
 def <NAME>(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
     if src is None:
         src = pl.col("close")

@@ -2,6 +2,15 @@
 
 ## 0.1.0
 
+- Move the shared factory machinery out of `bartons/indicators/__init__.py` into
+  a new `bartons.prelude` module, and rename `wrap_src_expression` to
+  `wrap_src_indicator` (matching `bearta.prelude`, which holds the same pieces
+  under the same name). `PLUGIN_PATH` moves with it — it had to, because the two
+  together were a circular import: each factory did `from . import PLUGIN_PATH,
+  …` while `__init__.py` imported the factories at the bottom, so the package
+  half-initialized itself and the re-export block could not be moved to the top
+  without an `ImportError`. Factories now import `from ..prelude import …`,
+  `indicators/__init__.py` is re-exports only, and the cycle is gone.
 - **Bug fix — the three-series indicators (TRANGE, ATR) silently truncated on
   mismatched input lengths.** `run_ternary` sized its output builder from the
   first input while `izip!` stopped at the shortest, so unequal inputs produced a

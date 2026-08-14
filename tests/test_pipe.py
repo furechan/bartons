@@ -1,20 +1,21 @@
 """The single-source factories accept their source column as the leading
-positional arg (via the wrap_src_expression decorator), so they compose with Expr.pipe."""
+positional arg (via the wrap_src_indicator decorator), so they compose with Expr.pipe."""
 
 import polars as pl
 import pytest
 from helpers import assert_series_equal
 
-from bartons.indicators import EMA, SMA, RMA, WMA, RSI, wrap_src_expression
+from bartons.indicators import EMA, SMA, RMA, WMA, RSI
+from bartons.prelude import wrap_src_indicator
 
 UNARY = [EMA, SMA, RMA, WMA, RSI]
 
 
-def test_wrap_src_expression_requires_src_param():
+def test_wrap_src_indicator_requires_src_param():
     """Decorating a factory with no `src` keyword fails fast at decoration time."""
     with pytest.raises(TypeError, match="src"):
 
-        @wrap_src_expression
+        @wrap_src_indicator
         def NoSrc(period):  # no src kwarg to route the leading expr into
             return pl.lit(period)
 
