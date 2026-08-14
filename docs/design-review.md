@@ -8,13 +8,16 @@ indicators as they stood at that date.
 library. Three rough edges are worth fixing, and two more are decisions to
 record rather than defects to repair.
 
+**Status:** items 1 and 2 have since been implemented — see the resolution note
+under each. Item 3 is still open, as are the recorded decisions below.
+
 ## Why the design holds up
 
 **Most of these indicators are inherently sequential.** EMA, RMA, RSI and ATR
 are recursive — there is no vectorized alternative being given up. And because
-`run_unary<F: Filter>` is generic, it monomorphizes and `next` inlines: the
-emitted code matches a hand-written per-indicator loop. The abstraction is free
-here, which is exactly when a trait earns its place.
+the drivers are generic over `F: Filter`, they monomorphize and `next` inlines:
+the emitted code matches a hand-written per-indicator loop. The abstraction is
+free here, which is exactly when a trait earns its place.
 
 **Composability is the real payoff.** `AtrFilter` is a `TrangeFilter` feeding an
 `RmaFilter`; `RsiFilter` is two `RmaFilter`s. A vectorized design would force
@@ -50,6 +53,16 @@ becomes `run_ternary<F: Filter<Input = (…)>>` and both call sites collapse to
 `run_ternary(h, l, c, "atr", filter)`. Each filter has exactly one input shape,
 so an associated type beats a generic parameter.
 
+**Resolved.** Implemented as described. `AtrFilter::next` now passes the triple
+straight through to its inner `TrangeFilter` rather than unpacking and
+respreading it. The tuple alias ended up spelled two ways on purpose:
+`utils::Triple` on the driver side, which is arity-generic and assumes nothing
+about what the three series mean, and `indicators::Hlc` on the kernel side,
+which does — same type, so an `Hlc` filter satisfies the `Triple` bound
+directly. Going further and collapsing `run_unary` and `run_ternary` into a
+single generic `run` was considered and deferred; see
+[unified-run-driver.md](unified-run-driver.md).
+
 ### 2. `run_ternary` doesn't validate lengths — a latent bug
 
 `izip!` truncates to the shortest input while the builder is sized from
@@ -57,6 +70,17 @@ so an associated type beats a generic parameter.
 plugin inputs arrive un-broadcast) silently yields a one-row result instead of
 an error. Add an explicit length check up front returning `ShapeMismatch`, and
 decide deliberately whether length-1 broadcast should be supported.
+
+**Resolved.** `run_ternary` opens with `check_len!(a, b, c)?` — a variadic macro
+over `utils::check_lengths` — and sizes its builder from the checked length. A
+mismatch raises `ShapeMismatch` naming the disagreeing series and both lengths.
+
+On the open question: **length-1 inputs are a mismatch, not a broadcast.** Plugin
+inputs arrive un-broadcast, so `pl.lit(100.0)` as an input is now a loud error
+rather than the silent one-row result it used to produce. Both behaviors are
+pinned by tests (`test_mismatched_lengths_raise`,
+`test_length_one_input_is_not_broadcast`), so the decision can't drift either way
+unnoticed.
 
 ### 3. Error plumbing is duplicated seven times
 
