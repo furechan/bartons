@@ -2,6 +2,15 @@
 
 ## 0.1.0
 
+- **Bug fix — the three-series indicators (TRANGE, ATR) silently truncated on
+  mismatched input lengths.** `run_ternary` sized its output builder from the
+  first input while `izip!` stopped at the shortest, so unequal inputs produced a
+  short result with no error. It now validates up front via a new variadic
+  `check_len!(a, b, c)?` macro (a thin wrapper over `utils::check_lengths`),
+  raising `ShapeMismatch` naming the series that disagrees and the two lengths.
+  A length-1 input is treated as a mismatch, not a scalar to broadcast — plugin
+  inputs arrive un-broadcast, so `pl.lit(100.0)` as an input is now a loud error
+  instead of a silent one-row result.
 - **API change — `bartons.expressions` is now `bartons.indicators`.** Import
   factories as `from bartons.indicators import EMA`. The `expressions` name was
   inherited from mintalib, where it distinguished the polars surface from the

@@ -109,6 +109,15 @@ def test_integer_input_is_cast():
     )
 
 
+def test_mismatched_lengths_raise():
+    """ATR shares the ternary driver's length guard."""
+    h = pl.Series("high", [10.0, 12.0, 11.0], dtype=pl.Float64)
+    l = pl.Series("low", [8.0, 9.0], dtype=pl.Float64)
+    c = pl.Series("close", [9.0, 11.0, 10.0], dtype=pl.Float64)
+    with pytest.raises(RuntimeError, match="input lengths differ"):
+        plugin.atr(h, l, c, period=2)
+
+
 def test_invalid_period_expression():
     df = _df([10.0, 12.0, 11.0], [8.0, 9.0, 9.0], [9.0, 11.0, 10.0])
     with pytest.raises(pl.exceptions.PolarsError):

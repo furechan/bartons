@@ -1,6 +1,41 @@
 use polars::prelude::*;
 use itertools::izip;
 
+/// Check that every input series has the same length, returning that length.
+///
+/// `check_len!(a, b, c)?` yields the shared length, or a `ShapeMismatch` naming
+/// the first series that disagrees. Variadic sugar over [`check_lengths`], which
+/// holds the actual logic.
+macro_rules! check_len {
+    ($($series:expr),+ $(,)?) => {
+        $crate::utils::check_lengths(&[$($series),+])
+    };
+}
+
+/// The body of [`check_len!`]: all inputs must agree on length.
+///
+/// Plugin inputs arrive un-broadcast, so a length-1 series is a genuine
+/// mismatch rather than a scalar to stretch — `pl.lit(100.0)` as an input is an
+/// error here, not a broadcast.
+pub(crate) fn check_lengths(inputs: &[&Series]) -> PolarsResult<usize> {
+    let Some((first, rest)) = inputs.split_first() else {
+        return Ok(0);
+    };
+
+    let len = first.len();
+    for series in rest {
+        if series.len() != len {
+            polars_bail!(
+                ShapeMismatch:
+                "input lengths differ: '{}' has {} rows but '{}' has {}",
+                first.name(), len, series.name(), series.len()
+            );
+        }
+    }
+
+    Ok(len)
+}
+
 /// Three values from one row — the [`Filter::Input`] of the three-series
 /// indicators, fed as a single value so they share the single-series filters'
 /// contract.
@@ -50,9 +85,12 @@ pub(crate) fn run_unary<F: Filter<Input = Option<f64>>>(
 
 /// Drive a [`Triple`]-input [`Filter`] over three aligned series.
 ///
-/// Casts each input to `Float64`, feeds the per-row [`Triple`] to the filter,
-/// and collects the `Option<f64>` outputs into a nullable `Float64` series, with
-/// `None` outputs becoming nulls.
+/// Checks that the three inputs agree on length, casts each to `Float64`, feeds
+/// the per-row [`Triple`] to the filter, and collects the `Option<f64>` outputs
+/// into a nullable `Float64` series, with `None` outputs becoming nulls.
+///
+/// The length check is not decorative: `izip!` stops at the shortest input, so
+/// without it a mismatch would silently yield a short result.
 pub(crate) fn run_ternary<F: Filter<Input = Triple>>(
     a: &Series,
     b: &Series,
@@ -60,13 +98,15 @@ pub(crate) fn run_ternary<F: Filter<Input = Triple>>(
     name: &str,
     mut filter: F,
 ) -> PolarsResult<Series> {
+    let len = check_len!(a, b, c)?;
+
     let a = a.cast(&DataType::Float64)?;
     let b = b.cast(&DataType::Float64)?;
     let c = c.cast(&DataType::Float64)?;
     let a = a.f64()?;
     let b = b.f64()?;
     let c = c.f64()?;
-    let mut builder = PrimitiveChunkedBuilder::<Float64Type>::new(name.into(), a.len());
+    let mut builder = PrimitiveChunkedBuilder::<Float64Type>::new(name.into(), len);
 
     for triple in izip!(a.iter(), b.iter(), c.iter()) {
         match filter.next(triple) {

@@ -73,6 +73,22 @@ def test_pyfunction_matches_expression():
     assert_series_equal(expr_out, func_out, check_names=False)
 
 
+def test_mismatched_lengths_raise():
+    """Unequal input lengths are an error, not a silently truncated result."""
+    h = pl.Series("high", [10.0, 12.0, 11.0], dtype=pl.Float64)
+    l = pl.Series("low", [8.0, 9.0], dtype=pl.Float64)
+    c = pl.Series("close", [9.0, 11.0, 10.0], dtype=pl.Float64)
+    with pytest.raises(RuntimeError, match="input lengths differ"):
+        plugin.trange(h, l, c)
+
+
+def test_length_one_input_is_not_broadcast():
+    """A length-1 input is a mismatch, not a scalar to stretch over the frame."""
+    df = _df(*CASES[0])
+    with pytest.raises(pl.exceptions.ComputeError, match="input lengths differ"):
+        df.select(TRANGE(close=pl.lit(100.0)).alias("trange"))
+
+
 def test_integer_input_is_cast():
     """Non-f64 input is cast to Float64 rather than panicking."""
     h = pl.Series("high", [10, 12, 11], dtype=pl.Int64)
