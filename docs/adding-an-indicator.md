@@ -31,7 +31,8 @@ Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It conta
 - **Kernel** `fn calc_<name>(series: &Series, …) -> PolarsResult<Series>`:
   - `let series = series.cast(&DataType::Float64)?;` then `let ca = series.f64()?;`
     (the cast accepts int/f32 input; `f64()?` then can't fail).
-  - Validate args (`period <= 0` → `PolarsError::ComputeError`).
+  - Validate args (`period <= 0` → `PolarsError::InvalidOperation`, which
+    `PyPolarsErr` maps to Python's builtin `ValueError`).
   - Build output with `PrimitiveChunkedBuilder::<Float64Type>::new(name.into(), len)`,
     appending `append_value` / `append_null` once per input row.
 - **Expression entry point**:
@@ -56,8 +57,14 @@ Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It conta
   ///     A Float64 series; null during the warmup period.
   #[pyfunction]
   #[pyo3(signature = (series, *, period=20))]
-  pub fn <name>(series: PySeries, period: i64) -> PyResult<PySeries> { … }
+  pub fn <name>(series: PySeries, period: i64) -> PyResult<PySeries> {
+      let series: Series = series.into();
+      let result = calc_<name>(&series, period).map_err(PyPolarsErr::from)?;
+      Ok(PySeries(result))
+  }
   ```
+  `PyPolarsErr` (from `pyo3_polars::error`) maps each `PolarsError` variant to
+  a Python exception — do not hand-roll a `PyRuntimeError`, which discards it.
 
 ### 2. Register
 
@@ -131,7 +138,13 @@ Use `assert_series_equal(..., check_exact=False, rel_tol=1e-12)` imported from
 ```sh
 just build     # release; debug builds are ~20x slower
 just test
+just stubs     # regenerate python/bartons/plugin.pyi, then commit it
 ```
+
+`just stubs` introspects the built module, so a new eager pyfunction is picked
+up automatically. If it errors with *no type mapped for parameter*, add the name
+to `PARAM_TYPES` in [scripts/generate-stubs.py](../scripts/generate-stubs.py) —
+pyo3 exposes no type information, so that map is where it comes from.
 
 ### 6. Benchmark (optional) — `scripts/benchmark-vs-<baseline>.py`
 
@@ -149,10 +162,6 @@ backend parallelises across expressions in one `select()`.
 ```sh
 just bench vs-native    # builds release, then runs scripts/benchmark-vs-native.py
 ```
-
-Note the `bench` recipe defaults to `indicator="ema"`, i.e. bare `just bench`
-looks for `scripts/benchmark-ema.py`, which no longer exists — always pass a
-baseline.
 
 Benchmark only against a **release** build (`just bench` does this) — a debug
 build is ~20x slower and misleading.

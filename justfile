@@ -20,6 +20,11 @@ test:
 bench baseline="vs-native": build
     python scripts/benchmark-{{baseline}}.py
 
+# Regenerate python/bartons/plugin.pyi by introspecting the built extension.
+# Depends on `build` so the module being introspected is current.
+stubs: build
+    python scripts/generate-stubs.py
+
 clean:
     find bartons -type d -name target -print -exec rm -rf {} +
     find python -type f -name "*.so" -print -delete
