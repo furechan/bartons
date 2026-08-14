@@ -22,6 +22,11 @@ import nox
 
 nox.options.default_venv_backend = "uv"
 
+# Keep the session virtualenvs under `.venv/` instead of a second top-level
+# `.nox/`, so all throwaway environments live in one place. They are caches: if
+# uv ever recreates `.venv`, nox just rebuilds them on the next run.
+nox.options.envdir = ".venv/.nox"
+
 PY = "3.11"
 
 # Path to the prebuilt extension wheel, populated on first use by `_wheel()` and
