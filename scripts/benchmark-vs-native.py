@@ -27,7 +27,7 @@ import timeit
 import polars as pl
 
 from bartons.samples import sample_prices, sample_dataset
-from bartons.expressions import EMA, SMA, RMA, WMA, RSI, TRANGE, ATR
+from bartons.indicators import EMA, SMA, RMA, WMA, RSI, TRANGE, ATR
 
 
 # ── Native polars equivalents ───────────────────────────────────────────────────

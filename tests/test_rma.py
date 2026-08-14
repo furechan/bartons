@@ -3,7 +3,7 @@ import pytest
 from helpers import assert_series_equal
 
 from bartons import plugin
-from bartons.expressions import RMA
+from bartons.indicators import RMA
 from refimpl import ref_rma
 
 

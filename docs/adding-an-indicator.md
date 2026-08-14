@@ -69,10 +69,10 @@ Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It conta
 - **Do not** register `<name>_expr` — the polars plugin machinery finds it by
   symbol; adding it to the module is wrong.
 
-### 3. Python expression factory — `python/bartons/expressions/<name>.py`
+### 3. Python expression factory — `python/bartons/indicators/<name>.py`
 
-Factories live in the `bartons.expressions` sub-package. Copy
-[python/bartons/expressions/ema.py](../python/bartons/expressions/ema.py): the
+Factories live in the `bartons.indicators` sub-package. Copy
+[python/bartons/indicators/ema.py](../python/bartons/indicators/ema.py): the
 shared `PLUGIN_PATH` (the `bartons` package dir holding the compiled `.so`) is
 imported from the package, and `IntoExprColumn` from the parent. Follow the
 mintalib convention: **period first, `src` keyword-only defaulting to
@@ -102,14 +102,14 @@ def <NAME>(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
 ```
 
 Then re-export it from
-[python/bartons/expressions/__init__.py](../python/bartons/expressions/__init__.py)
+[python/bartons/indicators/__init__.py](../python/bartons/indicators/__init__.py)
 (`from .<name> import <NAME>` plus the `__all__` entry) so it is importable as
-`from bartons.expressions import <NAME>`.
+`from bartons.indicators import <NAME>`.
 
 ### 4. `.bt` namespace — `python/bartons/namespace.py`
 
 Add a method to `BartonsExprNamespace` that **delegates to the factory**
-(imported as `from . import expressions as xp`), routing the receiver expression
+(imported as `from . import indicators as ind`), routing the receiver expression
 in as `src`. This keeps the `register_plugin_function` wiring in exactly one place
 — the factory. Single-source indicators only; TRANGE/ATR are multi-input and have
 no `.bt` method.

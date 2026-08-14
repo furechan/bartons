@@ -2,7 +2,7 @@
 
 Each factory builds a ``pl.Expr`` that calls the compiled plugin, e.g.::
 
-    from bartons.expressions import EMA, RSI, ATR
+    from bartons.indicators import EMA, RSI, ATR
 
 The compiled plugin (``plugin.abi3.so``) lives in the parent ``bartons`` package
 directory, so ``PLUGIN_PATH`` points there and is shared by every factory.

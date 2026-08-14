@@ -2,6 +2,15 @@
 
 ## 0.1.0
 
+- **API change — `bartons.expressions` is now `bartons.indicators`.** Import
+  factories as `from bartons.indicators import EMA`. The `expressions` name was
+  inherited from mintalib, where it distinguished the polars surface from the
+  pandas `indicators` one; bartons is polars-only, so the contrast it drew does
+  not exist here and every public object is an expression regardless. The
+  sub-package now matches `bartons/src/indicators/` on the Rust side, giving the
+  same seven names on both sides of the FFI boundary. "Expression factory"
+  remains the term for what the module contains — only the module name changed.
+  The `.bt` accessor is unaffected.
 - Generalize the `Filter` trait over its input shape with an associated
   `type Input`, so the multi-input indicators join the same contract as the
   single-series ones. `TrangeFilter` and `AtrFilter` had an inherent `next` while

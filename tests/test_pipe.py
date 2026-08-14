@@ -5,7 +5,7 @@ import polars as pl
 import pytest
 from helpers import assert_series_equal
 
-from bartons.expressions import EMA, SMA, RMA, WMA, RSI, wrap_src_expression
+from bartons.indicators import EMA, SMA, RMA, WMA, RSI, wrap_src_expression
 
 UNARY = [EMA, SMA, RMA, WMA, RSI]
 

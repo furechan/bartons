@@ -39,7 +39,7 @@ Requires the `.venv` to be active. The build tool is `uv`; use `uv sync` to set 
 
 `ty` (Astral's type checker, https://github.com/astral-sh/ty) is the project's
 designated type checker. Note the expression factories in
-`python/bartons/expressions/` are the statically-checkable surface; the `.bt`
+`python/bartons/indicators/` are the statically-checkable surface; the `.bt`
 accessor is registered at runtime via `@pl.api.register_expr_namespace` and is
 invisible to any type checker unless a `.pyi` stub declares `bt: BartonsExprNamespace`
 on `pl.Expr`.
@@ -51,15 +51,15 @@ checklist (entry points, naming, conventions, tests). In short: add a Rust
 kernel + `#[polars_expr]` + `#[pyfunction]` in `bartons/src/indicators/<name>.rs`,
 declare it with `pub mod <name>;` in `bartons/src/indicators/mod.rs`, register the
 pyfunction in `bartons/src/lib.rs`, add the `<NAME>()` factory in
-`python/bartons/expressions/<name>.py` (re-exported from
-`python/bartons/expressions/__init__.py`) and a `.bt.<name>()` method in
+`python/bartons/indicators/<name>.py` (re-exported from
+`python/bartons/indicators/__init__.py`) and a `.bt.<name>()` method in
 `namespace.py`, then mirror `tests/test_ema.py`.
 EMA and SMA are the reference implementations.
 
 ## Key files
 
 - [bartons/src/indicators/ema.rs](bartons/src/indicators/ema.rs) — reference implementation: EmaKwargs, `calc_ema`, expression + pyfunction wrappers
-- [python/bartons/expressions/ema.py](python/bartons/expressions/ema.py) — Python-side plugin registration; factories live in the `expressions` sub-package (`from bartons.expressions import EMA`)
+- [python/bartons/indicators/ema.py](python/bartons/indicators/ema.py) — Python-side plugin registration; factories live in the `indicators` sub-package (`from bartons.indicators import EMA`)
 - [python/bartons/namespace.py](python/bartons/namespace.py) — `@pl.api.register_expr_namespace("bt")` class (the `.bt` accessor)
 - [pyproject.toml](pyproject.toml) — Maturin config (module name, python-source, manifest-path)
 - [bartons/Cargo.toml](bartons/Cargo.toml) — Rust dependencies (pyo3, pyo3-polars, polars)
