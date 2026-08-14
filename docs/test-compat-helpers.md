@@ -11,8 +11,8 @@ supported floor is raised to a polars new enough to make it moot.
 > marshal a Series into Rust via `PySeries._export`, which polars only exposes
 > from 1.28; on older engines they raise `AttributeError: 'PySeries' object has
 > no attribute '_export'`. The package declares `polars>=1.28` for the same
-> reason (see [pyproject.toml](../pyproject.toml)). The expression path (`EMA()` /
-> `.bt.<name>()`) needs no `_export` and would work lower, but 1.28 is where the
+> reason (see [pyproject.toml](../pyproject.toml)). The expression path (`EMA()`)
+> needs no `_export` and would work lower, but 1.28 is where the
 > whole public API is usable.
 
 ## The everyday dev env runs the newest engine

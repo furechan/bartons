@@ -48,13 +48,6 @@ def test_sma_src_accepts_column_name():
 
 
 @pytest.mark.parametrize("xs,period", CASES)
-def test_sma_namespace(xs, period):
-    df = pl.DataFrame({"x": pl.Series(xs, dtype=pl.Float64)})
-    got = df.select(pl.col("x").bt.sma(period=period).alias("sma"))["sma"]
-    assert_series_equal(got, expected_series(xs, period), check_exact=False, rel_tol=1e-12)
-
-
-@pytest.mark.parametrize("xs,period", CASES)
 def test_sma_pyfunction(xs, period):
     s = pl.Series("x", xs, dtype=pl.Float64)
     got = plugin.sma(s, period=period)

@@ -14,7 +14,7 @@ Three Rust symbols per indicator, by role:
 | Role | Rust symbol | Reached from Python as |
 |---|---|---|
 | compute kernel | `calc_<name>` | — (private) |
-| expression plugin fn (FFI entry point) | `<name>_expr` | `<NAME>()` / `.bt.<name>()` |
+| expression plugin fn (FFI entry point) | `<name>_expr` | `<NAME>()` |
 | eager binding | `<name>` (pyfunction) | `bartons.plugin.<name>` |
 
 The `function_name="<name>_expr"` string in the Python wrappers **must match the
@@ -106,20 +106,7 @@ Then re-export it from
 (`from .<name> import <NAME>` plus the `__all__` entry) so it is importable as
 `from bartons.indicators import <NAME>`.
 
-### 4. `.bt` namespace — `python/bartons/namespace.py`
-
-Add a method to `BartonsExprNamespace` that **delegates to the factory**
-(imported as `from . import indicators as ind`), routing the receiver expression
-in as `src`. This keeps the `register_plugin_function` wiring in exactly one place
-— the factory. Single-source indicators only; TRANGE/ATR are multi-input and have
-no `.bt` method.
-
-```python
-def <name>(self, period: int) -> pl.Expr:
-    return xp.<NAME>(period, src=self._expr)
-```
-
-### 5. Tests — `tests/test_<name>.py`
+### 4. Tests — `tests/test_<name>.py`
 
 Copy [tests/test_ema.py](../tests/test_ema.py). Add a `ref_<name>` **independent
 Python reference oracle** to [tests/refimpl.py](../tests/refimpl.py) (all oracles
@@ -127,8 +114,8 @@ live there, one importable module, so composite indicators reuse the
 primitives — e.g. `ref_atr` is `ref_rma` of `ref_trange`), then
 `from refimpl import ref_<name>` in the test. Cover, against that oracle:
 
-- all three surfaces (`<NAME>()` expression, `.bt.<name>()`, `plugin.<name>()`)
-  and that they agree;
+- both surfaces (`<NAME>()` expression and `plugin.<name>()`) and that they
+  agree;
 - `src=None`→`close` default and the column-name-string form;
 - warmup nulls and null handling (see below);
 - integer input is cast (not panicked);
@@ -139,14 +126,14 @@ Use `assert_series_equal(..., check_exact=False, rel_tol=1e-12)` imported from
 `polars.testing`, so the suite runs across the full supported polars range. See
 [test-compat-helpers.md](test-compat-helpers.md) for why.
 
-### 6. Build & verify
+### 5. Build & verify
 
 ```sh
 just build     # release; debug builds are ~20x slower
 just test
 ```
 
-### 7. Benchmark (optional) — `scripts/benchmark-<name>.py`
+### 6. Benchmark (optional) — `scripts/benchmark-<name>.py`
 
 Copy [scripts/benchmark-ema.py](../scripts/benchmark-ema.py) (or
 [benchmark-sma.py](../scripts/benchmark-sma.py)). Compare against the native

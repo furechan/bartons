@@ -2,6 +2,17 @@
 
 ## 0.1.0
 
+- **Removed — the `.bt` expression namespace.** `pl.col("close").bt.ema(20)` no
+  longer exists; use `EMA(20, src=pl.col("close"))` or
+  `pl.col("close").pipe(EMA, 20)`, which are equivalent and, unlike `.bt`,
+  statically checkable. `@pl.api.register_expr_namespace` attaches the accessor
+  to `pl.Expr` at runtime, and since polars ships inline types with no `.pyi`
+  files — and Python stubs have no declaration-merging — there is no way to
+  declare `bt` on `pl.Expr` short of shadowing polars' own stubs. It was the only
+  surface with no path to type checking, and it duplicated the factories it
+  delegated to. `bartons/__init__.py` no longer imports anything for its side
+  effect. The implementation and the full reasoning are preserved in
+  [docs/namespace-legacy.md](docs/namespace-legacy.md).
 - Make the wrapped single-source factories statically checkable. `wrap_src_indicator`
   is now typed `Callable[P, R] -> SrcIndicator[P, R]`, where `SrcIndicator` is a
   `Protocol` declaring both call forms as `__call__` overloads (canonical first,

@@ -48,13 +48,6 @@ def test_rma_src_accepts_column_name():
 
 
 @pytest.mark.parametrize("xs,period", CASES)
-def test_rma_namespace(xs, period):
-    df = pl.DataFrame({"x": pl.Series(xs, dtype=pl.Float64)})
-    got = df.select(pl.col("x").bt.rma(period=period).alias("rma"))["rma"]
-    assert_series_equal(got, expected_series(xs, period), check_exact=False, rel_tol=1e-12)
-
-
-@pytest.mark.parametrize("xs,period", CASES)
 def test_rma_pyfunction(xs, period):
     s = pl.Series("x", xs, dtype=pl.Float64)
     got = plugin.rma(s, period=period)
