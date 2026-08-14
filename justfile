@@ -14,9 +14,11 @@ dump:
 test:
     pytest
 
-# Build optimized, then run a benchmark, e.g. `just bench` (ema) or `just bench sma`.
-bench indicator="ema": build
-    python scripts/benchmark-{{indicator}}.py
+# Build optimized, then run a benchmark against one baseline, e.g. `just bench`
+# or `just bench vs-talib`. Baselines: vs-native (polars built-ins, no extra deps
+# — hence the default), vs-talib (needs polars_talib + libta-lib), vs-mintalib.
+bench baseline="vs-native": build
+    python scripts/benchmark-{{baseline}}.py
 
 clean:
     find bartons -type d -name target -print -exec rm -rf {} +
