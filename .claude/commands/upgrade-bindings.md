@@ -6,7 +6,7 @@ allowed-tools: Read, Bash, Grep, Glob, Edit
 
 Upgrade the **version lock-in** of this native polars plugin to the latest mutually-compatible set, deriving the numbers from upstream machine-readable sources — never guess. **Propose the new settings and get explicit approval BEFORE recompiling.**
 
-Read the derivation method in [docs/pyo3-polars-version-lockstep.md](../../archive/pyo3-polars-version-lockstep.md) before starting. Optional argument `$1` = a target polars-Python version to upgrade toward (e.g. `1.42`); if absent, target the latest stable release.
+Read the derivation method in [docs/cargo-version-pins.md](../../docs/cargo-version-pins.md) before starting. Optional argument `$1` = a target polars-Python version to upgrade toward (e.g. `1.42`); if absent, target the latest stable release.
 
 ## Step 1 — current state
 
@@ -29,7 +29,7 @@ Sanity-check that the pieces agree: the polars crate that the chosen pyo3-polars
 ## Step 3 — propose, do not apply yet
 
 Present a clear before → after table for every changed pin across both files:
-- `rust/Cargo.toml`: `pyo3`, `pyo3-polars`, `polars`, `polars-arrow` (preserve all existing feature flags).
+- `bartons/Cargo.toml`: `pyo3`, `pyo3-polars`, `polars`, `polars-arrow` (preserve all existing feature flags).
 - `pyproject.toml`: the enforced `polars >=lower,<upper` cap.
 
 ### The cap is declared exactly ONCE — in `[project].dependencies`
@@ -40,15 +40,15 @@ Present a clear before → after table for every changed pin across both files:
 - **`[build-system].requires`** — must **not** carry a polars bound. maturin compiles the Rust crate; the Rust `polars` comes from Cargo/crates.io, and the runtime version handshake happens at *import* time, not build time. polars-Python is not needed to build at all — if a `polars` entry exists here, **remove it**.
 - **`[dependency-groups].dev`** — must **not** pin polars. Installing the project (editable) into the dev env already pulls polars in, constrained by the `[project].dependencies` cap. A bare `polars` line is redundant — **remove it**; leave the cap to flow transitively.
 
-Rationale: one cap = one place to update and no chance of the three drifting out of sync. (See [docs/pyo3-polars-version-lockstep.md](../../archive/pyo3-polars-version-lockstep.md) "resolver model".)
+Rationale: one cap = one place to update and no chance of the three drifting out of sync. (See [docs/cargo-version-pins.md](../../docs/cargo-version-pins.md), "The single dial: pick `pyo3-polars` first".)
 
 State the derived ABI window in one line (e.g. "crate 0.54 → polars-Python >=1.42,<1.43"). Then **stop and ask the user to approve** the proposed pins. Do not edit files until they confirm.
 
 ## Step 4 — apply, rebuild, verify (only after approval)
 
-1. Edit `rust/Cargo.toml` and `pyproject.toml` with the approved values (Edit tool; keep feature flags and formatting intact).
+1. Edit `bartons/Cargo.toml` and `pyproject.toml` with the approved values (Edit tool; keep feature flags and formatting intact).
 2. If the installed venv polars is now outside the new window, note that `just build` / `uv sync` will move it.
-3. Rebuild: `just build` (maturin develop). **Expect Rust source breakage on crate-minor jumps** — polars renames/removes API across minors (e.g. `ChunkedArray::into_iter` → `.iter()`), and several minors at once compounds it. A compile error here is normal, not a dead end: read the `cargo build --manifest-path rust/Cargo.toml --lib` errors (faster than the full wheel build), fix the source on this branch, and re-try. Only if it fails to *load* (handshake/ABI) after compiling, or you can't resolve the API changes, surface the error and offer to revert — never leave the tree half-migrated silently.
+3. Rebuild: `just build` (maturin develop). **Expect Rust source breakage on crate-minor jumps** — polars renames/removes API across minors (e.g. `ChunkedArray::into_iter` → `.iter()`), and several minors at once compounds it. A compile error here is normal, not a dead end: read the `cargo build --manifest-path bartons/Cargo.toml --lib` errors (faster than the full wheel build), fix the source on this branch, and re-try. Only if it fails to *load* (handshake/ABI) after compiling, or you can't resolve the API changes, surface the error and offer to revert — never leave the tree half-migrated silently.
 4. On success run `just test`. Report pass/fail with output.
 5. If `CHANGELOG.md` exists, add an entry under the latest version heading noting the polars/pyo3-polars bump.
 

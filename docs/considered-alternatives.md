@@ -28,7 +28,7 @@ block in `indicators/mod.rs` re-exporting the kernels via `#[pymodule_export] us
   `import bartons.plugin as p; p.…`, and codegen/introspection uses attribute access
   too. The hack wasn't earning its keep.
 
-The reorg of the *source* into `rust/src/indicators/` (Step 1) was kept; only
+The reorg of the *source* into `bartons/src/indicators/` (Step 1) was kept; only
 the *Python-facing submodule* (Step 2) was reverted. The revert was a `git reset`,
 so it leaves no trace in history — hence this note.
 

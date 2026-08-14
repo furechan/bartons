@@ -79,7 +79,7 @@ It catches one specific divergence (the binary/string "views" layout) and is dea
 
 The plugin-side export and the FFI constants landed together at the **polars `0.35` / pyo3-polars `0.9.0`** boundary (pyo3-polars `0.8.0 → polars ^0.34`, `0.9.0 → polars ^0.35`). Plugins built against pyo3-polars `≤ 0.8.0` export no version symbol, so a modern host's `.unwrap()` on the symbol lookup cannot load them.
 
-(This supersedes the description in [`polars-plugin-abi-compatibility.md`](../archive/polars-plugin-abi-compatibility.md), which framed the runtime check as a strict `PYPOLARS_VERSION` string match introduced "in a later version of pyo3-polars (e.g. 0.10)". The actual check is the `(major, minor)` FFI handshake, and the export first appears in `0.9.0`.)
+(This corrects an earlier note of ours — since removed — which framed the runtime check as a strict `PYPOLARS_VERSION` string match introduced "in a later version of pyo3-polars (e.g. 0.10)". The actual check is the `(major, minor)` FFI handshake, and the export first appears in `0.9.0`.)
 
 ## Source references (local evidence)
 
@@ -95,4 +95,3 @@ Versions present in this machine's caches when the above was verified:
 - [`cargo-version-pins.md`](cargo-version-pins.md) — the compile-time side: how the `pyo3-polars` / `polars` / `pyo3` Cargo pins that produce the `.so` are chosen.
 - [`polars-runtime-libraries.md`](polars-runtime-libraries.md) — the `polars-runtime-32`/`-64`/`-compat` engine split; the FFI version is identical across them.
 - [`polars-ffi-version-table.md`](polars-ffi-version-table.md) — the FFI version values across crate and package versions, and the method to regenerate them.
-- [`polars-plugin-abi-compatibility.md`](../archive/polars-plugin-abi-compatibility.md) — earlier companion note (its runtime-check description is superseded here).

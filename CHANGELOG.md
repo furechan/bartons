@@ -2,13 +2,6 @@
 
 ## 0.1.0
 
-- Move the Rust crate from `bartons/` to `rust/`. The two top-level source roots
-  were named on different axes — `python/` for the language, `bartons/` for the
-  project — so nothing at the repo root said which one held Rust. Both are now
-  named for their language. The Cargo package stays `bartons` and `[lib] name =
-  "plugin"` is unchanged, so the compiled module is still `bartons.plugin`;
-  nothing about the build or the Python API moves. Earlier changelog entries
-  still refer to `bartons/src/…`, which is where those files were at the time.
 - **Removed — the `.bt` expression namespace.** `pl.col("close").bt.ema(20)` no
   longer exists; use `EMA(20, src=pl.col("close"))` or
   `pl.col("close").pipe(EMA, 20)`, which are equivalent and, unlike `.bt`,

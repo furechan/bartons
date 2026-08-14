@@ -40,7 +40,11 @@ Each figure is the mean over 20 runs, repeated 7 times.
 ## Reproduction
 
 ```sh
-uv run scripts/benchmark-ema.py
+just bench vs-talib      # or: uv run scripts/benchmark-vs-talib.py
 ```
 
 Requires `polars-talib` and `numpy` in dev dependencies.
+
+The figures above were produced by the per-indicator `scripts/benchmark-ema.py`,
+which has since been replaced by the per-baseline `benchmark-vs-*.py` scripts, so
+absolute numbers may not line up exactly — the relative picture is the point.

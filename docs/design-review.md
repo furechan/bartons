@@ -1,7 +1,7 @@
 # Design review: the `Filter` + driver-loop core
 
 Review of the `Filter` trait and the `run_unary` / `run_ternary` drivers in
-[rust/src/utils.rs](../rust/src/utils.rs), 2026-08-14. Covers all seven
+[bartons/src/utils.rs](../bartons/src/utils.rs), 2026-08-14. Covers all seven
 indicators as they stood at that date.
 
 **Verdict: keep the loop-over-`Filter` design.** It is the right core for this
@@ -95,6 +95,22 @@ same four-line match into `PyRuntimeError`. Two small moves:
 
 Each pyfunction body then drops to three lines. Incidentally, `PyValueError`
 fits an invalid `period` better than `PyRuntimeError`.
+
+**Open — triaged into [BACKLOG.md](../BACKLOG.md)** as three separate entries,
+since the pieces carry different risk: the `to_pyseries` helper gives up nothing,
+the kernel error needs a design call, and the `PyValueError` switch changes
+behavior.
+
+Two corrections to the above. The count is **six**, not seven, for the kernel
+half — TRANGE has no period to validate, so it has neither the
+`Result<Self, String>` nor the `map_err`. And the first proposal has a cost this
+review missed: `polars_bail!` inside `new()` puts a polars type in every kernel
+constructor, discarding the polars-independence that the `String` error was
+introduced to buy (see the CHANGELOG entry "Move period validation out of the
+kernels"). A local `KernelError` with `impl From<KernelError> for PolarsError`
+reaches the same call sites — `?` applies the conversion, so the `map_err`
+disappears entirely — while keeping the kernels polars-free. That impl compiles;
+the orphan rule permits it because the local type is the trait's parameter.
 
 ## Decisions to record, not defects
 

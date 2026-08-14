@@ -54,7 +54,7 @@ def _wheel(session: nox.Session) -> str:
     """Build the bartons abi3 wheel once per `nox` run and return its path (cached).
 
     The first session to need it compiles via `maturin build --release` against the
-    shared `rust/target` cargo cache; every later session reuses the same wheel,
+    shared `bartons/target` cargo cache; every later session reuses the same wheel,
     which uv installs from its own cache without recompiling.
     """
     global _WHEEL

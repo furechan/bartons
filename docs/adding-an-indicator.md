@@ -23,9 +23,9 @@ load time. There is no compile-time check on it.
 
 ## Steps
 
-### 1. Rust kernel — `rust/src/indicators/<name>.rs`
+### 1. Rust kernel — `bartons/src/indicators/<name>.rs`
 
-Copy [rust/src/indicators/ema.rs](../rust/src/indicators/ema.rs). It contains all three symbols.
+Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It contains all three symbols.
 
 - **Kwargs struct** — `#[derive(Deserialize)] pub struct <NAME>Kwargs { period: i64, … }`.
 - **Kernel** `fn calc_<name>(series: &Series, …) -> PolarsResult<Series>`:
@@ -61,9 +61,9 @@ Copy [rust/src/indicators/ema.rs](../rust/src/indicators/ema.rs). It contains al
 
 ### 2. Register
 
-- In `rust/src/indicators/mod.rs`, add `pub mod <name>;` alongside the other
+- In `bartons/src/indicators/mod.rs`, add `pub mod <name>;` alongside the other
   kernel modules.
-- In `rust/src/lib.rs`, add
+- In `bartons/src/lib.rs`, add
   `m.add_function(wrap_pyfunction!(indicators::<name>::<name>, m)?)?;` in the
   `#[pymodule]`.
 - **Do not** register `<name>_expr` — the polars plugin machinery finds it by
@@ -133,17 +133,26 @@ just build     # release; debug builds are ~20x slower
 just test
 ```
 
-### 6. Benchmark (optional) — `scripts/benchmark-<name>.py`
+### 6. Benchmark (optional) — `scripts/benchmark-vs-<baseline>.py`
 
-Copy [scripts/benchmark-ema.py](../scripts/benchmark-ema.py) (or
-[benchmark-sma.py](../scripts/benchmark-sma.py)). Compare against the native
-polars equivalent (e.g. `ewm_mean`, `rolling_mean`) and the talib baseline. The
-template decomposes cost into construction / execution / build+execute and
-preloads libta-lib for `polars_talib` (skipped if absent). Run with:
+Benchmarks are organised per *baseline*, not per indicator: each script runs the
+whole indicator set against one comparison target. Add the new factory to the
+lists in whichever are relevant —
+[benchmark-vs-native.py](../scripts/benchmark-vs-native.py) (polars built-ins:
+`ewm_mean`, `rolling_mean`, …),
+[benchmark-vs-talib.py](../scripts/benchmark-vs-talib.py) (preloads libta-lib for
+`polars_talib`, skipped if absent), and
+[benchmark-vs-mintalib.py](../scripts/benchmark-vs-mintalib.py). They decompose
+cost into construction / execution / build+execute and also report how each
+backend parallelises across expressions in one `select()`.
 
 ```sh
-just bench <name>    # builds release, then runs scripts/benchmark-<name>.py
+just bench vs-native    # builds release, then runs scripts/benchmark-vs-native.py
 ```
+
+Note the `bench` recipe defaults to `indicator="ema"`, i.e. bare `just bench`
+looks for `scripts/benchmark-ema.py`, which no longer exists — always pass a
+baseline.
 
 Benchmark only against a **release** build (`just bench` does this) — a debug
 build is ~20x slower and misleading.
@@ -163,7 +172,7 @@ build is ~20x slower and misleading.
 - **NaN** is used only as the kernel's "unseeded" marker, never as a stand-in for
   a null input (nulls come through the `Option` from `ca.iter()`).
 - **Single polars cap**: the `polars >=x,<y` window lives only in
-  `[project].dependencies` — see [pyo3-polars-version-lockstep.md](../archive/pyo3-polars-version-lockstep.md).
+  `[project].dependencies` — see [cargo-version-pins.md](cargo-version-pins.md).
 - **Release builds**: `just build` is release; only `just build-debug` is the slow
   debug build. Benchmark with `just bench`.
 - Many indicators have a native polars equivalent (`ewm_mean`, `rolling_mean`).

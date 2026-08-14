@@ -6,7 +6,7 @@ current two-driver design is intentional and fine at today's scale.
 
 ## The problem it solves
 
-`rust/src/utils.rs` has two drivers doing the same job at different arities:
+`bartons/src/utils.rs` has two drivers doing the same job at different arities:
 `run_unary` for the single-series indicators and `run_ternary` for the
 three-series ones (TRANGE, ATR). Each casts to `Float64`, iterates in lockstep,
 and collects into a nullable series. A third arity would mean a third near-copy.
