@@ -59,7 +59,7 @@ so an associated type beats a generic parameter.
 straight through to its inner `TrangeFilter` rather than unpacking and
 respreading it. The tuple alias ended up spelled two ways on purpose:
 `utils::Triple` on the driver side, which is arity-generic and assumes nothing
-about what the three series mean, and `indicators::Hlc` on the kernel side,
+about what the three series mean, and `kernels::Hlc` on the kernel side,
 which does — same type, so an `Hlc` filter satisfies the `Triple` bound
 directly. Going further and collapsing `run_unary` and `run_ternary` into a
 single generic `run` was considered and deferred; see
@@ -115,7 +115,7 @@ dependency already ships this.
 That also reframed the `PyValueError` remark. It was never a matter of picking a
 nicer exception type at the end: `PyPolarsErr` maps `InvalidOperation` to the
 builtin `ValueError` automatically. What was needed was for the error to *carry*
-its classification, so each `calc_*` now raises `InvalidOperation` rather than
+its classification, so each kernel now raises `InvalidOperation` rather than
 `ComputeError` for a bad period. The chain went from
 `String → ComputeError → RuntimeError`, discarding at each hop information that
 was exact at the first, to `String → InvalidOperation → ValueError`, which

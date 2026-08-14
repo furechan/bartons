@@ -13,15 +13,24 @@ The crate directory is named after the Cargo package (`bartons`), which is what
 a Rust reader expects to find. Its `[lib] name = "plugin"` is what makes the
 compiled module `bartons.plugin`.
 
-Rust source layout: each indicator's kernel lives in `bartons/src/indicators/<name>.rs`
-and is declared in `bartons/src/indicators/mod.rs`; the shared `Filter` trait, the
+**The two layers are not mirrors.** Rust holds *kernels* — materialized vector
+computations, series in and series out, written where polars cannot express the
+logic or would be materially slower. Python holds *indicators* — expression
+factories that compose on top. Today the sets happen to coincide (seven of each),
+but that is incidental: a composite like BBANDS is `SMA ± k·std` and belongs in
+Python with no Rust counterpart. The directories are named for those roles
+(`bartons/src/kernels/` vs `python/bartons/indicators/`) precisely so the
+divergence reads as intended rather than as drift.
+
+Rust source layout: each indicator's kernel lives in `bartons/src/kernels/<name>.rs`
+and is declared in `bartons/src/kernels/mod.rs`; the shared `Filter` trait, the
 `run_unary`/`run_ternary` drivers and the `check_len!` length guard are in
 `bartons/src/utils.rs` (crate root); and `bartons/src/lib.rs` is the `#[pymodule]` glue
 that registers each eager pyfunction flat as `bartons.plugin.<name>`.
 
 `Filter` carries an associated `Input`: `Option<f64>` for the single-series
 kernels, and a three-tuple for TRANGE/ATR — spelled `utils::Triple` on the
-arity-generic driver side and re-aliased `indicators::Hlc` on the kernel side.
+arity-generic driver side and re-aliased `kernels::Hlc` on the kernel side.
 
 The flat layout is deliberate — a `plugin.indicators` submodule was built and
 rejected (`import bartons.plugin.indicators` needs a manual `sys.modules` hack that
@@ -37,9 +46,9 @@ The Python package and distribution are both `bartons`; the Rust module is impor
 just build       # maturin develop --release — optimized build, installed into .venv
 just build-debug # maturin develop — fast unoptimized build (~20x slower at runtime)
 just test        # pytest
-just bench vs-native # build optimized, then run scripts/benchmark-vs-native.py
-                     # (baselines: vs-native, vs-talib, vs-mintalib — bare
-                     #  `just bench` defaults to a script that no longer exists)
+just bench       # build optimized, then benchmark vs a baseline
+                 # (default vs-native; also vs-talib, vs-mintalib)
+just stubs       # regenerate python/bartons/plugin.pyi from the built module
 just clean       # remove Rust target/ and compiled .so files
 ```
 
@@ -74,8 +83,8 @@ downstream checker ignores it.
 
 See [docs/adding-an-indicator.md](docs/adding-an-indicator.md) for the full
 checklist (entry points, naming, conventions, tests). In short: add a Rust
-kernel + `#[polars_expr]` + `#[pyfunction]` in `bartons/src/indicators/<name>.rs`,
-declare it with `pub mod <name>;` in `bartons/src/indicators/mod.rs`, register the
+kernel + `#[polars_expr]` + `#[pyfunction]` in `bartons/src/kernels/<name>.rs`,
+declare it with `pub mod <name>;` in `bartons/src/kernels/mod.rs`, register the
 pyfunction in `bartons/src/lib.rs`, add the `<NAME>()` factory in
 `python/bartons/indicators/<name>.py` (re-exported from
 `python/bartons/indicators/__init__.py`), then mirror `tests/test_ema.py`.
@@ -83,7 +92,7 @@ EMA and SMA are the reference implementations.
 
 ## Key files
 
-- [bartons/src/indicators/ema.rs](bartons/src/indicators/ema.rs) — reference implementation: EmaKwargs, `calc_ema`, expression + pyfunction wrappers
+- [bartons/src/kernels/ema.rs](bartons/src/kernels/ema.rs) — reference implementation: the `ema` kernel, `EmaKwargs`, and the `ema_expr` / `ema_py` bindings
 - [python/bartons/indicators/ema.py](python/bartons/indicators/ema.py) — Python-side plugin registration; factories live in the `indicators` sub-package (`from bartons.indicators import EMA`)
 - [python/bartons/prelude.py](python/bartons/prelude.py) — shared factory machinery: `PLUGIN_PATH` and the `wrap_src_indicator` decorator (mirrors `bearta.prelude`)
 - [pyproject.toml](pyproject.toml) — Maturin config (module name, python-source, manifest-path)
@@ -94,7 +103,7 @@ EMA and SMA are the reference implementations.
 Open work is tracked in [BACKLOG.md](BACKLOG.md).
 
 - [docs/adding-an-indicator.md](docs/adding-an-indicator.md) — the end-to-end checklist
-- [docs/design-review.md](docs/design-review.md) — review of the `Filter` + driver core; items 1 and 2 resolved, item 3 in the backlog
+- [docs/design-review.md](docs/design-review.md) — review of the `Filter` + driver core; all three items resolved or deliberately declined
 - [docs/considered-alternatives.md](docs/considered-alternatives.md) — designs deliberately not taken
 - [docs/unified-run-driver.md](docs/unified-run-driver.md) — deferred proposal to collapse the two drivers into one; revisit when a fourth input arity appears
 - [docs/namespace-legacy.md](docs/namespace-legacy.md) — the retired `.bt` accessor: its code and why it went

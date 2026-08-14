@@ -45,14 +45,14 @@ impl Filter for AtrFilter {
     }
 }
 
-fn calc_atr(high: &Series, low: &Series, close: &Series, period: i64) -> PolarsResult<Series> {
+fn atr(high: &Series, low: &Series, close: &Series, period: i64) -> PolarsResult<Series> {
     let filter = AtrFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
     run_ternary(high, low, close, "atr", filter)
 }
 
 #[polars_expr(output_type = Float64)]
 fn atr_expr(inputs: &[Series], kwargs: AtrKwargs) -> PolarsResult<Series> {
-    calc_atr(&inputs[0], &inputs[1], &inputs[2], kwargs.period)
+    atr(&inputs[0], &inputs[1], &inputs[2], kwargs.period)
 }
 
 /// Average True Range (Wilder's).
@@ -66,12 +66,12 @@ fn atr_expr(inputs: &[Series], kwargs: AtrKwargs) -> PolarsResult<Series> {
 /// Returns:
 ///     A Float64 series; null during the warmup period.
 #[pyfunction]
-#[pyo3(signature = (high, low, close, *, period=14))]
-pub fn atr(high: PySeries, low: PySeries, close: PySeries, period: i64) -> PyResult<PySeries> {
+#[pyo3(name = "atr", signature = (high, low, close, *, period=14))]
+pub fn atr_py(high: PySeries, low: PySeries, close: PySeries, period: i64) -> PyResult<PySeries> {
     let high: Series = high.into();
     let low: Series = low.into();
     let close: Series = close.into();
 
-    let result = calc_atr(&high, &low, &close, period).map_err(PyPolarsErr::from)?;
+    let result = atr(&high, &low, &close, period).map_err(PyPolarsErr::from)?;
     Ok(PySeries(result))
 }

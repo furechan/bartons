@@ -70,14 +70,14 @@ impl Filter for RsiFilter {
     }
 }
 
-fn calc_rsi(series: &Series, period: i64) -> PolarsResult<Series> {
+fn rsi(series: &Series, period: i64) -> PolarsResult<Series> {
     let filter = RsiFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
     run_unary(series, "rsi", filter)
 }
 
 #[polars_expr(output_type = Float64)]
 fn rsi_expr(inputs: &[Series], kwargs: RsiKwargs) -> PolarsResult<Series> {
-    calc_rsi(&inputs[0], kwargs.period)
+    rsi(&inputs[0], kwargs.period)
 }
 
 /// Wilder's Relative Strength Index.
@@ -89,10 +89,10 @@ fn rsi_expr(inputs: &[Series], kwargs: RsiKwargs) -> PolarsResult<Series> {
 /// Returns:
 ///     A Float64 series in 0..=100; null during the warmup period.
 #[pyfunction]
-#[pyo3(signature = (series, *, period=14))]
-pub fn rsi(series: PySeries, period: i64) -> PyResult<PySeries> {
+#[pyo3(name = "rsi", signature = (series, *, period=14))]
+pub fn rsi_py(series: PySeries, period: i64) -> PyResult<PySeries> {
     let series: Series = series.into();
 
-    let result = calc_rsi(&series, period).map_err(PyPolarsErr::from)?;
+    let result = rsi(&series, period).map_err(PyPolarsErr::from)?;
     Ok(PySeries(result))
 }

@@ -5,30 +5,42 @@ implementation — copy it. This is the checklist; substitute `<name>` (lower,
 e.g. `sma`) and `<NAME>` (upper, e.g. `SMA`).
 
 The **scaffolding** (entry points, registration, wrappers, tests) is identical
-for every indicator. Only the **kernel math** (`calc_<name>`) is new.
+for every indicator. Only the **kernel math** (`<name>`) is new.
 
 ## Naming convention
 
-Three Rust symbols per indicator, by role:
+Three Rust symbols per indicator, by role. **The kernel owns the plain name — it
+is the computation; the two bindings are suffixed by the boundary they serve.**
 
 | Role | Rust symbol | Reached from Python as |
 |---|---|---|
-| compute kernel | `calc_<name>` | — (private) |
+| kernel — the vector calculation | `<name>` | — (private) |
 | expression plugin fn (FFI entry point) | `<name>_expr` | `<NAME>()` |
-| eager binding | `<name>` (pyfunction) | `bartons.plugin.<name>` |
+| eager binding | `<name>_py` | `bartons.plugin.<name>` |
 
-The `function_name="<name>_expr"` string in the Python wrappers **must match the
-Rust `<name>_expr` symbol exactly** — that's how polars resolves the plugin at
-load time. There is no compile-time check on it.
+A module is a *container*, not a synonym for one kernel: `linreg.rs` may define
+`linreg`, `slope` and `rvalue` side by side, each with its own bindings. So the
+kernel function is named for what it computes, never for its position — there is
+no bare `calc`.
+
+`<name>_py` keeps its Python name via `#[pyo3(name = "<name>")]`, so the exported
+surface is unchanged; the suffix exists only to leave the plain name free for the
+kernel. Two of the three names are externally constrained and cannot be chosen
+freely: `function_name="<name>_expr"` in the Python wrapper **must match the Rust
+`<name>_expr` symbol exactly** (that is how polars resolves the plugin at load
+time — there is no compile-time check), and the `#[pyo3(name = …)]` string is
+what Python sees. Only the kernel name is free.
 
 ## Steps
 
-### 1. Rust kernel — `bartons/src/indicators/<name>.rs`
+### 1. Rust kernel — `bartons/src/kernels/<name>.rs`
 
-Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It contains all three symbols.
+Copy [bartons/src/kernels/ema.rs](../bartons/src/kernels/ema.rs). It contains all three symbols.
 
 - **Kwargs struct** — `#[derive(Deserialize)] pub struct <NAME>Kwargs { period: i64, … }`.
-- **Kernel** `fn calc_<name>(series: &Series, …) -> PolarsResult<Series>`:
+- **Kernel** `fn <name>(series: &Series, …) -> PolarsResult<Series>` — series in,
+  series out. The `Filter` + driver loop is one way to implement it, not part of
+  the definition; a kernel may equally be a plain loop or a vectorized expression:
   - `let series = series.cast(&DataType::Float64)?;` then `let ca = series.f64()?;`
     (the cast accepts int/f32 input; `f64()?` then can't fail).
   - Validate args (`period <= 0` → `PolarsError::InvalidOperation`, which
@@ -39,7 +51,7 @@ Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It conta
   ```rust
   #[polars_expr(output_type = Float64)]
   fn <name>_expr(inputs: &[Series], kwargs: <NAME>Kwargs) -> PolarsResult<Series> {
-      calc_<name>(&inputs[0], kwargs.period)
+      <name>(&inputs[0], kwargs.period)
   }
   ```
   `output_type` must be declared (polars needs the dtype at plan time).
@@ -56,10 +68,10 @@ Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It conta
   /// Returns:
   ///     A Float64 series; null during the warmup period.
   #[pyfunction]
-  #[pyo3(signature = (series, *, period=20))]
-  pub fn <name>(series: PySeries, period: i64) -> PyResult<PySeries> {
+  #[pyo3(name = "<name>", signature = (series, *, period=20))]
+  pub fn <name>_py(series: PySeries, period: i64) -> PyResult<PySeries> {
       let series: Series = series.into();
-      let result = calc_<name>(&series, period).map_err(PyPolarsErr::from)?;
+      let result = <name>(&series, period).map_err(PyPolarsErr::from)?;
       Ok(PySeries(result))
   }
   ```
@@ -68,10 +80,10 @@ Copy [bartons/src/indicators/ema.rs](../bartons/src/indicators/ema.rs). It conta
 
 ### 2. Register
 
-- In `bartons/src/indicators/mod.rs`, add `pub mod <name>;` alongside the other
+- In `bartons/src/kernels/mod.rs`, add `pub mod <name>;` alongside the other
   kernel modules.
 - In `bartons/src/lib.rs`, add
-  `m.add_function(wrap_pyfunction!(indicators::<name>::<name>, m)?)?;` in the
+  `m.add_function(wrap_pyfunction!(kernels::<name>::<name>_py, m)?)?;` in the
   `#[pymodule]`.
 - **Do not** register `<name>_expr` — the polars plugin machinery finds it by
   symbol; adding it to the module is wrong.

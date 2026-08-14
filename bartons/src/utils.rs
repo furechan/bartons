@@ -48,7 +48,7 @@ pub(crate) fn check_lengths(inputs: &[&Series]) -> PolarsResult<usize> {
 ///
 /// Named by arity because the drivers here are: nothing in this module assumes
 /// what the three series mean. The indicator layer aliases it to
-/// `indicators::Hlc`, which is what the kernels that consume it actually say.
+/// `kernels::Hlc`, which is what the kernels that consume it actually say.
 pub(crate) type Triple = (Option<f64>, Option<f64>, Option<f64>);
 
 /// A streaming filter: fed one [`Self::Input`] at a time, emitting one

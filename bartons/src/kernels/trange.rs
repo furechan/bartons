@@ -45,13 +45,13 @@ impl Filter for TrangeFilter {
     }
 }
 
-fn calc_trange(high: &Series, low: &Series, close: &Series) -> PolarsResult<Series> {
+fn trange(high: &Series, low: &Series, close: &Series) -> PolarsResult<Series> {
     run_ternary(high, low, close, "trange", TrangeFilter::new())
 }
 
 #[polars_expr(output_type = Float64)]
 fn trange_expr(inputs: &[Series]) -> PolarsResult<Series> {
-    calc_trange(&inputs[0], &inputs[1], &inputs[2])
+    trange(&inputs[0], &inputs[1], &inputs[2])
 }
 
 /// True Range over high / low / close.
@@ -64,12 +64,12 @@ fn trange_expr(inputs: &[Series]) -> PolarsResult<Series> {
 /// Returns:
 ///     A Float64 series; the first row is null (no prior close).
 #[pyfunction]
-#[pyo3(signature = (high, low, close))]
-pub fn trange(high: PySeries, low: PySeries, close: PySeries) -> PyResult<PySeries> {
+#[pyo3(name = "trange", signature = (high, low, close))]
+pub fn trange_py(high: PySeries, low: PySeries, close: PySeries) -> PyResult<PySeries> {
     let high: Series = high.into();
     let low: Series = low.into();
     let close: Series = close.into();
 
-    let result = calc_trange(&high, &low, &close).map_err(PyPolarsErr::from)?;
+    let result = trange(&high, &low, &close).map_err(PyPolarsErr::from)?;
     Ok(PySeries(result))
 }

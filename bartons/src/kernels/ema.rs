@@ -59,14 +59,14 @@ impl Filter for EmaFilter {
     }
 }
 
-fn calc_ema(series: &Series, period: i64) -> PolarsResult<Series> {
+fn ema(series: &Series, period: i64) -> PolarsResult<Series> {
     let filter = EmaFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
     run_unary(series, "ema", filter)
 }
 
 #[polars_expr(output_type = Float64)]
 fn ema_expr(inputs: &[Series], kwargs: EmaKwargs) -> PolarsResult<Series> {
-    calc_ema(&inputs[0], kwargs.period)
+    ema(&inputs[0], kwargs.period)
 }
 
 /// Exponential moving average.
@@ -78,10 +78,10 @@ fn ema_expr(inputs: &[Series], kwargs: EmaKwargs) -> PolarsResult<Series> {
 /// Returns:
 ///     A Float64 series; null during the warmup period.
 #[pyfunction]
-#[pyo3(signature = (series, *, period=20))]
-pub fn ema(series: PySeries, period: i64) -> PyResult<PySeries> {
+#[pyo3(name = "ema", signature = (series, *, period=20))]
+pub fn ema_py(series: PySeries, period: i64) -> PyResult<PySeries> {
     let series: Series = series.into();
 
-    let result = calc_ema(&series, period).map_err(PyPolarsErr::from)?;
+    let result = ema(&series, period).map_err(PyPolarsErr::from)?;
     Ok(PySeries(result))
 }

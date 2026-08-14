@@ -66,14 +66,14 @@ impl Filter for RmaFilter {
     }
 }
 
-fn calc_rma(series: &Series, period: i64) -> PolarsResult<Series> {
+fn rma(series: &Series, period: i64) -> PolarsResult<Series> {
     let filter = RmaFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
     run_unary(series, "rma", filter)
 }
 
 #[polars_expr(output_type = Float64)]
 fn rma_expr(inputs: &[Series], kwargs: RmaKwargs) -> PolarsResult<Series> {
-    calc_rma(&inputs[0], kwargs.period)
+    rma(&inputs[0], kwargs.period)
 }
 
 /// Wilder's running moving average (SMMA / Wilder smoothing).
@@ -85,10 +85,10 @@ fn rma_expr(inputs: &[Series], kwargs: RmaKwargs) -> PolarsResult<Series> {
 /// Returns:
 ///     A Float64 series; null during the warmup period.
 #[pyfunction]
-#[pyo3(signature = (series, *, period=20))]
-pub fn rma(series: PySeries, period: i64) -> PyResult<PySeries> {
+#[pyo3(name = "rma", signature = (series, *, period=20))]
+pub fn rma_py(series: PySeries, period: i64) -> PyResult<PySeries> {
     let series: Series = series.into();
 
-    let result = calc_rma(&series, period).map_err(PyPolarsErr::from)?;
+    let result = rma(&series, period).map_err(PyPolarsErr::from)?;
     Ok(PySeries(result))
 }

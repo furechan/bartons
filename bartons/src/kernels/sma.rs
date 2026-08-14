@@ -65,14 +65,14 @@ impl Filter for SmaFilter {
     }
 }
 
-fn calc_sma(series: &Series, period: i64) -> PolarsResult<Series> {
+fn sma(series: &Series, period: i64) -> PolarsResult<Series> {
     let filter = SmaFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
     run_unary(series, "sma", filter)
 }
 
 #[polars_expr(output_type = Float64)]
 fn sma_expr(inputs: &[Series], kwargs: SmaKwargs) -> PolarsResult<Series> {
-    calc_sma(&inputs[0], kwargs.period)
+    sma(&inputs[0], kwargs.period)
 }
 
 /// Simple moving average.
@@ -84,10 +84,10 @@ fn sma_expr(inputs: &[Series], kwargs: SmaKwargs) -> PolarsResult<Series> {
 /// Returns:
 ///     A Float64 series; null during the warmup period.
 #[pyfunction]
-#[pyo3(signature = (series, *, period=20))]
-pub fn sma(series: PySeries, period: i64) -> PyResult<PySeries> {
+#[pyo3(name = "sma", signature = (series, *, period=20))]
+pub fn sma_py(series: PySeries, period: i64) -> PyResult<PySeries> {
     let series: Series = series.into();
 
-    let result = calc_sma(&series, period).map_err(PyPolarsErr::from)?;
+    let result = sma(&series, period).map_err(PyPolarsErr::from)?;
     Ok(PySeries(result))
 }

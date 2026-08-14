@@ -125,7 +125,7 @@ point into generated code, and the driver stops being a documentable function
 with a signature.
 
 **Typed arrays (`&Float64Chunked`) as the driver's input** instead of `&Series`.
-Simplifies the trait, but relocates the cast into all seven `calc_*` kernels
+Simplifies the trait, but relocates the cast into all seven kernels
 rather than removing it — the same call-site repetition, moved — and scatters a
 documented, tested behavior (`test_integer_input_is_cast`) across seven places
 where it can drift. Going further to `&[f64]` would need rechunking and lose the

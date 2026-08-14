@@ -26,7 +26,7 @@ Each figure is the mean over 20 runs, repeated 7 times.
 
 ## Likely causes of the bartons gap
 
-1. Element-by-element iteration in `calc_ema` (`into_iter()`) — no SIMD, no chunked parallelism
+1. Element-by-element iteration in the EMA kernel (`into_iter()`, since moved into `run_unary`) — no SIMD, no chunked parallelism
 2. Separate validity bitmap construction + `from_vec_validity` call adds an extra allocation pass over the output buffer
 
 ## Algorithmic differences

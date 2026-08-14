@@ -2,6 +2,21 @@
 
 ## 0.1.0
 
+- Rename the Rust source module `bartons/src/indicators/` to `bartons/src/kernels/`,
+  and give each file's three symbols names that say what they are: the **kernel**
+  takes the plain name (`ema`), and the two bindings are suffixed by the boundary
+  they serve (`ema_expr` for the polars FFI, `ema_py` for the eager one, which
+  keeps its Python name via `#[pyo3(name = "ema")]`). The `calc_` prefix is gone —
+  it existed to dodge Python's flat namespace, and Rust modules make it redundant.
+  The kernel is the vector calculation, series in and series out; the `Filter`
+  loop is one way to implement it, not part of the definition.
+  **No Python-visible change**: `bartons.plugin.<name>`, `__all__`, signatures and
+  docstrings are all byte-identical, and the generated stub regenerates unchanged.
+  The rename records a layer distinction that had been left implicit — Rust holds
+  materialized primitives, Python composes indicators on top of them. The two sets
+  coincide today only by accident; a composite like BBANDS (`SMA ± k·std`) belongs
+  in Python with no Rust counterpart, and the directory names now make that
+  divergence read as intended rather than as drift.
 - Ship type stubs for the compiled extension: `python/bartons/plugin.pyi`, plus
   the PEP 561 `python/bartons/py.typed` marker without which a *consumer's* type
   checker ignores them. `uv run ty check` now passes clean, down from 1394
