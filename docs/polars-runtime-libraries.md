@@ -48,7 +48,7 @@ Overrides: `POLARS_FORCE_PKG=64|32|compat` forces one; `POLARS_PREFER_PKG=...` m
 
 ## What this means for a compiled plugin
 
-A plugin links its **own** static copy of the polars crate; it does not link any `polars-runtime-*` library (see [`cargo-version-pins.md`](cargo-version-pins.md)). Compatibility with a given runtime is therefore a *source-level* match, invisible to the linker and only coarsely checked at runtime:
+A plugin links its **own** static copy of polars-rs; it does not link any `polars-runtime-*` library (see [`cargo-version-pins.md`](cargo-version-pins.md)). Compatibility with a given runtime is therefore a *source-level* match, invisible to the linker and only coarsely checked at runtime:
 
 - **runtime-32** — a default-built plugin (no `bigidx`) matches: same crate version, same `IdxSize = u32`.
 - **runtime-64** — `bigidx` flips `IdxSize` `u32→u64`. The FFI boundary structs (`SeriesExport`, `CallerContext`) contain **no `IdxSize`** (verified — they are Arrow-C pointers), so the boundary itself is bigidx-agnostic and a default plugin still loads and exchanges Arrow data safely. The only divergence is **index-typed columns** (`IDX_DTYPE`: `UInt32` vs `UInt64`). A plugin that never produces/consumes index columns (e.g. bartons' numeric `Float64` indicators) works on runtime-64 in practice; one that does would mismatch the engine's `IDX_DTYPE`.

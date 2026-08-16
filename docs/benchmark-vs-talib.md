@@ -4,7 +4,7 @@
 **N:** 10,000 values  
 **Period:** 20  
 **Platform:** macOS Darwin 25.0.0  
-**Python polars:** 1.30.0
+**polars-py:** 1.30.0
 
 ## Results
 

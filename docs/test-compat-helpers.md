@@ -1,6 +1,6 @@
 # Test compatibility helpers
 
-The plugin is built once (against polars crate 0.54.4 → polars 1.42) and is
+The plugin is built once (against polars-rs 0.54.4 → polars-py 1.42) and is
 verified to run on **every stable polars in `[1.28, 1.43)`** via the nox `compat`
 matrix in [noxfile.py](../noxfile.py). To make the *same* test suite run
 unchanged across that whole range, one small test-only shim exists. It is not a

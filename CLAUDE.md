@@ -109,8 +109,14 @@ Open work is tracked in [BACKLOG.md](BACKLOG.md).
 - [docs/namespace-legacy.md](docs/namespace-legacy.md) — the retired `.bt` accessor: its code and why it went
 - [docs/benchmark-vs-talib.md](docs/benchmark-vs-talib.md) — recorded EMA benchmark vs polars_talib and native `ewm_mean` (2026-04-25)
 
-Version/compatibility mechanics live in
-[docs/cargo-version-pins.md](docs/cargo-version-pins.md),
+**Two artifacts are both called "polars"**, on unrelated version schemes, so a
+bare "polars 0.54" is ambiguous. These docs say **polars-rs** for the Rust crate
+(`0.5x`, `bartons/Cargo.toml`, compiled into the `.so`) and **polars-py** for the
+Python package (`1.4x`, `[project].dependencies`, resolved into the venv) —
+borrowed from upstream's own `rs-*` / `py-*` release tags. Defined in the Naming
+section of [docs/cargo-version-pins.md](docs/cargo-version-pins.md).
+
+Version/compatibility mechanics live in that doc plus
 [docs/polars-ffi-version-table.md](docs/polars-ffi-version-table.md),
 [docs/polars-ffi-version-guard.md](docs/polars-ffi-version-guard.md),
 [docs/polars-runtime-libraries.md](docs/polars-runtime-libraries.md) and

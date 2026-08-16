@@ -192,7 +192,7 @@ build is ~20x slower and misleading.
 - **Warmup**: emit `null` until enough values are accumulated (`count >= period`).
 - **NaN** is used only as the kernel's "unseeded" marker, never as a stand-in for
   a null input (nulls come through the `Option` from `ca.iter()`).
-- **Single polars cap**: the `polars >=x,<y` window lives only in
+- **Single polars-py range**: the `polars >=x,<y` range lives only in
   `[project].dependencies` — see [cargo-version-pins.md](cargo-version-pins.md).
 - **Release builds**: `just build` is release; only `just build-debug` is the slow
   debug build. Benchmark with `just bench`.

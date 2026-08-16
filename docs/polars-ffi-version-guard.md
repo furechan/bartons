@@ -2,7 +2,7 @@
 
 What the runtime guard between a `pyo3-polars` plugin and the host polars actually does, where its code lives, and when it was introduced. The version *numbers* it operates on are tabulated in [`polars-ffi-version-table.md`](polars-ffi-version-table.md).
 
-Everything below is read from source: `pyo3-polars` / `polars-ffi` crates (crates.io) and the `pola-rs/polars` monorepo (the host check is compiled into the Python `polars` package's native binary, not shipped as Python).
+Everything below is read from source: `pyo3-polars` / `polars-ffi` crates (crates.io) and the `pola-rs/polars` monorepo (the host check is compiled into polars-py's native binary, not shipped as Python).
 
 ## What the guard is
 
@@ -31,7 +31,7 @@ Three crates contribute to the exported `.so`:
 
 ## Host side — where the check runs
 
-Compiled into the Python `polars` package; source in the monorepo at:
+Compiled into polars-py; source in the monorepo at:
 
 `crates/polars-plan/src/plans/aexpr/function_expr/plugin.rs`
 
@@ -67,7 +67,7 @@ It catches one specific divergence (the binary/string "views" layout) and is dea
 ### What the guard does and does not check
 
 - **Checks**: the FFI `(major, minor)` handshake only.
-- **Does not check**: the polars package version, the Rust crate version, or (on the `minor == 1` path) any struct layout. The handshake passing means only that the FFI generation is recognised, not that the two sides' `Series`/`SeriesExport`/Arrow layouts match.
+- **Does not check**: the polars-py version, the polars-rs version, or (on the `minor == 1` path) any struct layout. The handshake passing means only that the FFI generation is recognised, not that the two sides' `Series`/`SeriesExport`/Arrow layouts match.
 
 ## When it was introduced
 

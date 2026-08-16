@@ -2,6 +2,18 @@
 
 ## 0.1.0
 
+- Raise the stable-ABI floor from `abi3-py38` to `abi3-py311`; the wheel tag goes
+  from `cp38-abi3` to `cp311-abi3`. `requires-python` is already `>=3.11` and the
+  nox matrix only runs 3.11, so the old floor advertised three Python minors that
+  were neither installable nor tested. Nothing measurable is given up: `abi3`
+  cannot reach the compute path, since `#[polars_expr]` compiles to a
+  `#[no_mangle] extern "C"` symbol polars calls directly over the Arrow C
+  interface — never through pyo3 — and the eager `plugin.<name>` path crosses pyo3
+  once per call to marshal a Series, not once per element. The gain is headroom:
+  pyo3 gates ~98 call sites on `Py_3_10` and ~33 on `Py_3_11`, now available if
+  wanted. Verified across `rt32`, `rt64`, and `compat` at both ends of the
+  supported polars range (1.28.0 and 1.42.0), each installing a freshly built
+  wheel.
 - Rename the Rust source module `bartons/src/indicators/` to `bartons/src/kernels/`,
   and give each file's three symbols names that say what they are: the **kernel**
   takes the plain name (`ema`), and the two bindings are suffixed by the boundary

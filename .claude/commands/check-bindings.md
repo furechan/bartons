@@ -3,9 +3,11 @@ description: Review the pyo3-polars version lock-in across the Rust and Python s
 allowed-tools: Read, Bash, Grep, Glob
 ---
 
-You are auditing the **version lock-in** that keeps this native polars plugin (Rust, built with `pyo3-polars`) ABI-compatible with the polars-Python it runs against. This is a **read-only review** — do not edit any files. Gather the facts, lay them out, flag problems, then discuss next steps with the user.
+You are auditing the **version lock-in** that keeps this native polars plugin (Rust, built with `pyo3-polars`) ABI-compatible with the polars-py it runs against. This is a **read-only review** — do not edit any files. Gather the facts, lay them out, flag problems, then discuss next steps with the user.
 
-Background on *why* this coupling exists and how the version window is derived: read [docs/cargo-version-pins.md](../../docs/cargo-version-pins.md) and [docs/polars-ffi-version-guard.md](../../docs/polars-ffi-version-guard.md) first.
+Background on *why* this coupling exists and how the version range is derived: read [docs/cargo-version-pins.md](../../docs/cargo-version-pins.md) and [docs/polars-ffi-version-guard.md](../../docs/polars-ffi-version-guard.md) first.
+
+**Terminology.** Two artifacts are both called "polars", on unrelated version schemes. Use **polars-rs** for the Rust crate (`0.5x`, `bartons/Cargo.toml`, compiled into the `.so`) and **polars-py** for the Python package (`1.4x`, `[project].dependencies`, resolved into the venv) — never a bare "polars <version>", which is ambiguous. See the Naming section of cargo-version-pins.md.
 
 ## Where the settings live — gather all of these
 
@@ -15,17 +17,17 @@ Background on *why* this coupling exists and how the version window is derived: 
 - `polars` — version
 - `polars-arrow` — version
 
-**Rust side — resolved:** read the actual resolved `polars` crate version from `bartons/Cargo.lock` (`grep -A1 '^name = "polars"' bartons/Cargo.lock`). The `Cargo.toml` range is the *request*; the lockfile is what was *built*.
+**Rust side — resolved:** read the actual resolved polars-rs version from `bartons/Cargo.lock` (`grep -A1 '^name = "polars"' bartons/Cargo.lock`). The `Cargo.toml` range is the *request*; the lockfile is what was *built*.
 
 **Python side — [pyproject.toml](../../pyproject.toml):**
 - `[build-system] requires` — any `polars` / `maturin` bound
 - `[project] requires-python`
-- `[project] dependencies` — **is there an enforced `polars >=x,<y` cap here?** This is the *single* install-time gate the lockstep note argues for; note explicitly if it is missing.
-- `[build-system] requires` — should **not** carry a polars bound (maturin doesn't need polars-Python to build); flag it as redundant if present.
-- `[dependency-groups] dev` — should **not** pin/list polars; it is pulled in transitively under the `[project].dependencies` cap. Flag a redundant entry here.
+- `[project] dependencies` — **is there an enforced `polars >=x,<y` range here?** This is the *single* install-time gate the lockstep note argues for; note explicitly if it is missing.
+- `[build-system] requires` — should **not** carry a polars bound (maturin doesn't need polars-py to build); flag it as redundant if present.
+- `[dependency-groups] dev` — should **not** pin/list polars; it is pulled in transitively under the `[project].dependencies` range. Flag a redundant entry here.
 - `[tool.maturin]` — `module-name`, `manifest-path` (for orientation)
 
-**Installed runtime:** the polars-Python actually in the venv: `.venv/bin/python -c "import polars; print(polars.__version__)"`.
+**Installed runtime:** the polars-py actually in the venv: `.venv/bin/python -c "import polars; print(polars.__version__)"`.
 
 **Anything else:** `grep -rEn --exclude-dir=target --exclude-dir=.venv --exclude-dir=.git '^[+-]?\s*polars(-arrow)?\s*=' .` to catch stray references.
 
@@ -33,13 +35,13 @@ Background on *why* this coupling exists and how the version window is derived: 
 
 1. **polars vs polars-arrow** in Cargo.toml must be the same version.
 2. **Cargo.toml `polars` request vs Cargo.lock resolved** — are they consistent?
-3. **Rust crate ↔ installed polars-Python.** Map the resolved Rust `polars` crate version to the polars-Python version family it pairs with (use the tables in the two docs as a prior; the crate and Python package use *different* numbering — crate `0.5x` vs package `1.4x`). Flag loudly if the plugin is compiled against a crate that does **not** match the installed polars-Python — that is a latent load/handshake failure or silent-corruption risk.
-4. **The install cap — declared exactly once.** The `polars >=x,<y` cap belongs in `[project].dependencies` and **only there** (polars is a real runtime dependency of the plugin). If it is missing, the coupling is *de facto* (works) but not *enforced* — nothing stops a bad polars from being installed; call this out. Conversely, a polars bound in `[build-system].requires` or a polars entry in `[dependency-groups].dev` is **redundant duplication** that can drift out of sync — flag it for removal.
+3. **polars-rs ↔ installed polars-py.** Map the resolved polars-rs version to the polars-py version family it pairs with (use the tables in the two docs as a prior; the two use *different* numbering — polars-rs `0.5x` vs polars-py `1.4x`). Flag loudly if the plugin is compiled against a polars-rs that does **not** match the installed polars-py — that is a latent load/handshake failure or silent-corruption risk.
+4. **The polars-py range — declared exactly once.** The `polars >=x,<y` range belongs in `[project].dependencies` and **only there** (polars is a real runtime dependency of the plugin). If it is missing, the coupling is *de facto* (works) but not *enforced* — nothing stops a bad polars from being installed; call this out. Conversely, a polars bound in `[build-system].requires` or a polars entry in `[dependency-groups].dev` is **redundant duplication** that can drift out of sync — flag it for removal.
 5. **pyo3 ↔ pyo3-polars.** pyo3-polars caret-pins a pyo3 range (its second lockstep axis — see [docs/cargo-version-pins.md](../../docs/cargo-version-pins.md), "The single dial: pick `pyo3-polars` first"; the dial is pyo3-polars, and pyo3 is read off it rather than chosen). Confirm the `pyo3` pin falls inside the range the installed pyo3-polars requires (read its `pyo3` `req` from `curl -s -H "User-Agent: bartons-bindings" https://crates.io/api/v1/crates/pyo3-polars/<ver>/dependencies`). Confirm `Cargo.lock` has **exactly one** pyo3 version (`grep -E '^name = "pyo3"$' -A1 bartons/Cargo.lock`) — two pyo3 copies mean a broken `extension-module` build.
 6. **pyo3 abi3 floor vs requires-python** — sanity only.
 
 ## Output
 
-Present a compact table: **setting → file → declared value → resolved/effective value**, grouped Rust side then Python side. Below it, a short findings list: each inconsistency or gap with its severity (mismatch = high, missing cap = medium, cosmetic = low).
+Present a compact table: **setting → file → declared value → resolved/effective value**, grouped Rust side then Python side. Below it, a short findings list: each inconsistency or gap with its severity (mismatch = high, missing range = medium, cosmetic = low).
 
 Do **not** change anything. End by summarizing the situation in one or two sentences and asking the user how they want to proceed — e.g. run `/upgrade-bindings` to realign on the latest compatible set, or pin a specific target.
