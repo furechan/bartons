@@ -153,7 +153,6 @@ name = "bartons"
 version = "0.1.0"
 dependencies = [
  "itertools",
- "num-traits",
  "polars",
  "polars-arrow",
  "pyo3",
