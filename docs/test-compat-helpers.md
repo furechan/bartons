@@ -1,26 +1,52 @@
 # Test compatibility helpers
 
-The plugin is built once (against polars-rs 0.54.4 → polars-py 1.42) and is
-verified to run on **every stable polars in `[1.28, 1.43)`** via the nox `compat`
-matrix in [noxfile.py](../noxfile.py). To make the *same* test suite run
-unchanged across that whole range, one small test-only shim exists. It is not a
-hack — it is what keeps old-engine coverage possible. Do not delete it unless the
-supported floor is raised to a polars new enough to make it moot.
+The plugin is built once (against polars-rs 0.55.2) and is
+verified to run on **every stable polars-py in `[1.28, 1.44)`** via the nox
+`compat` matrix in [noxfile.py](../noxfile.py). To make the *same* test suite
+run unchanged across that whole range, one small test-only shim exists. It is not
+a hack — it is what keeps old-engine coverage possible. Do not delete it unless
+the supported floor is raised to a polars new enough to make it moot.
 
-> The floor is **1.28** because the eager `bartons.plugin.<name>` pyfunctions
-> marshal a Series into Rust via `PySeries._export`, which polars only exposes
-> from 1.28; on older engines they raise `AttributeError: 'PySeries' object has
-> no attribute '_export'`. The package declares `polars>=1.28` for the same
-> reason (see [pyproject.toml](../pyproject.toml)). The expression path (`EMA()`)
-> needs no `_export` and would work lower, but 1.28 is where the
-> whole public API is usable.
+## Raising the ceiling
+
+The ceiling is a **record of what the matrix has verified**, not a prediction — so
+it goes stale as polars releases. Keep it current with:
+
+```sh
+just raise-ceiling
+```
+
+That looks up the newest polars-py, adds it to `COMPAT_VERSIONS`, runs the
+`compat` session against it, and **only if that passes** moves the ceiling to the
+next minor — then upgrades the dev env to match (`uv lock --upgrade-package
+polars`, `uv sync`) and re-runs the suite. It changes nothing on failure, and
+never commits.
+
+Note the order: the compat session runs **before** the ceiling moves, deliberately.
+`uv pip install polars==<new>` inside the session does not enforce the installed
+wheel's `Requires-Dist`, so the matrix can probe a version the declared range does
+not yet admit — which is what lets you verify before declaring rather than after.
+
+Widening the ceiling to `<2.0` on the assumption that polars will not break the
+plugin within `1.x` was considered and rejected: `PySeries._export` — private API
+the eager path depends on — first appeared at polars-py `1.28`, a *minor*, which
+is precisely why the floor is not `1.0`. Semver does not cover underscore-prefixed
+API, so the surface that matters here has already moved inside `1.x` once.
 
 ## The everyday dev env runs the newest engine
 
-The dev lockfile resolves polars to **1.42.x** (the engine the plugin is built
-against), so `just test` exercises the full suite with **zero skips**. The shim
-below only changes behaviour on the *older* engines that the `compat` session
-installs — it is inert on 1.42.
+The dev lockfile resolves polars-py to the **newest supported** release, so
+`just test` exercises the full suite with **zero skips** against the same engine
+the ceiling admits. `just raise-ceiling` keeps it that way: after the compat run
+passes and the ceiling moves, it runs `uv lock --upgrade-package polars` and
+`uv sync`, then re-runs the suite. Without that the newly-admitted version would
+be tested once in a throwaway nox venv and never again. The shim below only
+changes behaviour on the *older* engines the `compat` session installs.
+
+Note this is **not** the engine the plugin is built against. The plugin links
+polars-rs `0.55.2`, and no released polars-py ships that yet — every `1.43.x`
+still resolves to `0.54.4`. So even the everyday dev run is a cross-crate test
+over the stable FFI boundary, which is the guarantee the pins exist to provide.
 
 ## `tests/helpers.py` — portable `assert_series_equal`
 

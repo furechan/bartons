@@ -19,10 +19,11 @@ classifiers = [
 ]
 dependencies = [
     # Supported polars-py range, verified by the noxfile `compat` matrix: the plugin
-    # (built against crate 0.54.4) runs correctly on every polars engine in this range via
+    # (built against polars-rs 0.55.2) runs correctly on every engine in this range via
     # the stable FFI (0,1) + Arrow C boundary. See docs/polars-ffi-version-table.md and
-    # docs/polars-ffi-version-guard.md. (The ceiling is the current test boundary, not a hard
-    # ABI limit — extend as newer polars is verified.)
+    # docs/polars-ffi-version-guard.md. The ceiling is the current test boundary, not a
+    # hard ABI limit — raise it with `just raise-ceiling`, which tests the newest
+    # polars-py and only moves the number if it passes.
     #
     # The floor is 1.28, not 1.0: the eager `bartons.plugin.<name>` pyfunctions marshal a
     # Series into Rust via pyo3-polars 0.27, which calls the private `PySeries._export` —
@@ -30,8 +31,8 @@ dependencies = [
     # `AttributeError: 'PySeries' object has no attribute '_export'`. The expression path
     # (`EMA()`) needs no `_export` and would work on older polars, but the
     # package floors at 1.28 so its whole public API is usable; the `compat` matrix tests
-    # `[1.28, 1.43)`. See docs/test-compat-helpers.md.
-    "polars>=1.28,<1.43",
+    # `[1.28, 1.44)`. See docs/test-compat-helpers.md.
+    "polars>=1.28,<1.44",
 ]
 
 [dependency-groups]

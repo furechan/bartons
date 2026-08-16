@@ -49,6 +49,7 @@ just test        # pytest
 just bench       # build optimized, then benchmark vs a baseline
                  # (default vs-native; also vs-talib, vs-mintalib)
 just stubs       # regenerate python/bartons/plugin.pyi from the built module
+just raise-ceiling # test the newest polars-py; raise the pyproject ceiling if it passes
 just clean       # remove Rust target/ and compiled .so files
 ```
 

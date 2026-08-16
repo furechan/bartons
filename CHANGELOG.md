@@ -2,6 +2,28 @@
 
 ## 0.1.0
 
+- Upgrade the binding pins. Turning the single dial to `pyo3-polars 0.28` sets the rest: polars-rs and
+  polars-arrow `0.55.1` (resolving `0.55.2`) and pyo3 `0.29` (resolving `0.29.2`).
+  The polars-rs minor jump needed **no kernel changes** — no API we use moved.
+  The FFI handshake is unchanged at `(0, 1)`, verified by reading the constants
+  out of `polars-ffi 0.55.2`, so the ABI story is intact; the version table is
+  extended accordingly.
+- Widen the polars-py range to `>=1.28,<1.44`, and add `just raise-ceiling` to
+  keep it there. The ceiling had gone three releases stale: polars-py `1.43.0`
+  through `1.43.2` all resolve to polars-rs `0.54.4`, the same engine crate as
+  `1.42.x`, so `<1.43` was excluding releases on an engine the matrix already
+  covered. `1.43.2` joins `COMPAT_VERSIONS`, and `rt64` moves to
+  `polars[rt64]>=1.43,<1.44`. The new recipe
+  ([scripts/raise-ceiling.py](scripts/raise-ceiling.py)) looks up the newest
+  polars-py, adds it to the matrix, runs `compat` against it, moves the ceiling
+  **only if that passes** — rolling back on failure so the declared range never
+  claims more than was tested — then upgrades the dev env to match
+  (`uv lock --upgrade-package polars`, `uv sync`) and re-runs the suite, so the
+  newly-admitted version is what daily work actually exercises rather than being
+  tested once in a throwaway venv. The dev lockfile therefore moves to 1.43.2. Widening to `<2.0` on semver faith was considered
+  and rejected: `PySeries._export`, the private API the eager path rides on, first
+  appeared at polars-py `1.28` — a minor — which is why the floor is not `1.0`.
+  All 11 nox sessions pass, spanning 1.28.0–1.43.2 plus both runtime engines.
 - Raise the stable-ABI floor from `abi3-py38` to `abi3-py311`; the wheel tag goes
   from `cp38-abi3` to `cp311-abi3`. `requires-python` is already `>=3.11` and the
   nox matrix only runs 3.11, so the old floor advertised three Python minors that

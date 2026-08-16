@@ -39,7 +39,7 @@ Use these sources (all structured; prefer `gh`/`curl` + parse). **crates.io reje
 3. **Latest (or `$1` target) polars-py** — `curl -s https://pypi.org/pypi/polars/json | python -c "import sys,json;print(json.load(sys.stdin)['info']['version'])"`.
 4. **polars-py tag → polars-rs** — the `pola-rs/polars` monorepo dual-tags `py-*` and `rs-*`; the `[workspace.package] version` at a `py-` tag *is* the polars-rs version:
    `gh api -H "Accept: application/vnd.github.raw" "repos/pola-rs/polars/contents/Cargo.toml?ref=py-<X.Y.Z>"` then grep the workspace `version`.
-   Walk a few adjacent `py-` minors to find the **contiguous run** on the same polars-rs — that run is your install range `>=floor,<ceiling` (remember: PEP 440 — set the ceiling to `< next_minor`, never `<= this_minor`).
+   Walk a few adjacent `py-` minors to find the **contiguous run** on the same polars-rs — that run tells you which polars-py versions share the engine you are building against, which is what the matrix should cover. The ceiling itself is set by `just raise-ceiling` (step 6), not derived here.
 5. **`pyo3` — driven by pyo3-polars, NOT latest.** Read the chosen pyo3-polars's `pyo3` `req` from the same `/dependencies` JSON (e.g. 0.27 → `pyo3 ^0.28`). Pin pyo3 to satisfy *that* req — the latest pyo3 is often **ahead** of it (latest was `0.29` while 0.27 capped at `^0.28`). Do not take latest pyo3 blindly: the `extension-module` feature allows **exactly one pyo3 in the build tree**, so a pin that disagrees with pyo3-polars's pulls in two pyo3 copies and the build fails hard. Keep the existing `extension-module` + `abi3-py*` features.
 
 Sanity-check that the pieces agree: the polars-rs version the chosen pyo3-polars depends on should match the one the target polars-py tag resolves to. If they diverge, prefer the pyo3-polars-compatible polars-rs and pick the polars-py window that maps to it — explain the choice.
@@ -60,7 +60,7 @@ Present a clear before → after table for every changed pin across both files:
 
 Rationale: one range = one place to update and no chance of the three drifting out of sync. (See [docs/cargo-version-pins.md](../../docs/cargo-version-pins.md), "The single dial: pick `pyo3-polars` first".)
 
-State the derived polars-py range in one line (e.g. "polars-rs 0.54 → polars-py >=1.42,<1.43"). Then **stop and ask the user to approve** the proposed pins. Do not edit files until they confirm.
+State in one line which polars-py versions share the polars-rs you are building against (e.g. "polars-rs 0.54.4 → polars-py 1.42.0–1.43.2"). Then **stop and ask the user to approve** the proposed pins. Do not edit files until they confirm.
 
 ## Applying it — one variable at a time
 
@@ -107,10 +107,11 @@ Only now edit `pyproject.toml`, and only the `[project].dependencies` range.
 
 - The **floor** moves only for a functional reason (something the plugin needs
   that older polars-py lacks) — not merely because the crate advanced.
-- The **ceiling** is whatever the matrix has verified. Moving it means running
-  `uv run nox -s compat` against the new versions, not editing the number: the
-  matrix sets the ceiling. If you do not run the matrix, leave the ceiling alone
-  and say so.
+- The **ceiling** is whatever the matrix has verified. Do not edit the number by
+  hand: run **`just raise-ceiling`**, which looks up the newest polars-py, adds it
+  to `COMPAT_VERSIONS`, runs `compat` against it, and moves the ceiling only if
+  that passes — rolling back and leaving the range honest if it does not. If you
+  do not run it, leave the ceiling alone and say so.
 
 If the range moved, note that `just build` / `uv sync` will pull a different
 polars-py into the venv — which makes step 5's result no longer the last word;

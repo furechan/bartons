@@ -20,6 +20,12 @@ test:
 bench baseline="vs-native": build
     python scripts/benchmark-{{baseline}}.py
 
+# Test the newest polars-py and, only if it passes, raise the ceiling in
+# pyproject.toml. The ceiling records what the compat matrix has verified, so this
+# is how it stays current. Changes nothing on failure; never commits.
+raise-ceiling:
+    python scripts/raise-ceiling.py
+
 # Regenerate python/bartons/plugin.pyi by introspecting the built extension.
 # Depends on `build` so the module being introspected is current.
 stubs: build

@@ -12,8 +12,8 @@ and the binding skills use:
 
 | term | what | version scheme | declared in | example |
 |---|---|---|---|---|
-| **`polars-rs`** | the Rust crate, statically linked into the `.so` | `0.5x` | `bartons/Cargo.toml` | `0.54.4` |
-| **`polars-py`** | the Python package, resolved into the venv | `1.4x` | `[project].dependencies` | `1.42.1` |
+| **`polars-rs`** | the Rust crate, statically linked into the `.so` | `0.5x` | `bartons/Cargo.toml` | `0.55.2` |
+| **`polars-py`** | the Python package, resolved into the venv | `1.4x` | `[project].dependencies` | `1.43.2` |
 
 Borrowed from upstream: the `pola-rs/polars` monorepo dual-tags every release
 `rs-0.54.4` and `py-1.42.1`, and mapping between those tags is exactly how the
@@ -32,17 +32,17 @@ One noun per file, so the term says where the setting lives:
 | term | file | means |
 |---|---|---|
 | **pins** | `bartons/Cargo.toml` | the four crate versions compiled into the `.so` |
-| **range** | `pyproject.toml` | `polars>=1.28,<1.43` — the polars-py versions allowed to install |
+| **range** | `pyproject.toml` | `polars>=1.28,<1.44` — the polars-py versions allowed to install |
 | **matrix** | `noxfile.py` | `COMPAT_VERSIONS` — the discrete versions actually executed |
 
-The range has a **floor** (`>=1.28`) and a **ceiling** (`<1.43`), and they are not
+The range has a **floor** (`>=1.28`) and a **ceiling** (`<1.44`), and they are not
 the same kind of limit:
 
 - The **floor is hard**. Below it the eager `bartons.plugin.<name>` functions
   genuinely break — `PySeries._export` does not exist. A functional requirement.
 - The **ceiling is tested, not hard**. Nothing is known to fail above it; it marks
   how far the matrix has run. **The matrix sets the ceiling** — to raise one, run
-  the other.
+  the other. `just raise-ceiling` does both in one step.
 
 Avoid **cap** (it names only an upper limit, so it misdescribes the two-sided
 range) and **constraint** (pip and uv use it for *constraints files*, `-c`, a
@@ -70,17 +70,17 @@ Read the requirements straight from crates.io (structured, no build needed):
 GET https://crates.io/api/v1/crates/pyo3-polars/<ver>/dependencies
 ```
 
-For `pyo3-polars 0.27.0` this returns:
+For `pyo3-polars 0.28.0` this returns:
 
 | dependency | req |
 |---|---|
-| `polars` | `^0.54.4` |
-| `polars-arrow` | `^0.54.4` |
-| `pyo3` | `^0.28` |
+| `polars` | `^0.55.1` |
+| `polars-arrow` | `^0.55.1` |
+| `pyo3` | `^0.29` |
 
 ## The interlock rules
 
-1. **`polars` and `polars-arrow` must match the version `pyo3-polars` targets, and each other.** Pin both to the exact version `pyo3-polars` carets to (here `0.54.4`). They share struct layouts; a mismatch between them, or against the version compiled into `pyo3-polars`, is an ABI break.
+1. **`polars` and `polars-arrow` must match the version `pyo3-polars` targets, and each other.** Pin both to the exact version `pyo3-polars` carets to (here `0.55.1`). They share struct layouts; a mismatch between them, or against the version compiled into `pyo3-polars`, is an ABI break.
 2. **`pyo3` must satisfy `pyo3-polars`'s `pyo3` req — pin to that caret, not to "latest".** When upgrading, the newest published pyo3 is often *ahead* of what `pyo3-polars` accepts (pyo3 `0.29` existed while `pyo3-polars 0.27` wanted `^0.28`). Pin to the req.
 3. **`extension-module` ⇒ exactly one `pyo3` in the build tree.** A direct `pyo3` pin that disagrees with `pyo3-polars`'s pulls in *two* pyo3 versions; pyo3's build script detects this and the build **fails hard** (it does not silently pick one). This is why rule 2 matters.
 
@@ -89,22 +89,24 @@ For `pyo3-polars 0.27.0` this returns:
 `bartons/Cargo.toml`:
 
 ```toml
-pyo3 = { version = "0.28", features = ["extension-module", "abi3-py311"] }
-pyo3-polars = { version = "0.27", features = ["derive", "dtype-struct", "dtype-decimal", "dtype-array"] }
-polars = { version = "0.54.4", features = ["dtype-struct"] }
-polars-arrow = { version = "0.54.4", default-features = false }
+pyo3 = { version = "0.29", features = ["extension-module", "abi3-py311"] }
+pyo3-polars = { version = "0.28", features = ["derive", "dtype-struct", "dtype-decimal", "dtype-array"] }
+polars = { version = "0.55.1", features = ["dtype-struct"] }
+polars-arrow = { version = "0.55.1", default-features = false }
 ```
 
 Resolved in `bartons/Cargo.lock`:
 
 | crate | resolved |
 |---|---|
-| `pyo3-polars` | `0.27.0` |
-| `polars` | `0.54.4` |
-| `polars-arrow` | `0.54.4` |
-| `pyo3` | `0.28.3` |
+| `pyo3-polars` | `0.28.0` |
+| `polars` | `0.55.2` |
+| `polars-arrow` | `0.55.2` |
+| `pyo3` | `0.29.2` |
 
-These exactly satisfy `pyo3-polars 0.27.0`'s requirements above.
+These exactly satisfy `pyo3-polars 0.28.0`'s requirements above. Note the pin is
+the caret *target* (`0.55.1`) while cargo resolves to the newest compatible
+(`0.55.2`) — the request versus the resolved, as above.
 
 ## `abi3` — what it does and does not decouple
 
@@ -128,7 +130,7 @@ future feature wants them.
 The default pins above produce a plugin for the default `polars-runtime-32` engine (`IdxSize = u32`). To target the `polars[rt64]` engine (`polars-runtime-64`, `IdxSize = u64`), add the `bigidx` feature to the `polars` dependency:
 
 ```toml
-polars = { version = "0.54.4", features = ["dtype-struct", "bigidx"] }
+polars = { version = "0.55.1", features = ["dtype-struct", "bigidx"] }
 ```
 
 `IdxSize` is a compile-time type, so one `.so` cannot serve both engines — a `bigidx` build is a separate artifact. For the default install this is unnecessary; see [`polars-runtime-libraries.md`](polars-runtime-libraries.md) for what the runtime variants are and when a `bigidx` build is actually needed.
@@ -161,7 +163,7 @@ The [`check-bindings`](../.claude/commands/check-bindings.md) skill audits these
 
 ## Scope: this is the Cargo side only
 
-This doc covers the compile-time crate pins. The **polars-py range** in [`pyproject.toml`](../pyproject.toml) is a *separate* setting — it governs which polars-py the built `.so` runs against at the FFI guard, not what compiles. The polars-rs ↔ polars-py correspondence is tabulated in [`polars-ffi-version-table.md`](polars-ffi-version-table.md). The current range is `polars>=1.28,<1.43`: the lower bound is the floor for the eager `bartons.plugin.<name>` pyfunctions (they need `PySeries._export`, first exposed in polars 1.28 — see [`test-compat-helpers.md`](test-compat-helpers.md)), and the upper bound is the current test ceiling (one past the `0.54.4`/`1.42.x` build), **not** a hard ABI limit — it is widened as newer polars-py is verified by the nox `compat` matrix. The expression path alone works down to polars-py 1.0, but the package floors at 1.28 so its whole public API is usable.
+This doc covers the compile-time crate pins. The **polars-py range** in [`pyproject.toml`](../pyproject.toml) is a *separate* setting — it governs which polars-py the built `.so` runs against at the FFI guard, not what compiles. The polars-rs ↔ polars-py correspondence is tabulated in [`polars-ffi-version-table.md`](polars-ffi-version-table.md). The current range is `polars>=1.28,<1.44`: the floor is a hard requirement for the eager `bartons.plugin.<name>` pyfunctions (they need `PySeries._export`, first exposed in polars-py 1.28 — see [`test-compat-helpers.md`](test-compat-helpers.md)), and the ceiling is the current test boundary, **not** a hard ABI limit — raise it with `just raise-ceiling`, which tests the newest polars-py and only moves the number if it passes. The expression path alone works down to polars-py 1.0, but the package floors at 1.28 so its whole public API is usable.
 
 ## Related
 

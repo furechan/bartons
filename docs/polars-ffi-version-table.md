@@ -14,7 +14,7 @@ The FFI version is two `u16` constants, `MAJOR`/`MINOR`, in the `polars-ffi` cra
 |---|---|---|
 | ≤ `0.34.2` | *(none)* | No constants, no `get_version` — no handshake at all. |
 | `0.35.0` – `0.36.2` | `(0, 0)` | Versioned handshake introduced. |
-| `0.37.0` – `0.54.4` (latest) | `(0, 1)` | Bumped once; unchanged since. |
+| `0.37.0` – `0.55.2` | `(0, 1)` | Bumped once; unchanged since — verified in `polars-ffi 0.55.2` on 2026-08-14. |
 
 ## polars-py → polars-rs → FFI version
 
@@ -43,7 +43,7 @@ The FFI version is two `u16` constants, `MAJOR`/`MINOR`, in the `polars-ffi` cra
 | `1.34.0` – `1.35.2` | `0.51.0` | `(0, 1)` |
 | `1.36.0` – `1.38.1` | `0.52.0` | `(0, 1)` |
 | `1.39.0` – `1.41.2` | `0.53.0` | `(0, 1)` |
-| `1.42.0` – `1.42.1` | `0.54.4` | `(0, 1)` |
+| `1.42.0` – `1.43.2` | `0.54.4` | `(0, 1)` |
 
 Notes:
 
@@ -61,6 +61,7 @@ The plugin side exports the FFI version via `pyo3-polars`. For reference, the ex
 | ≤ `0.8.0` | no | `^0.34` (and earlier) |
 | `0.9.0` | yes (first) | `^0.35` |
 | `0.27.0` | yes | `^0.54.4` |
+| `0.28.0` | yes | `^0.55.1` |
 
 ## Method
 
