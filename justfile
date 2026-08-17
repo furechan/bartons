@@ -33,9 +33,9 @@ dump:
 # which is the "forgot to bump" mistake and is unrecoverable — PyPI never permits
 # reusing a version or filename, even after deletion.
 #
-# Credentials come from MATURIN_PYPI_TOKEN (or ~/.pypirc). Keep the token in a
-# credential bundle rather than plaintext, per the fleet's env contract:
-#   envs exec pypi -- just publish
+# Credentials come from MATURIN_PYPI_TOKEN, which .envrc supplies by importing the
+# `pypi` sops bundle — so an active direnv in this directory is all that is needed,
+# and no token is ever at rest in the repo.
 #
 # The release ritual:
 #   just publish          # builds fresh, then uploads
