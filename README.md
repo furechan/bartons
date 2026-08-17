@@ -15,13 +15,6 @@ wheel per platform covers every Python from 3.11 up.
 pip install bartons
 ```
 
-To work from a clone instead:
-
-```sh
-uv sync
-just develop        # builds the Rust extension and installs it into .venv
-```
-
 ## Usage
 
 ```python
@@ -81,26 +74,13 @@ plugin.ema(prices["close"], period=20)
 Parameters are keyword-only here. This path needs `polars>=1.28`; the expression
 API alone works further back.
 
-## Development
+## Related Projects
 
-```sh
-just develop     # build + install into .venv
-just test        # pytest
-just build       # wheel + sdist into dist/
-just bench       # benchmark against a baseline
-```
-
-In the repository: `CLAUDE.md` for the architecture, `docs/` for the
-version-pinning and polars-FFI details, `BACKLOG.md` for open items.
-
-## Built with
-
-- [Polars](https://docs.pola.rs/) — the DataFrame library these indicators extend.
-  Everything here returns a plain `pl.Expr`, so anything polars can do with an
-  expression applies unchanged.
-- [PyO3](https://pyo3.rs/) — Rust bindings for Python. The indicator kernels are
-  Rust, called over the polars plugin interface rather than through Python, so
-  there is no per-element crossing between the two languages.
-- [Maturin](https://www.maturin.rs/) — builds and packages the Rust extension as a
-  Python wheel. The wheels are `abi3`, which is why a single one covers every
-  Python from 3.11 up.
+- [Polars](https://docs.pola.rs/) — the DataFrame library. Since every indicator
+  here is a plain `pl.Expr`, its expression docs cover most of what you can do
+  with them: windows, groups, lazy frames, and the rest.
+- [PyO3](https://pyo3.rs/) — Rust bindings for Python, and the polars plugin
+  interface these kernels are written against. Worth reading if you want to write
+  indicators of your own.
+- [Maturin](https://www.maturin.rs/) — builds and publishes Rust extensions as
+  Python wheels. The tool to reach for if you take that route.
