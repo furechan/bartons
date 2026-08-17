@@ -2,6 +2,23 @@
 
 ## 0.1.0
 
+- Add the local build/publish path the archived CI never left behind, and rename
+  the recipes to mirror maturin's own verbs. `just develop` (was `just build`)
+  installs into the `.venv`; `just build` now runs `maturin build`, producing the
+  wheel + sdist in `dist/` and installing nothing — so `just <verb>` and
+  `maturin <verb>` finally mean the same thing. `just develop-debug` was
+  `just build-debug`; `bench` and `stubs` depend on `develop`, the nine references
+  across docs and benchmark scripts were updated with them. `build` wipes `dist/`
+  first — a stale wheel from an earlier version is indistinguishable from a fresh
+  one to any `dist/*` glob, and one was in fact sitting there. `just publish`
+  uploads via `maturin upload`. `just dump` is fixed to inspect `dist/*.tar.gz`; it had pointed
+  at `target/wheels/`, a path no recipe ever produced. Publishing is guarded by
+  [scripts/check-release-version.py](scripts/check-release-version.py), which
+  refuses a version already on PyPI — the "forgot to bump" mistake, and one PyPI
+  cannot undo, since a version or filename can never be reused even after
+  deletion. It fails loudly rather than using `--skip-existing`, which would
+  quietly do nothing and let you believe you had published. That is the check
+  worth keeping from the deleted tag-guard job.
 - Build a full GitHub Actions release pipeline, then archive it unused as
   [archive/github-workflow.zip](archive/github-workflow.zip). It published five `cp311-abi3`
   wheels plus the sdist to PyPI on a `v*` tag, over OIDC trusted publishing with
@@ -17,13 +34,16 @@
   at the ×10 macOS multiplier, why wheels must be built in one run rather than
   accumulated across runs, and the PyPI facts that outlive CI (immutable
   `Requires-Dist`, filenames never reusable, yank-not-delete).
-- Point the in-repo version at the *next* release rather than the last one, using
-  a PEP 440 `.devN` suffix: main now reads `0.1.0.dev0`. Releasing drops the
-  suffix in the release commit, the tag points at that commit, and the next
-  commit opens `0.2.0.dev0` — so main never claims a version already on PyPI, and
-  the suffix says plainly that this tree is ahead of the release it names.
-  `0.1.0.dev0` sorts below `0.1.0`, and pip ignores dev releases without `--pre`,
-  so an accidental upload cannot become anyone's default install.
+- Have the in-repo version name the *next* release, plain — no `.devN` suffix,
+  matching the convention in mintalib. The tree is therefore publishable at any
+  moment: build as often as you like, and on release `just publish` uploads what
+  the version already says. Afterwards commit and push at that version, then
+  `just bump` (patch increment via
+  [scripts/bump-version.py](scripts/bump-version.py)) and push again so the repo
+  names the next one. A `.devN` scheme was tried first and dropped: it bought
+  pip's `--pre` protection and an unambiguous "this tree is ahead of its release"
+  marker, at the cost of an edit before every publishable build — not worth it
+  when the only consumers are two machines the author controls.
 - Make [pyproject.toml](pyproject.toml) the one authoritative version and freeze
   the crate's at `0.0.0`. Both files previously declared `0.1.0` with nothing
   keeping them equal, so the two could drift silently — maturin stamps the wheel
@@ -35,7 +55,6 @@
   puts the release number in a nested Rust file that is otherwise irrelevant
   here: the crate is a cdylib built only into the wheel, unpublished on
   crates.io, with no Rust dependents. Revisit if it is ever published on its own.
-
 - Upgrade the binding pins. Turning the single dial to `pyo3-polars 0.28` sets the rest: polars-rs and
   polars-arrow `0.55.1` (resolving `0.55.2`) and pyo3 `0.29` (resolving `0.29.2`).
   The polars-rs minor jump needed **no kernel changes** — no API we use moved.

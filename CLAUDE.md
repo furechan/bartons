@@ -43,15 +43,22 @@ The Python package and distribution are both `bartons`; the Rust module is impor
 ## Build & test
 
 ```sh
-just build       # maturin develop --release — optimized build, installed into .venv
-just build-debug # maturin develop — fast unoptimized build (~20x slower at runtime)
-just test        # pytest
-just bench       # build optimized, then benchmark vs a baseline
-                 # (default vs-native; also vs-talib, vs-mintalib)
-just stubs       # regenerate python/bartons/plugin.pyi from the built module
+just develop       # maturin develop --release — optimized, installed into .venv
+just develop-debug # maturin develop — fast unoptimized build (~20x slower at runtime)
+just build         # maturin build — wheel + sdist into dist/, installs nothing
+just dump          # list what went into the sdist
+just publish       # guarded upload of dist/ to PyPI
+just test          # pytest
+just bench         # develop, then benchmark vs a baseline
+                   # (default vs-native; also vs-talib, vs-mintalib)
+just stubs         # regenerate python/bartons/plugin.pyi from the built module
 just raise-ceiling # test the newest polars-py; raise the pyproject ceiling if it passes
-just clean       # remove Rust target/ and compiled .so files
+just clean         # remove Rust target/ and compiled .so files
 ```
+
+`develop` and `build` mirror maturin's own verbs: `develop` installs into the
+`.venv` (what you want for tests, benchmarks and stubs — all three depend on it),
+`build` produces artifacts in `dist/` and installs nothing.
 
 Requires the `.venv` to be active. The build tool is `uv`; use `uv sync` to set up the environment.
 

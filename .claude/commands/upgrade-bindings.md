@@ -76,7 +76,7 @@ installed polars-py stays exactly where it is.
 
 1. Edit the four crate pins to the approved values; keep every feature flag
    (`extension-module`, `abi3-py*`, the `dtype-*` set) intact.
-2. `just build`. **Expect Rust source breakage on crate-minor jumps** — polars
+2. `just develop`. **Expect Rust source breakage on crate-minor jumps** — polars
    renames/removes API across minors (e.g. `ChunkedArray::into_iter` → `.iter()`),
    and several minors at once compounds it. A compile error here is normal, not a
    dead end: read `cargo build --manifest-path bartons/Cargo.toml --lib` (faster
@@ -113,7 +113,7 @@ Only now edit `pyproject.toml`, and only the `[project].dependencies` range.
   that passes — rolling back and leaving the range honest if it does not. If you
   do not run it, leave the ceiling alone and say so.
 
-If the range moved, note that `just build` / `uv sync` will pull a different
+If the range moved, note that `just develop` / `uv sync` will pull a different
 polars-py into the venv — which makes step 5's result no longer the last word;
 re-run `just test` afterwards.
 

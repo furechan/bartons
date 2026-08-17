@@ -12,7 +12,7 @@ Seeding/warmup differs between bartons and the native baselines (e.g. bartons em
 null until `period` values; ewm_mean outputs from row 0), so early rows differ — this
 measures speed, not equality. See benchmark-rsi.py for the value cross-check.
 
-IMPORTANT: build the plugin in release mode first (`just build` /
+IMPORTANT: build the plugin in release mode first (`just develop` /
 `maturin develop --release`); a debug build is ~20x slower and misleading.
 
 Usage:

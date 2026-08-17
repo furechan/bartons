@@ -6,7 +6,7 @@ dataset with .over(). Each scenario ends with an "ALL combined" row — every in
 in one df.select(), showing how each backend parallelises / CSEs across expressions vs
 the one-by-one sum.
 
-IMPORTANT: build the plugin in release mode first (`just build` /
+IMPORTANT: build the plugin in release mode first (`just develop` /
 `maturin develop --release`); a debug build is ~20x slower and misleading.
 
 Usage:

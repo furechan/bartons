@@ -12,11 +12,10 @@ name = "bartons"
 # The one authoritative version for the project. Only the Python distribution is
 # published; the crate's own `version` is unused and stays at 0.0.0. Bump here.
 #
-# This points at the *next* release, carrying a `.devN` suffix while unreleased.
-# Releasing drops the suffix in the release commit (which the tag then points at);
-# the following commit opens the next version's `.dev0`. PEP 440 sorts
-# `0.1.0.dev0 < 0.1.0`, and pip skips dev versions unless asked with `--pre`.
-version = "0.1.0.dev0"
+# This names the *next* release, plain — no `.devN` suffix (same convention as
+# mintalib). Build as often as you like; on publish, commit and push at this
+# version, then `just bump` and push again so the repo names the next one.
+version = "0.1.0"
 requires-python = ">=3.11"
 license = "MIT"
 classifiers = [

@@ -17,7 +17,7 @@ this only equalises the warmup-null representation on clean data.
 RMA has no TA-Lib equivalent (Wilder smoothing isn't exposed standalone), so it is
 covered only in benchmark-vs-mintalib.py.
 
-IMPORTANT: build the plugin in release mode first (`just build` /
+IMPORTANT: build the plugin in release mode first (`just develop` /
 `maturin develop --release`); a debug build is ~20x slower and misleading.
 
 Usage:

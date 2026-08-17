@@ -148,7 +148,7 @@ Use `assert_series_equal(..., check_exact=False, rel_tol=1e-12)` imported from
 ### 5. Build & verify
 
 ```sh
-just build     # release; debug builds are ~20x slower
+just develop     # release; debug builds are ~20x slower
 just test
 just stubs     # regenerate python/bartons/plugin.pyi, then commit it
 ```
@@ -194,7 +194,7 @@ build is ~20x slower and misleading.
   a null input (nulls come through the `Option` from `ca.iter()`).
 - **Single polars-py range**: the `polars >=x,<y` range lives only in
   `[project].dependencies` — see [cargo-version-pins.md](cargo-version-pins.md).
-- **Release builds**: `just build` is release; only `just build-debug` is the slow
+- **Release builds**: `just develop` is release; only `just develop-debug` is the slow
   debug build. Benchmark with `just bench`.
 - Many indicators have a native polars equivalent (`ewm_mean`, `rolling_mean`).
   Adding a plugin version is a deliberate choice (consistency / a specific
