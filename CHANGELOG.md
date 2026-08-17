@@ -2,28 +2,21 @@
 
 ## 0.1.0
 
-- Add release automation: [.github/workflows/wheels.yml](.github/workflows/wheels.yml)
-  builds every artifact — five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
-  arm64/x86_64, Windows x64) plus the sdist — and
-  [.github/workflows/release.yml](.github/workflows/release.yml) publishes them to
-  PyPI on a `v*` tag. `abi3-py311` is what keeps this to five builds: no Python
-  axis, only platforms. wheels.yml is `workflow_call`-able, so releases build
-  through the same path CI exercises rather than a drifting copy, and each
-  natively-built wheel is installed and run against the test suite before upload —
-  a wheel that compiles but will not import is the failure the matrix exists to
-  catch. Linux wheels are built in manylinux `2_28` containers rather than on the
-  runner, whose glibc would otherwise be stamped into the tag and needlessly
-  exclude older distros. Runs are scoped by cost: this repo is private, so runner
-  minutes are metered with per-OS multipliers (linux ×1, windows ×2, macOS ×10),
-  making a full matrix ~195 billed minutes against ~19 for linux alone. So the
-  full matrix runs only where it is load-bearing — a release tag, or the manual
-  button — while pull requests build linux only, and only when packaging or
-  compiled code changed. There is deliberately no `push` trigger: pushing to main
-  costs nothing. Publishing uses PyPI trusted
-  publishing over OIDC: no API token is stored, and only the publish job holds
-  `id-token: write`. A guard job compares the tag against `[project].version` and
-  refuses `.dev` versions before anything is built, since a mismatched tag is
-  cheap to fix but a tag already consumed by a build is not.
+- Build a full GitHub Actions release pipeline, then archive it unused as
+  [archive/github-workflow.zip](archive/github-workflow.zip). It published five `cp311-abi3`
+  wheels plus the sdist to PyPI on a `v*` tag, over OIDC trusted publishing with
+  no stored token. It was disproportionate: the repo is private and early, and its
+  only consumers are two machines — an OrbStack VM (Ubuntu 25.04, glibc 2.41,
+  Python 3.11) and `boston`, an EC2 Graviton box (Ubuntu 24.04, glibc 2.39, Python
+  3.12). Both are aarch64 Linux, so one locally-built wheel serves both and four of
+  the five CI targets existed for users who do not exist. Building sdists and
+  aarch64 wheels from the dev machine is the proportionate answer at this stage.
+  The zip carries the workflows, the release handoff, and a README recording what
+  the exercise established — `abi3` collapsing the Python axis (one wheel spans the
+  fleet's 3.11 and 3.12), the ~195 billed minutes a full private-repo matrix costs
+  at the ×10 macOS multiplier, why wheels must be built in one run rather than
+  accumulated across runs, and the PyPI facts that outlive CI (immutable
+  `Requires-Dist`, filenames never reusable, yank-not-delete).
 - Point the in-repo version at the *next* release rather than the last one, using
   a PEP 440 `.devN` suffix: main now reads `0.1.0.dev0`. Releasing drops the
   suffix in the release commit, the tag points at that commit, and the next
