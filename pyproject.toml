@@ -107,12 +107,6 @@ include = [
 # - the #[pymodule] function definition
 # - the the #[pyo3(name = "...")] directive
 
-[tool.ty.src]
-# `evcxr/` holds Rust prototyping notebooks — .ipynb files whose kernelspec is
-# `language = "rust"`. ty parses any .ipynb as Python, so every Rust cell in
-# them lands as a syntax error (~1375 of them), drowning the real diagnostics.
-exclude = ["evcxr"]
-
 [tool.pytest.ini_options]
 addopts = ["-p no:cacheprovider"]
 testpaths = ["tests"]

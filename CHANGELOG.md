@@ -2,6 +2,25 @@
 
 ## 0.1.0
 
+- Remove the `evcxr/` Rust notebooks and `scripts/install-evcxr.sh`, porting the
+  one result worth keeping into
+  [docs/benchmark-builder-vs-collect.md](docs/benchmark-builder-vs-collect.md) and
+  [scripts/builder-vs-collect.rs](scripts/builder-vs-collect.rs). Six of the seven
+  notebooks were spent prototyping scaffolding whose conclusions had already
+  landed in `bartons/src/` — the "Version 35 → 49" EMA iterations, the filter
+  sketches, a `CircularBuffer` never adopted, polars-API notes from the 0.39 era.
+  One had gone actively wrong: `sma-filter.ipynb` computed an EMA under an SMA
+  name, with none of the shipped `SmaFilter`'s warmup or gap-reset semantics.
+  They were also the only code in the repo with no automated coverage — excluded
+  from `ty`, absent from the `justfile`, and pinning polars separately from
+  `bartons/Cargo.toml` (0.54.4 against the crate's 0.55.1), so they could only
+  rot silently. Re-running the surviving benchmark on the current pin overturned
+  its recorded reading: measured as a 2x2 rather than a diagonal, the streaming-
+  filter abstraction is exactly free (355µs, same as a hand-inlined loop), and
+  the 1.6× cost the notebook had attributed to it belongs entirely to
+  `append_option` — which `run_unary`/`run_ternary` already avoid, deliberately,
+  and should keep avoiding. The `[tool.ty.src]` exclusion in `pyproject.toml`
+  went with the notebooks; `uv run ty check` is now clean with no exclusions.
 - Add the local build/publish path the archived CI never left behind, and rename
   the recipes to mirror maturin's own verbs. `just develop` (was `just build`)
   installs into the `.venv`; `just build` now runs `maturin build`, producing the
