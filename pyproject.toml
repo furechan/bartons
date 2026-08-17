@@ -18,10 +18,32 @@ name = "bartons"
 version = "0.1.0"
 requires-python = ">=3.11"
 license = "MIT"
+description = "Financial and technical-analysis expressions for polars, implemented in Rust"
+readme = "README.md"
+authors = [{ name = "Furechan", email = "furechan@xsmail.com" }]
+keywords = [
+  "polars",
+  "technical-analysis",
+  "indicators",
+  "finance",
+  "quantitative-finance",
+  "rust",
+]
+# No "License :: OSI Approved :: MIT License" classifier: PEP 639 deprecates the
+# license classifiers in favour of the `license` field above, and the two must not
+# be combined once a backend emits `License-Expression`.
 classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Operating System :: OS Independent",
+  "Topic :: Office/Business :: Financial :: Investment",
   "Programming Language :: Rust",
+  # No per-minor entries: `requires-python` is what pip enforces, and each
+  # classifier would be a claim to keep current.
+  "Programming Language :: Python :: 3",
+  # CPython only, and not by omission: the wheels are `cp311-abi3`, and PyPy has
+  # no stable ABI for pyo3 to build against.
   "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
     # Supported polars-py range, verified by the noxfile `compat` matrix: the plugin
