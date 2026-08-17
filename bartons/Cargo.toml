@@ -1,6 +1,11 @@
 [package]
 name = "bartons"
-version = "0.1.0"
+# Deliberately 0.0.0 and never bumped. Cargo requires the field, but nothing
+# reads it: this crate is a cdylib built only into the Python wheel, is not
+# published to crates.io, and has no Rust dependents. The project version lives
+# in ../pyproject.toml, which is what maturin stamps on the wheel. If the crate
+# is ever published independently, this becomes real — revisit then.
+version = "0.0.0"
 edition = "2021"
 
 [lib]

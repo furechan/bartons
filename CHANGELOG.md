@@ -2,6 +2,41 @@
 
 ## 0.1.0
 
+- Add release automation: [.github/workflows/wheels.yml](.github/workflows/wheels.yml)
+  builds every artifact — five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
+  arm64/x86_64, Windows x64) plus the sdist — and
+  [.github/workflows/release.yml](.github/workflows/release.yml) publishes them to
+  PyPI on a `v*` tag. `abi3-py311` is what keeps this to five builds: no Python
+  axis, only platforms. wheels.yml is `workflow_call`-able and also runs on PRs,
+  so releases build through the same path CI already exercised rather than a
+  drifting copy, and each natively-built wheel is installed and run against the
+  test suite before upload — a wheel that compiles but will not import is the
+  failure the matrix exists to catch. Linux wheels are built in manylinux `2_28`
+  containers rather than on the runner, whose glibc would otherwise be stamped
+  into the tag and needlessly exclude older distros. Publishing uses PyPI trusted
+  publishing over OIDC: no API token is stored, and only the publish job holds
+  `id-token: write`. A guard job compares the tag against `[project].version` and
+  refuses `.dev` versions before anything is built, since a mismatched tag is
+  cheap to fix but a tag already consumed by a build is not.
+- Point the in-repo version at the *next* release rather than the last one, using
+  a PEP 440 `.devN` suffix: main now reads `0.1.0.dev0`. Releasing drops the
+  suffix in the release commit, the tag points at that commit, and the next
+  commit opens `0.2.0.dev0` — so main never claims a version already on PyPI, and
+  the suffix says plainly that this tree is ahead of the release it names.
+  `0.1.0.dev0` sorts below `0.1.0`, and pip ignores dev releases without `--pre`,
+  so an accidental upload cannot become anyone's default install.
+- Make [pyproject.toml](pyproject.toml) the one authoritative version and freeze
+  the crate's at `0.0.0`. Both files previously declared `0.1.0` with nothing
+  keeping them equal, so the two could drift silently — maturin stamps the wheel
+  from pyproject and ignores the crate. Cargo requires the field, so it cannot
+  simply be deleted; pinning it at `0.0.0` with a comment marks it dead rather
+  than leaving a plausible-looking number that no longer tracks releases. The
+  alternative — `dynamic = ["version"]` in pyproject, sourcing from the crate —
+  works (verified: a crate bump to `0.1.1` produced `bartons-0.1.1-*.whl`) but
+  puts the release number in a nested Rust file that is otherwise irrelevant
+  here: the crate is a cdylib built only into the wheel, unpublished on
+  crates.io, with no Rust dependents. Revisit if it is ever published on its own.
+
 - Upgrade the binding pins. Turning the single dial to `pyo3-polars 0.28` sets the rest: polars-rs and
   polars-arrow `0.55.1` (resolving `0.55.2`) and pyo3 `0.29` (resolving `0.29.2`).
   The polars-rs minor jump needed **no kernel changes** — no API we use moved.

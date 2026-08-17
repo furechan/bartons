@@ -1,0 +1,92 @@
+# Build every distributable artifact: one wheel per (OS, arch) plus the sdist.
+#
+# `abi3-py311` is what keeps this matrix small — a single cp311-abi3 wheel serves
+# every Python 3.11+, so the matrix has no Python axis at all, only platforms.
+#
+# Runs on PRs and pushes to main so a broken target surfaces before a tag, and is
+# reusable (`workflow_call`) so release.yml builds through this exact same path
+# rather than a drifting copy.
+name: Wheels
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions: {}
+
+concurrency:
+  group: wheels-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  wheel:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # manylinux 2_28 rather than the host's glibc: building on the runner
+          # directly would stamp whatever it happens to have (2_34 locally),
+          # needlessly excluding older distros.
+          - { name: linux-x86_64, runner: ubuntu-latest, target: x86_64, manylinux: "2_28", smoke: true }
+          # Cross-compiled in a container, so the runner cannot run the result —
+          # the only target without a smoke test.
+          - { name: linux-aarch64, runner: ubuntu-latest, target: aarch64, manylinux: "2_28", smoke: false }
+          - { name: macos-arm64, runner: macos-14, target: aarch64-apple-darwin, manylinux: "auto", smoke: true }
+          - { name: macos-x86_64, runner: macos-13, target: x86_64-apple-darwin, manylinux: "auto", smoke: true }
+          - { name: windows-x64, runner: windows-latest, target: x64, manylinux: "auto", smoke: true }
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Build wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          args: --release --out dist
+          sccache: "true"
+
+      # A wheel that builds but cannot be imported is the failure this matrix
+      # exists to catch, so install it from the wheel — not the source tree — and
+      # run the suite against the artifact that would ship.
+      - name: Smoke-test the wheel
+        if: matrix.smoke
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.whl pytest
+          python -c "import bartons; from bartons.indicators import EMA; print('import ok')"
+          python -m pytest -q
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.name }}
+          path: dist/*.whl
+
+  sdist:
+    name: sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # The fallback for platforms with no wheel. Installing from it needs a Rust
+      # toolchain on the user's machine, which pyproject cannot declare — hence
+      # the wheel matrix above.
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-sdist
+          path: dist/*.tar.gz
