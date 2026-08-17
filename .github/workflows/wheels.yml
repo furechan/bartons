@@ -1,19 +1,43 @@
-# Build every distributable artifact: one wheel per (OS, arch) plus the sdist.
+# Build distributable artifacts: wheels per (OS, arch) plus the sdist.
 #
-# `abi3-py311` is what keeps this matrix small — a single cp311-abi3 wheel serves
-# every Python 3.11+, so the matrix has no Python axis at all, only platforms.
+# `abi3-py311` is what keeps this small — a single cp311-abi3 wheel serves every
+# Python 3.11+, so there is no Python axis, only platforms.
 #
-# Runs on PRs and pushes to main so a broken target surfaces before a tag, and is
-# reusable (`workflow_call`) so release.yml builds through this exact same path
-# rather than a drifting copy.
+# COST. This is a private repo, so runner minutes are metered with per-OS
+# multipliers: linux x1, windows x2, macOS x10. A full six-job matrix bills
+# ~195 minutes, ~160 of it the two macOS jobs. So the full matrix runs only where
+# it is actually load-bearing — a release tag — and everything else defaults to
+# the linux-only `scope`, which bills ~19.
+#
+# Triggers, deliberately narrow:
+#   pull_request     linux scope, and only when packaging or compiled code changed
+#   workflow_dispatch  the button; pick `linux` or `full` by hand
+#   workflow_call    release.yml passes scope=full
+# There is intentionally NO push trigger. Pushing to main costs nothing; when you
+# want a cross-platform check, press the button.
 name: Wheels
 
 on:
   pull_request:
-  push:
-    branches: [main]
+    # Docs, notebooks and backlog edits cannot break a wheel.
+    paths:
+      - "bartons/**"
+      - "python/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - ".github/workflows/wheels.yml"
   workflow_dispatch:
+    inputs:
+      scope:
+        description: "Which targets to build"
+        type: choice
+        options: [linux, full]
+        default: linux
   workflow_call:
+    inputs:
+      scope:
+        type: string
+        default: full
 
 permissions: {}
 
@@ -22,23 +46,53 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Selects the matrix so the expensive targets are opt-in. `inputs.scope` is
+  # empty for `pull_request`, hence the fallback.
+  setup:
+    name: Select targets
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - id: pick
+        env:
+          SCOPE: ${{ inputs.scope || 'linux' }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+
+          # manylinux 2_28 rather than the runner's own glibc: building on the
+          # host would stamp whatever it happens to have (2_34) into the tag and
+          # needlessly exclude older distros.
+          linux = [
+              {"name": "linux-x86_64", "runner": "ubuntu-latest", "target": "x86_64",
+               "manylinux": "2_28", "smoke": True},
+              # Cross-compiled in a container, so the runner cannot execute the
+              # result — the only target without a smoke test.
+              {"name": "linux-aarch64", "runner": "ubuntu-latest", "target": "aarch64",
+               "manylinux": "2_28", "smoke": False},
+          ]
+          rest = [
+              {"name": "macos-arm64", "runner": "macos-14", "target": "aarch64-apple-darwin",
+               "manylinux": "auto", "smoke": True},
+              {"name": "macos-x86_64", "runner": "macos-13", "target": "x86_64-apple-darwin",
+               "manylinux": "auto", "smoke": True},
+              {"name": "windows-x64", "runner": "windows-latest", "target": "x64",
+               "manylinux": "auto", "smoke": True},
+          ]
+
+          scope = os.environ["SCOPE"]
+          include = linux + rest if scope == "full" else linux
+          print(f"matrix={json.dumps({'include': include})}")
+          PY
+
   wheel:
     name: ${{ matrix.name }}
+    needs: setup
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          # manylinux 2_28 rather than the host's glibc: building on the runner
-          # directly would stamp whatever it happens to have (2_34 locally),
-          # needlessly excluding older distros.
-          - { name: linux-x86_64, runner: ubuntu-latest, target: x86_64, manylinux: "2_28", smoke: true }
-          # Cross-compiled in a container, so the runner cannot run the result —
-          # the only target without a smoke test.
-          - { name: linux-aarch64, runner: ubuntu-latest, target: aarch64, manylinux: "2_28", smoke: false }
-          - { name: macos-arm64, runner: macos-14, target: aarch64-apple-darwin, manylinux: "auto", smoke: true }
-          - { name: macos-x86_64, runner: macos-13, target: x86_64-apple-darwin, manylinux: "auto", smoke: true }
-          - { name: windows-x64, runner: windows-latest, target: x64, manylinux: "auto", smoke: true }
+      matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v7
 
@@ -55,8 +109,8 @@ jobs:
           sccache: "true"
 
       # A wheel that builds but cannot be imported is the failure this matrix
-      # exists to catch, so install it from the wheel — not the source tree — and
-      # run the suite against the artifact that would ship.
+      # exists to catch, so install from the wheel — not the source tree — and run
+      # the suite against the artifact that would actually ship.
       - name: Smoke-test the wheel
         if: matrix.smoke
         shell: bash

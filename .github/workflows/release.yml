@@ -66,6 +66,9 @@ jobs:
     name: Build
     needs: guard
     uses: ./.github/workflows/wheels.yml
+    # The one place the expensive macOS/Windows targets are non-negotiable.
+    with:
+      scope: full
 
   publish:
     name: Publish to PyPI
