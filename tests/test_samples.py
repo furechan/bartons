@@ -5,6 +5,7 @@ from bartons.samples import (
     SAMPLE_FREQUENCIES,
     SAMPLE_TICKERS,
     TIMEZONE,
+    random_prices,
     sample_dataset,
     sample_prices,
 )
@@ -88,3 +89,42 @@ def test_sample_dataset_sorted_by_ticker_then_time():
     ds = sample_dataset(3, freq="daily", max_bars=10)
     time_col = ds.columns[1]  # "date"
     assert ds.equals(ds.sort("ticker", time_col))
+
+
+def test_random_prices_is_deterministic_and_has_valid_ohlc():
+    left = random_prices(100, seed=42)
+    right = random_prices(100, seed=42)
+
+    assert left.equals(right)
+    assert left.columns == ["date"] + OHLCV
+    assert left.select((pl.col("high") >= pl.max_horizontal("open", "close")).all()).item()
+    assert left.select((pl.col("low") <= pl.min_horizontal("open", "close")).all()).item()
+
+
+@pytest.mark.parametrize("n_chunks", [1, 2, 7, 100])
+def test_random_prices_has_exact_chunk_count(n_chunks):
+    df = random_prices(100, n_chunks=n_chunks)
+    assert {series.n_chunks() for series in df} == {n_chunks}
+
+
+def test_random_prices_multiple_tickers_and_first_null():
+    df = random_prices(10, n_tickers=3, n_chunks=6, null_first=True)
+
+    assert df.height == 30
+    assert df.columns == ["ticker", "date"] + OHLCV
+    assert df["ticker"].unique(maintain_order=True).to_list() == ["T001", "T002", "T003"]
+    assert df.group_by("ticker", maintain_order=True).agg(pl.col("close").first().is_null())["close"].to_list() == [True] * 3
+    assert {series.n_chunks() for series in df} == {6}
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"n_rows": 0}, "n_rows"),
+        ({"n_tickers": 0}, "n_tickers"),
+        ({"n_rows": 2, "n_chunks": 3}, "n_chunks"),
+    ],
+)
+def test_random_prices_rejects_invalid_shape(kwargs, message):
+    with pytest.raises(ValueError, match=message):
+        random_prices(**kwargs)

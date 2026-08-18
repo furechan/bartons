@@ -2,9 +2,12 @@
 
 bartons is a Rust polars plugin (single-pass streaming kernels); mintalib wraps
 Cython kernels. Two scenarios: single symbol (~11k rows) and a 500-ticker synthetic
-dataset with .over(). Each scenario ends with an "ALL combined" row — every indicator
-in one df.select(), showing how each backend parallelises / CSEs across expressions vs
-the one-by-one sum.
+dataset with .over(). Each is measured twice: with the chunks produced by the sample
+loader and after `.rechunk()` outside the timed region. Each scenario ends with an
+"ALL combined" row — every indicator in one df.select(), showing how each backend
+parallelises / CSEs across expressions vs the one-by-one sum. The first OHLC row of
+each input series is null, so the benchmark does not give either backend a
+clean-input-only fast path.
 
 IMPORTANT: build the plugin in release mode first (`just develop` /
 `maturin develop --release`); a debug build is ~20x slower and misleading.
@@ -53,6 +56,20 @@ def bench_over(df: pl.DataFrame, expr: pl.Expr, *, repeat: int = 3, number: int 
 
 def fmt_ms(s: float) -> str:
     return f"{s * 1000:.3f}"
+
+
+def null_first_ohlc_row(df: pl.DataFrame) -> pl.DataFrame:
+    """Set the first chronological OHLC row to null in each input series."""
+    time_col = "date" if "date" in df.columns else "datetime"
+    first = pl.col(time_col) == (
+        pl.col(time_col).min().over("ticker")
+        if "ticker" in df.columns
+        else pl.col(time_col).min()
+    )
+    return df.with_columns(
+        pl.when(first).then(None).otherwise(pl.col(column)).alias(column)
+        for column in ("open", "high", "low", "close")
+    )
 
 
 def bench_combined(
@@ -115,29 +132,53 @@ def main() -> None:
         if not pairs:
             raise SystemExit(f"No benchmark found for {args.indicator!r}")
 
-    prices = sample_prices()
+    prices_fragmented = null_first_ohlc_row(sample_prices())
+    prices_contiguous = prices_fragmented.rechunk()
 
     print("\nWarming up ...")
     for _, b_expr, m_expr in pairs:
-        prices.select(b_expr)
-        prices.select(m_expr)
+        prices_fragmented.select(b_expr)
+        prices_fragmented.select(m_expr)
+        prices_contiguous.select(b_expr)
+        prices_contiguous.select(m_expr)
 
-    print(f"\nScenario 1 — single symbol  ({len(prices):,} rows)"
-          f"  repeat={args.repeat}  number={args.number}\n")
-    run(prices, pairs, runner=bench, over=False, repeat=args.repeat, number=args.number)
+    for label, prices in (
+        ("fragmented", prices_fragmented),
+        ("rechunked", prices_contiguous),
+    ):
+        chunks = prices["close"].n_chunks()
+        chunk_label = "chunk" if chunks == 1 else "chunks"
+        print(
+            f"\nScenario 1 — single symbol, {label}"
+            f"  ({len(prices):,} rows, {chunks} {chunk_label})"
+            f"  repeat={args.repeat}  number={args.number}\n"
+        )
+        run(prices, pairs, runner=bench, over=False, repeat=args.repeat, number=args.number)
 
     if not args.no_over:
-        sp = sample_dataset()
-        n_tickers = sp["ticker"].n_unique()
+        sp_fragmented = null_first_ohlc_row(sample_dataset())
+        sp_contiguous = sp_fragmented.rechunk()
+        n_tickers = sp_fragmented["ticker"].n_unique()
 
         print(f"\nWarming up .over() ...")
         for _, b_expr, m_expr in pairs:
-            sp.select(b_expr.over("ticker"))
-            sp.select(m_expr.over("ticker"))
+            sp_fragmented.select(b_expr.over("ticker"))
+            sp_fragmented.select(m_expr.over("ticker"))
+            sp_contiguous.select(b_expr.over("ticker"))
+            sp_contiguous.select(m_expr.over("ticker"))
 
-        print(f"\nScenario 2 — {n_tickers} tickers .over()  ({len(sp):,} rows)"
-              f"  repeat=3  number=1\n")
-        run(sp, pairs, runner=bench_over, over=True, repeat=3, number=1)
+        for label, sp in (
+            ("fragmented", sp_fragmented),
+            ("rechunked", sp_contiguous),
+        ):
+            chunks = sp["close"].n_chunks()
+            chunk_label = "chunk" if chunks == 1 else "chunks"
+            print(
+                f"\nScenario 2 — {n_tickers} tickers .over(), {label}"
+                f"  ({len(sp):,} rows, {chunks} {chunk_label})"
+                "  repeat=3  number=1\n"
+            )
+            run(sp, pairs, runner=bench_over, over=True, repeat=3, number=1)
 
     print()
 

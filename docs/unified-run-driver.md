@@ -1,4 +1,4 @@
-# Proposal: one `run` driver via an `Inputs` trait
+# Proposal: one `run_filter` driver via an `Inputs` trait
 
 **Status: deferred.** Sketched 2026-08-14, not built. The trigger to revisit is a
 fourth input arity — an OHLC indicator. Nothing here is a bug or a TODO; the
@@ -23,32 +23,122 @@ Rust workaround for having no variadic generics — the same technique `axum` us
 to type handlers.
 
 ```rust
-trait Inputs {
+use polars_arrow::array::PrimitiveArray;
+
+pub(crate) trait Inputs {
     type Casted;
     type Row;
+
     fn cast(self) -> PolarsResult<Self::Casted>;
     fn len(casted: &Self::Casted) -> usize;
-    fn rows(casted: &Self::Casted) -> impl Iterator<Item = Self::Row> + '_;
+    fn for_each(
+        casted: &Self::Casted,
+        emit: impl FnMut(Self::Row),
+    );
 }
 
 impl Inputs for &Series {
     type Casted = Float64Chunked;
     type Row = Option<f64>;
-    fn cast(self) -> PolarsResult<Float64Chunked> { f64c(self) }
-    fn len(c: &Float64Chunked) -> usize { c.len() }
-    fn rows(c: &Float64Chunked) -> impl Iterator<Item = Option<f64>> + '_ { c.iter() }
+
+    fn cast(self) -> PolarsResult<Self::Casted> {
+        Ok(self.cast(&DataType::Float64)?.f64()?.clone())
+    }
+
+    fn len(casted: &Self::Casted) -> usize {
+        casted.len()
+    }
+
+    fn for_each(
+        casted: &Self::Casted,
+        emit: impl FnMut(Self::Row),
+    ) {
+        casted.iter().for_each(emit);
+    }
+}
+
+/// A copy-free cursor that hoists the Arrow downcast once per chunk.
+struct ChunkCursor<'a> {
+    parts: Vec<&'a PrimitiveArray<f64>>,
+    chunk: usize,
+    offset: usize,
+    left: usize,
+}
+
+trait FastIter {
+    fn fast_iter(&self) -> ChunkCursor<'_>;
+}
+
+impl FastIter for Float64Chunked {
+    fn fast_iter(&self) -> ChunkCursor<'_> {
+        ChunkCursor {
+            parts: self.downcast_iter().collect(),
+            chunk: 0,
+            offset: 0,
+            left: self.len(),
+        }
+    }
+}
+
+impl Iterator for ChunkCursor<'_> {
+    type Item = Option<f64>;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.left == 0 {
+            return None;
+        }
+        self.left -= 1;
+
+        while self.offset >= self.parts[self.chunk].len() {
+            self.chunk += 1;
+            self.offset = 0;
+        }
+
+        let index = self.offset;
+        self.offset += 1;
+
+        // SAFETY: the loop above establishes that `index` is in bounds.
+        Some(unsafe { self.parts[self.chunk].get_unchecked(index) })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.left, Some(self.left))
+    }
 }
 
 impl Inputs for (&Series, &Series, &Series) {
-    type Casted = (Float64Chunked, Float64Chunked, Float64Chunked);
+    type Casted = (
+        Float64Chunked,
+        Float64Chunked,
+        Float64Chunked,
+    );
     type Row = Triple;
+
     fn cast(self) -> PolarsResult<Self::Casted> {
-        check_len!(self.0, self.1, self.2)?;
-        Ok((f64c(self.0)?, f64c(self.1)?, f64c(self.2)?))
+        let (a, b, c) = self;
+        check_len!(a, b, c)?;
+
+        Ok((
+            a.cast(&DataType::Float64)?.f64()?.clone(),
+            b.cast(&DataType::Float64)?.f64()?.clone(),
+            c.cast(&DataType::Float64)?.f64()?.clone(),
+        ))
     }
-    fn len(c: &Self::Casted) -> usize { c.0.len() }
-    fn rows(c: &Self::Casted) -> impl Iterator<Item = Triple> + '_ {
-        izip!(c.0.iter(), c.1.iter(), c.2.iter())
+
+    fn len(casted: &Self::Casted) -> usize {
+        casted.0.len()
+    }
+
+    fn for_each(
+        casted: &Self::Casted,
+        mut emit: impl FnMut(Self::Row),
+    ) {
+        let (a, b, c) = casted;
+
+        for row in izip!(a.fast_iter(), b.fast_iter(), c.fast_iter()) {
+            emit(row);
+        }
     }
 }
 ```
@@ -56,15 +146,30 @@ impl Inputs for (&Series, &Series, &Series) {
 `run_unary` and `run_ternary` then collapse into one function:
 
 ```rust
-pub(crate) fn run<I: Inputs, F: Filter<Input = I::Row>>(
+pub(crate) fn run_filter<I: Inputs, F: Filter<Input = I::Row>>(
     inputs: I,
     name: &str,
     mut filter: F,
-) -> PolarsResult<Series>
+) -> PolarsResult<Series> {
+    let casted = inputs.cast()?;
+    let mut builder = PrimitiveChunkedBuilder::<Float64Type>::new(
+        name.into(),
+        I::len(&casted),
+    );
+
+    I::for_each(&casted, |row| {
+        match filter.next(row) {
+            Some(value) => builder.append_value(value),
+            None => builder.append_null(),
+        }
+    });
+
+    Ok(builder.finish().into_series())
+}
 ```
 
-Call sites become `run(series, "ema", filter)` and
-`run((high, low, close), "atr", filter)`.
+Call sites become `run_filter(series, "ema", filter)` and
+`run_filter((high, low, close), "atr", filter)`.
 
 Two details that make it work:
 
@@ -76,14 +181,21 @@ Two details that make it work:
   two-step cast-then-borrow dance with the driver holding the storage between.
   Storing the chunked array directly avoids that, and `ChunkedArray::clone` is
   cheap — the chunks are `Arc`'d.
+- **`for_each` lets an input shape choose its traversal.** The ternary
+  implementation uses the same copy-free `FastIter` extension as today's
+  drivers. A separate direct-index single-chunk branch remains deliberately
+  out of scope; there is one traversal implementation for now.
 
 Adding an arity is one impl, and the impls themselves can be macro-generated if
 the count ever justifies it.
 
 ## Cost
 
-Roughly **line-neutral**: about 45 lines, against the ~43 that `run_unary` and
-`run_ternary` occupy today.
+With the ownership conversion and fast cursor written out explicitly, this is
+a meaningful source increase over the two current drivers. Most of that is the
+shared `ChunkCursor`, not the arity abstraction. Each additional arity after
+that adds only its `Inputs` implementation rather than another copy of the
+output loop.
 
 The real cost is **indirection**. Today a reader opens `run_ternary` and sees
 cast, zip, build in fifteen straight lines. Afterwards they follow `I::Row` and

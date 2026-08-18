@@ -1,6 +1,6 @@
 //! EMA kernel micro-benchmark: what the streaming-filter abstraction costs, and
 //! what the output-construction path costs. Recorded results and the reading of
-//! them are in `docs/benchmark-builder-vs-collect.md`.
+//! them are in `docs/builder-vs-collect-benchmark.md`.
 //!
 //! Five implementations of one EMA recurrence. Four of them are a 2x2 over the
 //! two independent choices, which is the point — measuring only the diagonal

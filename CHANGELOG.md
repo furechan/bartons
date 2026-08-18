@@ -2,25 +2,73 @@
 
 ## 0.1.0
 
-- Remove the `evcxr/` Rust notebooks and `scripts/install-evcxr.sh`, porting the
-  one result worth keeping into
-  [docs/benchmark-builder-vs-collect.md](docs/benchmark-builder-vs-collect.md) and
-  [scripts/builder-vs-collect.rs](scripts/builder-vs-collect.rs). Six of the seven
-  notebooks were spent prototyping scaffolding whose conclusions had already
-  landed in `bartons/src/` — the "Version 35 → 49" EMA iterations, the filter
-  sketches, a `CircularBuffer` never adopted, polars-API notes from the 0.39 era.
-  One had gone actively wrong: `sma-filter.ipynb` computed an EMA under an SMA
-  name, with none of the shipped `SmaFilter`'s warmup or gap-reset semantics.
-  They were also the only code in the repo with no automated coverage — excluded
-  from `ty`, absent from the `justfile`, and pinning polars separately from
-  `bartons/Cargo.toml` (0.54.4 against the crate's 0.55.1), so they could only
-  rot silently. Re-running the surviving benchmark on the current pin overturned
-  its recorded reading: measured as a 2x2 rather than a diagonal, the streaming-
-  filter abstraction is exactly free (355µs, same as a hand-inlined loop), and
-  the 1.6× cost the notebook had attributed to it belongs entirely to
-  `append_option` — which `run_unary`/`run_ternary` already avoid, deliberately,
-  and should keep avoiding. The `[tool.ty.src]` exclusion in `pyproject.toml`
-  went with the notebooks; `uv run ty check` is now clean with no exclusions.
+- Give the `evcxr/` notebooks versionless `:dep` cells and move the kernel's build
+  settings to the dotfiles repo. A bare `:dep polars` resolves to whatever is newest
+  rather than tracking `bartons/Cargo.toml`, which is the intended behaviour: these
+  notebooks compare patterns and methods, where the crate version is rarely the
+  variable, and pinning them is exactly what rotted last time — polars 0.54.4 in the
+  notebooks against 0.55.1 in the crate, with nothing to say so. Pin a single line
+  when an experiment needs one. Every notebook that needs crates declares the same
+  block (`polars`, `itertools`, `serde`), because evcxr's build cache is keyed on the
+  *complete* dependency set rather than per crate: identical sets share one build,
+  while a set differing by a single crate pays its own ~80s. `:cache 2048` and
+  `:opt 3` now live in `~/.config/evcxr/init.evcxr`, stowed from the dotfiles repo as
+  machine-level build settings; without them notebooks still work, at ~80s per
+  session instead of ~2s.
+- Drop `evcxr/evcxr.toml`, `scripts/check-evcxr-pins.py` and the `just evcxr-check`
+  recipe, which briefly centralised the notebook pins. The toml turned out to shadow
+  `init.evcxr` completely — settings and `:dep` lines alike — and its schema has no
+  cache key, so adopting it disabled `:cache` and moved the dependency build from
+  first-cell-execution to *kernel startup*, where ~80s exceeded VS Code's 60s
+  `jupyter.jupyterLaunchTimeout` and failed as "Failed to start the Kernel" with
+  cargo output and no mention of configuration. Neither workaround recovers it:
+  `sccache = "sccache"` is genuinely engaged but buys ~8%, and `EVCXR_CACHE_ENABLED`
+  is an internal marker with no effect when set. With the pins gone there is nothing
+  left for the checker to compare, and the raised launch timeout is no longer needed.
+- Record a ternary-driver micro-benchmark in
+  [docs/izip-vs-index-benchmark.md](docs/izip-vs-index-benchmark.md), from
+  [scripts/izip-vs-index.rs](scripts/izip-vs-index.rs). `izip!` beats any index loop
+  and the margin grows with fragmentation — 8.4× at 64 chunks — so nothing argues
+  for indexing. The finding is what beats `izip!`: both `ChunkedArray::get` and
+  `get_unchecked` re-derive the array on every element (index `chunks[0]`, deref the
+  `Arc<dyn Array>`, downcast), which cannot be hoisted through `&self`. Hoisting it
+  once per chunk instead is 2.8× faster than today's `izip!` on single-chunk input
+  and 2.0× on fragmented input, with no allocation at any chunking — rechunking,
+  which would have copied `3 × n × 8` bytes, turns out to be an expensive way to
+  reach the same hoist and is slower than walking chunks. Each contributing term is
+  isolated by its own variant rather than argued: `izip!`'s machinery is free
+  (advancing the same iterators by hand costs the same), the number of cursors is
+  free (one index per array matches one shared index), and what remains is
+  per-element chunk-boundary handling. Expressing that cursor as an `Iterator`
+  behind a trait made it *faster* than the equivalent macro (347 against 413 at 64
+  chunks), since carrying a remaining count supplies an exact `size_hint` the macro
+  could not.
+  Implement the copy-free cursor as a `FastIter` extension trait used by both
+  drivers. A separate unary comparison found the native single-chunk Arrow
+  iterator and `FastIter` tied at 286.6µs, so no unary dispatcher is added. The
+  separately measured ternary direct-index single-chunk dispatcher remains
+  deferred. The script takes `--out <path>` to
+  save its report, and its header states it must be
+  cargo-built — a notebook of the same source reverses the result, which is a fact
+  about evcxr's build profile rather than about the driver, since `maturin
+  --release` is what compiles the shipped extension.
+- Correct the recorded kernel micro-benchmark, and move it out of the notebook that
+  produced it. `evcxr/builder-vs-collect.ipynb` had compared `filter` (using
+  `append_option`) against `builder` (using a manual `match`) — two variables down
+  one diagonal, so the gap was attributable to neither. Re-run as a 2x2 on the
+  current pin, the streaming-filter abstraction is exactly free (355µs, same as a
+  hand-inlined loop) and the whole 1.6× it had been charged belongs to
+  `append_option` — which `run_unary`/`run_ternary` already avoid, deliberately, and
+  should keep avoiding. The corrected experiment is
+  [scripts/builder-vs-collect.rs](scripts/builder-vs-collect.rs) with results and
+  provenance in
+  [docs/builder-vs-collect-benchmark.md](docs/builder-vs-collect-benchmark.md); the
+  notebook keeps a pointer to both and no longer carries stored numbers. It cannot
+  be a cargo example: `polars-utils` pulls `numpy` -> `pyo3` and the crate enables
+  pyo3's `extension-module`, so no example, test or bin target in that package can
+  link. `evcxr/sma-filter.ipynb` is flagged in place as known-incorrect — it
+  computes an EMA under an SMA name, with none of the shipped `SmaFilter`'s warmup
+  or gap-reset semantics.
 - Add the local build/publish path the archived CI never left behind, and rename
   the recipes to mirror maturin's own verbs. `just develop` (was `just build`)
   installs into the `.venv`; `just build` now runs `maturin build`, producing the

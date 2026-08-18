@@ -6,13 +6,14 @@ stays inside the polars engine, wrapping the C TA-Lib. Two scenarios: single sym
 an "ALL combined" row — every indicator in one df.select(), showing how each backend
 parallelises / CSEs across expressions vs the one-by-one sum.
 
-The `talib` column is raw polars_talib, which represents warmup/gaps as NaN in the
-values buffer (no validity bitmap) — numpy-style, not polars nulls. bartons instead
-emits real nulls inline. So `talib+null` is the apples-to-apples column: raw talib
-plus `.fill_nan(None)` to produce the same null-correct output bartons does. `r(raw)`
-compares against raw talib, `r(fair)` against talib+null (both bartons/other, <1 =
-bartons faster). Note talib still can't handle *interior* nulls even with fill_nan;
-this only equalises the warmup-null representation on clean data.
+The first OHLC row of each input series is null. The `talib` column is raw
+polars_talib, which represents warmup/gaps as NaN in the values buffer (no validity
+bitmap) — numpy-style, not polars nulls. bartons instead emits real nulls inline.
+So `talib+null` is the closest output-representation comparison: raw talib plus
+`.fill_nan(None)`. `r(raw)` compares against raw talib, `r(fair)` against
+talib+null (both bartons/other, <1 = bartons faster). This exercises only a leading
+input null; talib still can't handle *interior* nulls equivalently even with
+`fill_nan`.
 
 RMA has no TA-Lib equivalent (Wilder smoothing isn't exposed standalone), so it is
 covered only in benchmark-vs-mintalib.py.
@@ -86,6 +87,20 @@ def fmt_ms(s: float) -> str:
     return f"{s * 1000:.3f}"
 
 
+def null_first_ohlc_row(df: pl.DataFrame) -> pl.DataFrame:
+    """Set the first chronological OHLC row to null in each input series."""
+    time_col = "date" if "date" in df.columns else "datetime"
+    first = pl.col(time_col) == (
+        pl.col(time_col).min().over("ticker")
+        if "ticker" in df.columns
+        else pl.col(time_col).min()
+    )
+    return df.with_columns(
+        pl.when(first).then(None).otherwise(pl.col(column)).alias(column)
+        for column in ("open", "high", "low", "close")
+    )
+
+
 def bench_combined(
     df: pl.DataFrame, exprs: list, *, over: bool, repeat: int, number: int
 ) -> float:
@@ -151,7 +166,7 @@ def main() -> None:
         if not pairs:
             raise SystemExit(f"No benchmark found for {args.indicator!r}")
 
-    prices = sample_prices()
+    prices = null_first_ohlc_row(sample_prices())
 
     print("\nWarming up ...")
     for _, b_expr, t_expr in pairs:
@@ -166,7 +181,7 @@ def main() -> None:
     run(prices, pairs, runner=bench, over=False, repeat=args.repeat, number=args.number)
 
     if not args.no_over:
-        sp = sample_dataset()
+        sp = null_first_ohlc_row(sample_dataset())
         n_tickers = sp["ticker"].n_unique()
 
         print(f"\nWarming up .over() ...")

@@ -1,5 +1,6 @@
-use polars::prelude::*;
 use itertools::izip;
+use polars::prelude::*;
+use polars_arrow::array::PrimitiveArray;
 
 /// Check that every input series has the same length, returning that length.
 ///
@@ -65,6 +66,62 @@ pub(crate) trait Filter {
     fn next(&mut self, input: Self::Input) -> Option<f64>;
 }
 
+/// A cursor over a `Float64Chunked` that downcasts each Arrow chunk once,
+/// rather than re-entering `ChunkedArray`'s flattened iterator per element.
+struct ChunkCursor<'a> {
+    parts: Vec<&'a PrimitiveArray<f64>>,
+    chunk: usize,
+    offset: usize,
+    remaining: usize,
+}
+
+/// Private extension trait for the drivers' copy-free chunk traversal.
+trait FastIter {
+    fn fast_iter(&self) -> ChunkCursor<'_>;
+}
+
+impl FastIter for Float64Chunked {
+    #[inline]
+    fn fast_iter(&self) -> ChunkCursor<'_> {
+        ChunkCursor {
+            parts: self.downcast_iter().collect(),
+            chunk: 0,
+            offset: 0,
+            remaining: self.len(),
+        }
+    }
+}
+
+impl Iterator for ChunkCursor<'_> {
+    type Item = Option<f64>;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.remaining == 0 {
+            return None;
+        }
+        self.remaining -= 1;
+
+        while self.offset >= self.parts[self.chunk].len() {
+            self.chunk += 1;
+            self.offset = 0;
+        }
+
+        let index = self.offset;
+        self.offset += 1;
+
+        // SAFETY: the loop above establishes that `index` is in bounds.
+        Some(unsafe { self.parts[self.chunk].get_unchecked(index) })
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.remaining, Some(self.remaining))
+    }
+}
+
+impl ExactSizeIterator for ChunkCursor<'_> {}
+
 /// Drive a single-series [`Filter`] over a series.
 ///
 /// Casts the input to `Float64`, feeds each `Option<f64>` to the filter, and
@@ -79,7 +136,7 @@ pub(crate) fn run_unary<F: Filter<Input = Option<f64>>>(
     let ca = series.f64()?;
     let mut builder = PrimitiveChunkedBuilder::<Float64Type>::new(name.into(), ca.len());
 
-    for opt_val in ca.iter() {
+    for opt_val in ca.fast_iter() {
         match filter.next(opt_val) {
             Some(v) => builder.append_value(v),
             None => builder.append_null(),
@@ -114,7 +171,7 @@ pub(crate) fn run_ternary<F: Filter<Input = Triple>>(
     let c = c.f64()?;
     let mut builder = PrimitiveChunkedBuilder::<Float64Type>::new(name.into(), len);
 
-    for triple in izip!(a.iter(), b.iter(), c.iter()) {
+    for triple in izip!(a.fast_iter(), b.fast_iter(), c.fast_iter()) {
         match filter.next(triple) {
             Some(v) => builder.append_value(v),
             None => builder.append_null(),
