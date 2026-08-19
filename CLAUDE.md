@@ -48,16 +48,16 @@ just develop-debug # maturin develop — fast unoptimized build (~20x slower at 
 just build         # maturin build — wheel + sdist into dist/, installs nothing
 just dump          # list what went into the sdist
 just publish       # guarded upload of dist/ to PyPI
-just test          # pytest
+just test          # native Rust tests, then pytest
 just bench         # develop, then benchmark vs a baseline
                    # (default vs-native; also vs-talib, vs-mintalib)
 just stubs         # regenerate python/bartons/plugin.pyi from the built module
 just raise-ceiling # test the newest polars-py; raise the pyproject ceiling if it passes
 just clean         # remove Rust target/ and compiled .so files
 
-# Native Rust test/bench/example targets must link libpython. The default
-# extension-module feature deliberately does not.
-cargo test --manifest-path bartons/Cargo.toml --no-default-features
+# Native Rust bench/example targets must link libpython. The default
+# extension-module feature deliberately does not. `just test` configures this
+# linkage automatically for tests using the project's uv-managed Python.
 cargo bench --manifest-path bartons/Cargo.toml --no-default-features
 ```
 
