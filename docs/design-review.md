@@ -178,6 +178,6 @@ a reference implementation.
 
 ## Explicitly not worth doing yet
 
-The `% self.buf.len()` in the ring buffers (a branch would be cheaper) and
-`ca.iter()` versus slice iteration over a rechunked, null-free array. Both are
-micro-optimizations; leave them until a benchmark asks for them.
+Slice iteration over a rechunked, null-free array remains a micro-optimization;
+leave it until a benchmark asks for it. The ring-buffer modulo was replaced by
+an explicit wrap branch after WMA benchmarks justified the change.

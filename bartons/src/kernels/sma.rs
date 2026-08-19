@@ -58,7 +58,10 @@ impl Filter for SmaFilter {
         }
         self.sum += val;
         self.buf[self.idx] = val;
-        self.idx = (self.idx + 1) % self.buf.len();
+        self.idx += 1;
+        if self.idx == self.buf.len() {
+            self.idx = 0;
+        }
 
         // Warmup period emits null; otherwise the rolling mean.
         (self.count >= self.period).then_some(self.sum / self.period as f64)
