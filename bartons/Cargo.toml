@@ -28,6 +28,10 @@ name = "fast-iter-bis"
 path = "../scripts/fast-iter-bis.rs"
 
 [[example]]
+name = "fast-path"
+path = "../scripts/fast-path.rs"
+
+[[example]]
 name = "izip-vs-index"
 path = "../scripts/izip-vs-index.rs"
 
