@@ -57,16 +57,16 @@ impl Filter for WmaFilter {
             return None;
         };
 
-        self.count += 1;
-        self.rsum += val;
-        self.wsum += self.count as f64 * val;
-
-        if self.count > self.period {
-            // Slide the window: drop one from every weight, then evict the oldest.
+        if self.count < self.period {
+            self.count += 1;
+            self.rsum += val;
+            self.wsum += self.count as f64 * val;
+        } else {
+            // Slide the full window: drop one from every existing weight,
+            // evict the oldest, and add the new value with weight `period`.
             let oldest = self.buf[self.idx]; // read before overwriting
-            self.wsum -= self.rsum;
-            self.rsum -= oldest;
-            self.count -= 1;
+            self.wsum += self.period as f64 * val - self.rsum;
+            self.rsum += val - oldest;
         }
         self.buf[self.idx] = val;
         self.idx += 1;
