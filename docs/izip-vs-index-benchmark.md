@@ -182,8 +182,8 @@ About a minute, almost all of it compiling polars.
 Trailing arguments name variants to run, in that order, which is how the
 ordering check above was done.
 
-It cannot be a `cargo` example inside `bartons/` — `polars-utils` depends on
-`numpy`, which depends on `pyo3`, and the crate enables pyo3's
-`extension-module`, so the dependency graph is built without linking libpython
-and no example, test or bin target in that package can link. Same constraint and
-same remedy as [builder-vs-collect-benchmark.md](builder-vs-collect-benchmark.md).
+It can now be moved into a `cargo` example inside `bartons/` if useful: the
+crate also emits an `rlib`. Native examples, tests and benchmarks must use
+`--no-default-features`, which disables pyo3's default `extension-module` mode
+and links libpython. The standalone script remains convenient for reproducing
+the recorded experiment without changing the production crate.

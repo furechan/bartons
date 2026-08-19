@@ -40,6 +40,23 @@ def ema(series: pl.Series, *, period: int = 20) -> pl.Series:
     ...
 
 
+def random_prices(n_rows: int = 10000, *, n_chunks: int = 1, n_tickers: int = 1, seed: int = 0, null_first: bool = False) -> pl.DataFrame:
+    """
+    Generate deterministic OHLCV prices with controlled chunking.
+
+    Args:
+        n_rows: number of rows per ticker.
+        n_chunks: exact number of chunks in every output column.
+        n_tickers: number of price series.
+        seed: deterministic pseudo-random seed.
+        null_first: whether the first OHLC row of each ticker is null.
+
+    Returns:
+        A Polars DataFrame with the requested physical chunk layout.
+    """
+    ...
+
+
 def rma(series: pl.Series, *, period: int = 20) -> pl.Series:
     """
     Wilder's running moving average (SMMA / Wilder smoothing).
@@ -93,6 +110,20 @@ def trange(high: pl.Series, low: pl.Series, close: pl.Series) -> pl.Series:
 
     Returns:
         A Float64 series; the first row is null (no prior close).
+    """
+    ...
+
+
+def with_n_chunks(frame: pl.DataFrame, n_chunks: int) -> pl.DataFrame:
+    """
+    Return a DataFrame with exactly the requested number of physical chunks.
+
+    Args:
+        frame: input DataFrame; its existing chunk layout is ignored.
+        n_chunks: exact number of chunks in every output column.
+
+    Returns:
+        A logically equivalent Polars DataFrame with controlled chunking.
     """
     ...
 

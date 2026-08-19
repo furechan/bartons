@@ -89,7 +89,11 @@ For `pyo3-polars 0.28.0` this returns:
 `bartons/Cargo.toml`:
 
 ```toml
-pyo3 = { version = "0.29", features = ["extension-module", "abi3-py311"] }
+[features]
+default = ["extension-module"]
+extension-module = ["pyo3/extension-module"]
+
+pyo3 = { version = "0.29", features = ["abi3-py311"] }
 pyo3-polars = { version = "0.28", features = ["derive", "dtype-struct", "dtype-decimal", "dtype-array"] }
 polars = { version = "0.55.1", features = ["dtype-struct"] }
 polars-arrow = { version = "0.55.1", default-features = false }

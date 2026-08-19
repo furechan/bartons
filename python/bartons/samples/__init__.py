@@ -2,15 +2,25 @@
 
 from functools import lru_cache
 from importlib import resources
-from datetime import date, timedelta
-import random
 
 import polars as pl
+
+from ..plugin import random_prices as _random_prices
+from ..plugin import with_n_chunks as _with_n_chunks
 
 
 TIMEZONE = "America/New_York"
 SAMPLE_FREQUENCIES = ("daily", "hourly", "minute")
 SAMPLE_TICKERS = tuple(f"T{i:03d}" for i in range(1, 501))
+
+
+def with_n_chunks(frame: pl.DataFrame, n_chunks: int) -> pl.DataFrame:
+    """Return ``frame`` with exactly ``n_chunks`` in every column.
+
+    Existing chunk boundaries are ignored, so this can both fragment and
+    consolidate a frame while preserving its values and row order.
+    """
+    return _with_n_chunks(frame, n_chunks)
 
 
 def random_prices(
@@ -40,65 +50,13 @@ def random_prices(
         A Polars DataFrame containing ``date``, OHLC, and ``volume`` columns,
         plus a leading ``ticker`` column when ``n_tickers`` is greater than one.
     """
-    if n_rows < 1:
-        raise ValueError("n_rows must be positive")
-    if n_tickers < 1:
-        raise ValueError("n_tickers must be positive")
-
-    total_rows = n_rows * n_tickers
-    if not 1 <= n_chunks <= total_rows:
-        raise ValueError(f"n_chunks must be between 1 and {total_rows}")
-
-    rng = random.Random(seed)
-    dates = [date(2000, 1, 1) + timedelta(days=i) for i in range(n_rows)]
-    opens: list[float | None] = []
-    highs: list[float | None] = []
-    lows: list[float | None] = []
-    closes: list[float | None] = []
-    volumes: list[int] = []
-
-    previous_close = 100.0
-    for i in range(n_rows):
-        open_ = previous_close
-        close = max(0.01, open_ * (1.0 + rng.gauss(0.0002, 0.012)))
-        spread = open_ * rng.uniform(0.001, 0.015)
-        high = max(open_, close) + spread
-        low = max(0.01, min(open_, close) - spread)
-
-        is_null = null_first and i == 0
-        opens.append(None if is_null else open_)
-        highs.append(None if is_null else high)
-        lows.append(None if is_null else low)
-        closes.append(None if is_null else close)
-        volumes.append(rng.randint(100_000, 10_000_000))
-        previous_close = close
-
-    base = pl.DataFrame(
-        {
-            "date": dates,
-            "open": opens,
-            "high": highs,
-            "low": lows,
-            "close": closes,
-            "volume": volumes,
-        }
+    return _random_prices(
+        n_rows,
+        n_chunks=n_chunks,
+        n_tickers=n_tickers,
+        seed=seed,
+        null_first=null_first,
     )
-
-    if n_tickers > 1:
-        base = pl.concat(
-            base.select(pl.lit(f"T{i + 1:03d}").alias("ticker"), pl.all())
-            for i in range(n_tickers)
-        )
-
-    quotient, remainder = divmod(total_rows, n_chunks)
-    sizes = [quotient + (i < remainder) for i in range(n_chunks)]
-    offset = 0
-    chunks = []
-    for size in sizes:
-        chunks.append(base.slice(offset, size))
-        offset += size
-
-    return pl.concat(chunks, rechunk=False)
 
 
 @lru_cache

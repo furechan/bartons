@@ -33,8 +33,17 @@ PARAM_TYPES = {
     "low": "pl.Series",
     "close": "pl.Series",
     "period": "int",
+    "n_rows": "int",
+    "n_chunks": "int",
+    "n_tickers": "int",
+    "seed": "int",
+    "null_first": "bool",
+    "frame": "pl.DataFrame",
 }
-RETURN_TYPE = "pl.Series"  # every eager pyfunction returns a Series
+RETURN_TYPES = {
+    "random_prices": "pl.DataFrame",
+    "with_n_chunks": "pl.DataFrame",
+}
 
 OUT = Path(__file__).resolve().parent.parent / "python" / "bartons" / "plugin.pyi"
 
@@ -73,7 +82,8 @@ def render(name: str, func) -> str:
             seen_kwonly = True
         params.append(annotate(param))
 
-    lines = [f"def {name}({', '.join(params)}) -> {RETURN_TYPE}:"]
+    return_type = RETURN_TYPES.get(name, "pl.Series")
+    lines = [f"def {name}({', '.join(params)}) -> {return_type}:"]
     doc = inspect.getdoc(func)
     if doc:
         lines.append('    """')

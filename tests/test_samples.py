@@ -8,6 +8,7 @@ from bartons.samples import (
     random_prices,
     sample_dataset,
     sample_prices,
+    with_n_chunks,
 )
 
 OHLCV = ["open", "high", "low", "close", "volume"]
@@ -105,6 +106,17 @@ def test_random_prices_is_deterministic_and_has_valid_ohlc():
 def test_random_prices_has_exact_chunk_count(n_chunks):
     df = random_prices(100, n_chunks=n_chunks)
     assert {series.n_chunks() for series in df} == {n_chunks}
+
+
+def test_with_n_chunks_replaces_existing_layout():
+    original = random_prices(100, n_chunks=7)
+    fragmented = with_n_chunks(original, 3)
+    contiguous = with_n_chunks(fragmented, 1)
+
+    assert {series.n_chunks() for series in fragmented} == {3}
+    assert {series.n_chunks() for series in contiguous} == {1}
+    assert original.equals(fragmented)
+    assert original.equals(contiguous)
 
 
 def test_random_prices_multiple_tickers_and_first_null():

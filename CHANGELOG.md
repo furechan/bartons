@@ -2,6 +2,13 @@
 
 ## 0.1.0
 
+- Add a deterministic Rust `random_prices` generator for tests and benchmarks.
+  It produces OHLCV `DataFrame`s with an exact requested chunk count, optional
+  ticker groups and leading nulls. The same implementation is public through
+  `bartons.samples.random_prices` and the crate's `rlib` target, allowing Python
+  plugin-boundary benchmarks and native Rust micro-benchmarks to share a fixture.
+  Physical layout is a separate `with_n_chunks(frame, n_chunks)` utility, so the
+  same controlled fragmentation can be applied to generated or real datasets.
 - Give the `evcxr/` notebooks versionless `:dep` cells and move the kernel's build
   settings to the dotfiles repo. A bare `:dep polars` resolves to whatever is newest
   rather than tracking `bartons/Cargo.toml`, which is the intended behaviour: these

@@ -1,12 +1,14 @@
-mod utils;
 mod kernels;
+pub mod samples;
+mod utils;
 
 use pyo3::prelude::*;
+#[cfg(feature = "extension-module")]
 use pyo3_polars::PolarsAllocator;
 
+#[cfg(feature = "extension-module")]
 #[global_allocator]
 static ALLOC: PolarsAllocator = PolarsAllocator::new();
-
 
 #[pymodule]
 fn plugin(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -18,5 +20,7 @@ fn plugin(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(kernels::rsi::rsi_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::trange::trange_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::atr::atr_py, m)?)?;
+    m.add_function(wrap_pyfunction!(samples::random_prices_py, m)?)?;
+    m.add_function(wrap_pyfunction!(samples::with_n_chunks_py, m)?)?;
     Ok(())
 }

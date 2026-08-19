@@ -81,6 +81,7 @@ dev = [
     "polars-talib>=0.1.5",
     "ta-lib>=0.6.7",
     "mintalib>=0.0.35",
+    "fsdata>=0.0.9",
 ]
 
 # Only needed to refresh the bundled sample prices via scripts/update-samples.py.

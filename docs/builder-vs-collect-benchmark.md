@@ -93,12 +93,11 @@ with the recipe in its header comment: a `cargo new` throwaway crate, `cargo add
 polars`, copy the file to `src/main.rs`, `cargo run --release`. About a minute,
 almost all of it compiling polars.
 
-It cannot be a `cargo` example inside `bartons/`, which would otherwise be the
-obvious home. `polars-utils` depends on `numpy`, which depends on `pyo3`, and
-the crate enables pyo3's `extension-module` — so the dependency graph is built
-without linking libpython and *no* example, test or bin target in that package
-can link. Adding a second in-tree crate just to host a benchmark was judged not
-worth the second polars pin to keep in step.
+It can now be moved into a `cargo` example inside `bartons/` if useful: the
+crate also emits an `rlib`. Native examples, tests and benchmarks must use
+`--no-default-features`, which disables pyo3's default `extension-module` mode
+and links libpython. The standalone script remains convenient for reproducing
+the recorded experiment without changing the production crate.
 
 Match the polars version to the pin in [../bartons/Cargo.toml](../bartons/Cargo.toml)
 when re-running, or the numbers describe a version the crate does not use.

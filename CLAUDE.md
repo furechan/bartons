@@ -54,11 +54,23 @@ just bench         # develop, then benchmark vs a baseline
 just stubs         # regenerate python/bartons/plugin.pyi from the built module
 just raise-ceiling # test the newest polars-py; raise the pyproject ceiling if it passes
 just clean         # remove Rust target/ and compiled .so files
+
+# Native Rust test/bench/example targets must link libpython. The default
+# extension-module feature deliberately does not.
+cargo test --manifest-path bartons/Cargo.toml --no-default-features
+cargo bench --manifest-path bartons/Cargo.toml --no-default-features
 ```
 
 `develop` and `build` mirror maturin's own verbs: `develop` installs into the
 `.venv` (what you want for tests, benchmarks and stubs — all three depend on it),
 `build` produces artifacts in `dist/` and installs nothing.
+
+`extension-module` is a default Cargo feature because wheel builds are the
+normal path. Cargo features are additive, so native Rust executables use
+`--no-default-features`; there is intentionally no empty opposing feature.
+This changes PyO3's linkage mode, not the generated Rust code: native targets
+link libpython, while the Python extension resolves those symbols from its host
+interpreter.
 
 Requires the `.venv` to be active. The build tool is `uv`; use `uv sync` to set up the environment.
 
