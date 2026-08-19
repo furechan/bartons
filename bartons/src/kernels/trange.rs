@@ -33,7 +33,9 @@ impl Filter for TrangeFilter {
             (Some(hi), Some(lo)) => {
                 let mut tr = hi - lo;
                 if let Some(pc) = self.prev_close {
-                    tr = tr.max((hi - pc).abs()).max((lo - pc).abs());
+                    // For a valid OHLC bar (`hi >= lo`), true range is the
+                    // width of the envelope containing the bar and prev close.
+                    tr = hi.max(pc) - lo.min(pc);
                 }
                 Some(tr)
             }

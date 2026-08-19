@@ -123,7 +123,7 @@ preserves it.
 
 `check_lengths` was moved to `InvalidOperation` for the same reason. The literal
 `ShapeMismatch` maps to a `ShapeError` whose module (`exceptions`) does not exist
-as far as Python is concerned — not importable, not on `bartons.plugin`, not
+as far as Python is concerned — not importable, not on `bartons.kernels`, not
 `polars.exceptions.ShapeError` — so it is catchable only as bare `Exception`.
 Only the variants landing on builtins (`ValueError`, `IndexError`, `IOError`,
 `AssertionError`) are usable by callers.

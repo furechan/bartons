@@ -10,8 +10,8 @@ use pyo3_polars::PolarsAllocator;
 #[global_allocator]
 static ALLOC: PolarsAllocator = PolarsAllocator::new();
 
-#[pymodule]
-fn plugin(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
+#[pymodule(name = "kernels")]
+fn python_kernels(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_function(wrap_pyfunction!(kernels::ema::ema_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::sma::sma_py, m)?)?;
@@ -20,6 +20,7 @@ fn plugin(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(kernels::rsi::rsi_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::trange::trange_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::atr::atr_py, m)?)?;
+    m.add_function(wrap_pyfunction!(kernels::mad::mad_py, m)?)?;
     m.add_function(wrap_pyfunction!(samples::random_prices_py, m)?)?;
     m.add_function(wrap_pyfunction!(samples::with_n_chunks_py, m)?)?;
     Ok(())

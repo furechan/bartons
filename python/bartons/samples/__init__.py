@@ -5,8 +5,8 @@ from importlib import resources
 
 import polars as pl
 
-from ..plugin import random_prices as _random_prices
-from ..plugin import with_n_chunks as _with_n_chunks
+from ..kernels import random_prices as _random_prices
+from ..kernels import with_n_chunks as _with_n_chunks
 
 
 TIMEZONE = "America/New_York"

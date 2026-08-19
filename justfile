@@ -66,7 +66,7 @@ bench baseline="vs-native": develop
 raise-ceiling:
     python scripts/raise-ceiling.py
 
-# Regenerate python/bartons/plugin.pyi by introspecting the built extension.
+# Regenerate python/bartons/kernels.pyi by introspecting the built extension.
 # Depends on `develop` so the module being introspected is current.
 stubs: develop
     python scripts/generate-stubs.py

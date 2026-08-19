@@ -88,7 +88,7 @@ def _wheel(session: nox.Session) -> str:
 # list — a newer confirmation replaces the older one rather than adding to the
 # matrix, because it adds no engine coverage.
 #
-# Floor is 1.28: the eager plugin.<name> pyfunctions need PySeries._export, which
+# Floor is 1.28: the eager kernels.<name> pyfunctions need PySeries._export, which
 # polars only exposes from 1.28 (see docs/test-compat-helpers.md). 1.28.0 also
 # represents engine crate 0.46.0, whose group spans polars 1.22–1.29.
 # version -> crate:  1.28.0→0.46.0  1.30.0→0.48.1  1.32.0→0.49.1  1.32.1→0.50.0

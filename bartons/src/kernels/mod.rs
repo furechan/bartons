@@ -10,8 +10,9 @@ use crate::utils::Triple;
 pub(crate) type Hlc = Triple;
 
 pub mod ema;
-pub mod sma;
+pub mod mad;
 pub mod rma;
+pub mod sma;
 pub mod wma;
 pub mod rsi;
 pub mod trange;

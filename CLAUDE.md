@@ -6,12 +6,12 @@ Polars plugin providing financial/technical analysis expressions, implemented in
 
 One crate, one Python package:
 
-- `bartons/` — PyO3 `cdylib` crate, compiles to `python/bartons/plugin.abi3.so`
+- `bartons/` — PyO3 `cdylib` crate, compiles to `python/bartons/kernels.abi3.so`
 - `python/bartons/` — Python package wrapping the compiled plugin
 
 The crate directory is named after the Cargo package (`bartons`), which is what
-a Rust reader expects to find. Its `[lib] name = "plugin"` is what makes the
-compiled module `bartons.plugin`.
+a Rust reader expects to find. Its `[lib] name = "kernels"` is what makes the
+compiled module `bartons.kernels`.
 
 **The two layers are not mirrors.** Rust holds *kernels* — materialized vector
 computations, series in and series out, written where polars cannot express the
@@ -26,19 +26,19 @@ Rust source layout: each indicator's kernel lives in `bartons/src/kernels/<name>
 and is declared in `bartons/src/kernels/mod.rs`; the shared `Filter` trait, the
 `run_unary`/`run_ternary` drivers and the `check_len!` length guard are in
 `bartons/src/utils.rs` (crate root); and `bartons/src/lib.rs` is the `#[pymodule]` glue
-that registers each eager pyfunction flat as `bartons.plugin.<name>`.
+that registers each eager pyfunction flat as `bartons.kernels.<name>`.
 
 `Filter` carries an associated `Input`: `Option<f64>` for the single-series
 kernels, and a three-tuple for TRANGE/ATR — spelled `utils::Triple` on the
 arity-generic driver side and re-aliased `kernels::Hlc` on the kernel side.
 
-The flat layout is deliberate — a `plugin.indicators` submodule was built and
-rejected (`import bartons.plugin.indicators` needs a manual `sys.modules` hack that
-isn't worth it for a private module). See
+The flat layout is deliberate — a `kernels.indicators` submodule was built and
+rejected (`import bartons.kernels.indicators` needs a manual `sys.modules` hack that
+isn't worth it). See
 [docs/considered-alternatives.md](docs/considered-alternatives.md) for that and
 other deferred designs.
 
-The Python package and distribution are both `bartons`; the Rust module is imported as `bartons.plugin`. The name `bartons` was chosen to avoid colliding with the separate `bearta` TA library. Polars expressions are registered via `polars.plugins.register_plugin_function`.
+The Python package and distribution are both `bartons`; the Rust module is imported as `bartons.kernels`. The name `bartons` was chosen to avoid colliding with the separate `bearta` TA library. Polars expressions are registered via `polars.plugins.register_plugin_function`.
 
 ## Build & test
 
@@ -51,7 +51,7 @@ just publish       # guarded upload of dist/ to PyPI
 just test          # native Rust tests, then pytest
 just bench         # develop, then benchmark vs a baseline
                    # (default vs-native; also vs-talib, vs-mintalib)
-just stubs         # regenerate python/bartons/plugin.pyi from the built module
+just stubs         # regenerate python/bartons/kernels.pyi from the built module
 just raise-ceiling # test the newest polars-py; raise the pyproject ceiling if it passes
 just clean         # remove Rust target/ and compiled .so files
 
@@ -114,7 +114,7 @@ declaring both call forms as overloads, so `EMA(20)` and `EMA(pl.col("x"), 20)`
 both type as `pl.Expr`.
 
 `uv run ty check` is **clean** and should stay that way. Two things keep it so:
-`python/bartons/plugin.pyi` (generated — see below) covers the compiled
+`python/bartons/kernels.pyi` (generated — see below) covers the compiled
 extension, which a checker cannot otherwise see into; and `evcxr/` is excluded in
 `[tool.ty.src]`, those being Rust notebooks ty would parse as Python. The
 runtime-registered `.bt` namespace was retired partly because it could not be

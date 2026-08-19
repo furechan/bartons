@@ -2,7 +2,7 @@ import polars as pl
 import pytest
 from helpers import assert_series_equal
 
-from bartons import plugin
+from bartons import kernels
 from bartons.indicators import ATR
 from refimpl import ref_atr
 
@@ -80,7 +80,7 @@ def test_atr_pyfunction(highs, lows, closes, period):
     h = pl.Series("high", highs, dtype=pl.Float64)
     l = pl.Series("low", lows, dtype=pl.Float64)
     c = pl.Series("close", closes, dtype=pl.Float64)
-    got = plugin.atr(h, l, c, period=period)
+    got = kernels.atr(h, l, c, period=period)
     assert_series_equal(
         got, expected_series(highs, lows, closes, period),
         check_names=False, check_exact=False, rel_tol=1e-12,
@@ -92,7 +92,7 @@ def test_pyfunction_matches_expression():
     highs, lows, closes, period = CASES[2]  # the null-skip case
     df = _df(highs, lows, closes)
     expr_out = df.select(ATR(period).alias("atr"))["atr"]
-    func_out = plugin.atr(df["high"], df["low"], df["close"], period=period)
+    func_out = kernels.atr(df["high"], df["low"], df["close"], period=period)
     assert_series_equal(expr_out, func_out, check_names=False)
 
 
@@ -101,7 +101,7 @@ def test_integer_input_is_cast():
     h = pl.Series("high", [10, 12, 11, 13], dtype=pl.Int64)
     l = pl.Series("low", [8, 9, 9, 10], dtype=pl.Int64)
     c = pl.Series("close", [9, 11, 10, 12], dtype=pl.Int64)
-    got = plugin.atr(h, l, c, period=2)
+    got = kernels.atr(h, l, c, period=2)
     assert got.dtype == pl.Float64
     assert_series_equal(
         got, expected_series([10.0, 12.0, 11.0, 13.0], [8.0, 9.0, 9.0, 10.0], [9.0, 11.0, 10.0, 12.0], 2),
@@ -115,7 +115,7 @@ def test_mismatched_lengths_raise():
     l = pl.Series("low", [8.0, 9.0], dtype=pl.Float64)
     c = pl.Series("close", [9.0, 11.0, 10.0], dtype=pl.Float64)
     with pytest.raises(ValueError, match="input lengths differ"):
-        plugin.atr(h, l, c, period=2)
+        kernels.atr(h, l, c, period=2)
 
 
 def test_invalid_period_expression():
@@ -129,4 +129,4 @@ def test_invalid_period_pyfunction():
     l = pl.Series("low", [8.0, 9.0, 9.0], dtype=pl.Float64)
     c = pl.Series("close", [9.0, 11.0, 10.0], dtype=pl.Float64)
     with pytest.raises(ValueError, match="period must be > 0"):
-        plugin.atr(h, l, c, period=0)
+        kernels.atr(h, l, c, period=0)

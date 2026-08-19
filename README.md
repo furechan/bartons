@@ -19,7 +19,7 @@ pip install bartons
 
 ```python
 import polars as pl
-from bartons.indicators import EMA, RSI, ATR
+from bartons.indicators import ATR, CCI, EMA, MACD, MAD, RSI
 from bartons.samples import sample_prices
 
 prices = sample_prices("daily")
@@ -59,6 +59,17 @@ pl.col("close").pipe(EMA, 5).pipe(RSI, 14)
 | `RSI(period)` | Wilder's relative strength index |
 | `TRANGE()` | True range |
 | `ATR(period)` | Average true range |
+| `MACD(fast=12, slow=26, signal=9)` | MACD, signal and histogram expressions |
+| `MAD(period=20)` | Rolling mean absolute deviation |
+| `CCI(period=20)` | Commodity Channel Index |
+
+Multi-output native indicators return an `ExprBundle`, which Polars accepts as
+one argument and expands into ordinary columns:
+
+```python
+prices.with_columns(MACD())
+prices.with_columns(*MACD(), SMA(20))  # splat when mixing with other expressions
+```
 
 ## Eager API
 
@@ -66,9 +77,9 @@ The compiled kernels are also callable directly on a `pl.Series`, bypassing the
 expression layer:
 
 ```python
-import bartons.plugin as plugin
+from bartons import kernels
 
-plugin.ema(prices["close"], period=20)
+kernels.ema(prices["close"], period=20)
 ```
 
 Parameters are keyword-only here. This path needs `polars>=1.28`; the expression

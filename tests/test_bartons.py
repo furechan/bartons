@@ -1,6 +1,6 @@
-from bartons import plugin
+from bartons import kernels
 
 
-def test_plugin_importable_and_versioned():
-    assert isinstance(plugin.__version__, str)
-    assert plugin.__version__
+def test_kernels_importable_and_versioned():
+    assert isinstance(kernels.__version__, str)
+    assert kernels.__version__

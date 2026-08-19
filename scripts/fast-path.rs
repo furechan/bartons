@@ -16,7 +16,7 @@
 use std::hint::black_box;
 use std::time::{Duration, Instant};
 
-use plugin::samples::{random_prices, RandomPricesOptions};
+use kernels::samples::{random_prices, RandomPricesOptions};
 use polars::prelude::*;
 
 const N: usize = 100_000;

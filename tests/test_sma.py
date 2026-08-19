@@ -2,7 +2,7 @@ import polars as pl
 import pytest
 from helpers import assert_series_equal
 
-from bartons import plugin
+from bartons import kernels
 from bartons.indicators import SMA
 from refimpl import ref_sma
 
@@ -50,7 +50,7 @@ def test_sma_src_accepts_column_name():
 @pytest.mark.parametrize("xs,period", CASES)
 def test_sma_pyfunction(xs, period):
     s = pl.Series("x", xs, dtype=pl.Float64)
-    got = plugin.sma(s, period=period)
+    got = kernels.sma(s, period=period)
     assert_series_equal(
         got, expected_series(xs, period), check_names=False, check_exact=False, rel_tol=1e-12
     )
@@ -61,14 +61,14 @@ def test_pyfunction_matches_expression():
     xs = [10.0, 11.0, None, 20.0, 21.0, 22.0]
     df = pl.DataFrame({"x": pl.Series(xs, dtype=pl.Float64)})
     expr_out = df.select(SMA(3, src=pl.col("x")).alias("sma"))["sma"]
-    func_out = plugin.sma(df["x"], period=3)
+    func_out = kernels.sma(df["x"], period=3)
     assert_series_equal(expr_out, func_out, check_names=False)
 
 
 def test_integer_input_is_cast():
     """Non-f64 input is cast to Float64 rather than panicking."""
     s = pl.Series("x", [1, 2, 3, 4], dtype=pl.Int64)
-    got = plugin.sma(s, period=2)
+    got = kernels.sma(s, period=2)
     assert got.dtype == pl.Float64
     assert_series_equal(
         got, expected_series([1.0, 2.0, 3.0, 4.0], 2), check_names=False, check_exact=False, rel_tol=1e-12
@@ -84,4 +84,4 @@ def test_invalid_period_expression():
 def test_invalid_period_pyfunction():
     s = pl.Series("x", [1.0, 2.0, 3.0], dtype=pl.Float64)
     with pytest.raises(ValueError, match="period must be > 0"):
-        plugin.sma(s, period=0)
+        kernels.sma(s, period=0)

@@ -53,7 +53,7 @@ dependencies = [
     # hard ABI limit — raise it with `just raise-ceiling`, which tests the newest
     # polars-py and only moves the number if it passes.
     #
-    # The floor is 1.28, not 1.0: the eager `bartons.plugin.<name>` pyfunctions marshal a
+    # The floor is 1.28, not 1.0: the eager `bartons.kernels.<name>` pyfunctions marshal a
     # Series into Rust via pyo3-polars 0.27, which calls the private `PySeries._export` —
     # only present from polars 1.28. On older engines those calls raise
     # `AttributeError: 'PySeries' object has no attribute '_export'`. The expression path
@@ -95,7 +95,7 @@ samples = [
 [tool.maturin]
 python-source = "python"
 python-packages = ["bartons"]
-module-name = "bartons.plugin"
+module-name = "bartons.kernels"
 manifest-path = "bartons/Cargo.toml"
 # Bundled sample-price CSVs are data, not Python — list them so maturin ships
 # them in both the sdist and the wheel.

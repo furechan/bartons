@@ -1,7 +1,7 @@
 """Shared machinery for the bartons indicator factories.
 
 Holds the pieces every factory in :mod:`bartons.indicators` needs: the
-``PLUGIN_PATH`` pointing at the compiled plugin (``plugin.abi3.so``, which sits
+``PLUGIN_PATH`` pointing at the compiled plugin (``kernels.abi3.so``, which sits
 in this package directory), and the :func:`wrap_src_indicator` decorator.
 
 Mirrors ``bearta.prelude``, which plays the same role there.
@@ -14,7 +14,9 @@ from typing import Callable, ParamSpec, Protocol, TypeVar, cast, overload
 
 import polars as pl
 
-__all__ = ["PLUGIN_PATH", "SrcIndicator", "wrap_src_indicator"]
+from .bundle import ExprBundle
+
+__all__ = ["ExprBundle", "PLUGIN_PATH", "SrcIndicator", "wrap_src_indicator"]
 
 PLUGIN_PATH = Path(__file__).parent
 

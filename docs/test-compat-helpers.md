@@ -84,5 +84,5 @@ i.e. on polars < 1.28. When the supported floor was raised to 1.28 in **both**
 [pyproject.toml](../pyproject.toml) and the `compat` matrix, every tested engine
 gained `_export`, so the marker's `skipif` was permanently false. It and its
 decorators were removed. Earlier still, that marker had itself replaced a
-`conftest.py` hook that grepped each test's source for `plugin.<name>(` to
+`conftest.py` hook that grepped each test's source for `kernels.<name>(` to
 auto-detect the direct-call tests.

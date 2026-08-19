@@ -16,7 +16,7 @@ is the computation; the two bindings are suffixed by the boundary they serve.**
 |---|---|---|
 | kernel — the vector calculation | `<name>` | — (private) |
 | expression plugin fn (FFI entry point) | `<name>_expr` | `<NAME>()` |
-| eager binding | `<name>_py` | `bartons.plugin.<name>` |
+| eager binding | `<name>_py` | `bartons.kernels.<name>` |
 
 A module is a *container*, not a synonym for one kernel: `linreg.rs` may define
 `linreg`, `slope` and `rvalue` side by side, each with its own bindings. So the
@@ -57,7 +57,7 @@ Copy [bartons/src/kernels/ema.rs](../bartons/src/kernels/ema.rs). It contains al
   `output_type` must be declared (polars needs the dtype at plan time).
 - **Eager pyfunction** (optional but EMA has one). Precede it with a `///` doc
   comment (Args/Returns) — PyO3 surfaces it as the function's `__doc__`, so
-  `help(bartons.plugin.<name>)` works:
+  `help(bartons.kernels.<name>)` works:
   ```rust
   /// <One-line description>.
   ///
@@ -133,7 +133,7 @@ live there, one importable module, so composite indicators reuse the
 primitives — e.g. `ref_atr` is `ref_rma` of `ref_trange`), then
 `from refimpl import ref_<name>` in the test. Cover, against that oracle:
 
-- both surfaces (`<NAME>()` expression and `plugin.<name>()`) and that they
+- both surfaces (`<NAME>()` expression and `kernels.<name>()`) and that they
   agree;
 - `src=None`→`close` default and the column-name-string form;
 - warmup nulls and null handling (see below);
@@ -150,7 +150,7 @@ Use `assert_series_equal(..., check_exact=False, rel_tol=1e-12)` imported from
 ```sh
 just develop     # release; debug builds are ~20x slower
 just test
-just stubs     # regenerate python/bartons/plugin.pyi, then commit it
+just stubs     # regenerate python/bartons/kernels.pyi, then commit it
 ```
 
 `just stubs` introspects the built module, so a new eager pyfunction is picked

@@ -24,10 +24,10 @@ import timeit
 import polars as pl
 
 from bartons.samples import sample_prices, sample_dataset
-from bartons.indicators import EMA, SMA, RMA, WMA, RSI, TRANGE, ATR
+from bartons.indicators import ATR, CCI, EMA, RMA, RSI, SMA, TRANGE, WMA
 from mintalib.expressions import (
     SMA as M_SMA, EMA as M_EMA, WMA as M_WMA, RMA as M_RMA,
-    RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR,
+    RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, CCI as M_CCI,
 )
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
@@ -40,6 +40,7 @@ PAIRS = [
     ("RSI(14)", RSI(14),  M_RSI(14)),
     ("TRANGE",  TRANGE(), M_TRANGE()),
     ("ATR(14)", ATR(14),  M_ATR(14)),
+    ("CCI(20)", CCI(20),  M_CCI(20)),
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

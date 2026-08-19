@@ -37,6 +37,22 @@ def ref_ema(xs, period):
     return out
 
 
+def ref_macd(xs, fast=12, slow=26, signal=9):
+    """MACD composed from the independent EMA oracle."""
+    fast_values = ref_ema(xs, fast)
+    slow_values = ref_ema(xs, slow)
+    line = [
+        None if fast_value is None or slow_value is None else fast_value - slow_value
+        for fast_value, slow_value in zip(fast_values, slow_values)
+    ]
+    signal_line = ref_ema(line, signal)
+    histogram = [
+        None if value is None or signal_value is None else value - signal_value
+        for value, signal_value in zip(line, signal_line)
+    ]
+    return line, signal_line, histogram
+
+
 def ref_sma(xs, period):
     """SMA: rolling mean of the last `period` values; null during warmup (fewer
     than `period` seen), reset on a null."""
@@ -52,6 +68,44 @@ def ref_sma(xs, period):
             window.pop(0)
         out.append(sum(window) / period if len(window) == period else None)
     return out
+
+
+def ref_mad(xs, period):
+    """Rolling mean absolute deviation, recomputed directly per window."""
+    out = []
+    window = []
+    for x in xs:
+        if x is None:
+            window = []
+            out.append(None)
+            continue
+        window.append(x)
+        if len(window) > period:
+            window.pop(0)
+        if len(window) == period:
+            mean = sum(window) / period
+            out.append(sum(abs(value - mean) for value in window) / period)
+        else:
+            out.append(None)
+    return out
+
+
+def ref_cci(highs, lows, closes, period):
+    """CCI composed independently from typical price, SMA and MAD."""
+    typical = [
+        None if high is None or low is None or close is None else (high + low + close) / 3
+        for high, low, close in zip(highs, lows, closes)
+    ]
+    average = ref_sma(typical, period)
+    deviation = ref_mad(typical, period)
+    return [
+        None
+        if value is None or mean is None or mad is None
+        else (value - mean) / (0.015 * mad)
+        if mad != 0
+        else float("nan")
+        for value, mean, mad in zip(typical, average, deviation)
+    ]
 
 
 def ref_rma(xs, period):

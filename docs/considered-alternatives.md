@@ -4,10 +4,10 @@ Designs that were explored for the plugin surface and deliberately **not** taken
 recorded so they aren't re-litigated. None of these are bugs or TODOs — the
 current design is the intended one; this is the "why not" context.
 
-## Native `plugin.indicators` submodule — rejected
+## Native `kernels.indicators` submodule — rejected
 
-**Idea:** instead of exposing the eager pyfunctions flat as `bartons.plugin.<name>`,
-group them under a native submodule so they read as `bartons.plugin.indicators.<name>`
+**Idea:** instead of exposing the eager pyfunctions flat as `bartons.kernels.<name>`,
+group them under a native submodule so they read as `bartons.kernels.indicators.<name>`
 (mirroring the Rust `indicators/` source dir).
 
 **Built and reverted.** It was implemented fully: `lib.rs` converted to the
@@ -18,15 +18,14 @@ block in `indicators/mod.rs` re-exporting the kernels via `#[pymodule_export] us
 
 - PyO3 0.28 does **not** auto-register nested declarative submodules in
   `sys.modules`, and an extension module (`.so`) is not a package (no `__path__`).
-  So `import bartons.plugin.indicators` / `from bartons.plugin.indicators import ema`
+  So `import bartons.kernels.indicators` / `from bartons.kernels.indicators import ema`
   raise `ModuleNotFoundError` out of the box — only *attribute* access
-  (`bartons.plugin.indicators.ema`) works.
+  (`bartons.kernels.indicators.ema`) works.
 - Making the `import` form work requires a manual `#[pymodule_init]` that sets the
   submodule's `__name__` and inserts it into `sys.modules` under the fully qualified
   name. That's non-obvious machinery living in Rust, in service of an import form
-  that's rarely used — `bartons.plugin` is private plumbing reached via
-  `import bartons.plugin as p; p.…`, and codegen/introspection uses attribute access
-  too. The hack wasn't earning its keep.
+  that's rarely used. The flat `bartons.kernels.<name>` API is clearer, while
+  codegen and introspection already work naturally through attribute access.
 
 The reorg of the *source* into `bartons/src/kernels/` (Step 1) was kept; only
 the *Python-facing submodule* (Step 2) was reverted. The revert was a `git reset`,

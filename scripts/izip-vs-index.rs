@@ -65,7 +65,7 @@
 //! artifacts, which is worth doing before believing any gap.
 
 use itertools::izip;
-use plugin::samples::{random_prices, RandomPricesOptions};
+use kernels::samples::{random_prices, RandomPricesOptions};
 use polars_arrow::array::PrimitiveArray;
 use polars::prelude::*;
 use std::fmt::Write as _;

@@ -23,5 +23,19 @@ from .wma import WMA
 from .rsi import RSI
 from .trange import TRANGE
 from .atr import ATR
+from .macd import MACD
+from .mad import MAD
+from .cci import CCI
 
-__all__ = ["EMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR"]
+__all__ = [
+    "EMA",
+    "SMA",
+    "RMA",
+    "WMA",
+    "RSI",
+    "TRANGE",
+    "ATR",
+    "MACD",
+    "MAD",
+    "CCI",
+]

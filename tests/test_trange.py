@@ -2,7 +2,7 @@ import polars as pl
 import pytest
 from helpers import assert_series_equal
 
-from bartons import plugin
+from bartons import kernels
 from bartons.indicators import TRANGE
 from refimpl import ref_trange
 
@@ -59,7 +59,7 @@ def test_trange_pyfunction(highs, lows, closes):
     h = pl.Series("high", highs, dtype=pl.Float64)
     l = pl.Series("low", lows, dtype=pl.Float64)
     c = pl.Series("close", closes, dtype=pl.Float64)
-    got = plugin.trange(h, l, c)
+    got = kernels.trange(h, l, c)
     assert_series_equal(
         got, expected_series(highs, lows, closes), check_names=False, check_exact=False, rel_tol=1e-12
     )
@@ -69,7 +69,7 @@ def test_pyfunction_matches_expression():
     highs, lows, closes = CASES[0]
     df = _df(highs, lows, closes)
     expr_out = df.select(TRANGE().alias("trange"))["trange"]
-    func_out = plugin.trange(df["high"], df["low"], df["close"])
+    func_out = kernels.trange(df["high"], df["low"], df["close"])
     assert_series_equal(expr_out, func_out, check_names=False)
 
 
@@ -79,7 +79,7 @@ def test_mismatched_lengths_raise():
     l = pl.Series("low", [8.0, 9.0], dtype=pl.Float64)
     c = pl.Series("close", [9.0, 11.0, 10.0], dtype=pl.Float64)
     with pytest.raises(ValueError, match="input lengths differ"):
-        plugin.trange(h, l, c)
+        kernels.trange(h, l, c)
 
 
 def test_length_one_input_is_not_broadcast():
@@ -94,7 +94,7 @@ def test_integer_input_is_cast():
     h = pl.Series("high", [10, 12, 11], dtype=pl.Int64)
     l = pl.Series("low", [8, 9, 9], dtype=pl.Int64)
     c = pl.Series("close", [9, 11, 10], dtype=pl.Int64)
-    got = plugin.trange(h, l, c)
+    got = kernels.trange(h, l, c)
     assert got.dtype == pl.Float64
     assert_series_equal(
         got,

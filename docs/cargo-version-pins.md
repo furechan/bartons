@@ -38,7 +38,7 @@ One noun per file, so the term says where the setting lives:
 The range has a **floor** (`>=1.28`) and a **ceiling** (`<1.44`), and they are not
 the same kind of limit:
 
-- The **floor is hard**. Below it the eager `bartons.plugin.<name>` functions
+- The **floor is hard**. Below it the eager `bartons.kernels.<name>` functions
   genuinely break — `PySeries._export` does not exist. A functional requirement.
 - The **ceiling is tested, not hard**. Nothing is known to fail above it; it marks
   how far the matrix has run. **The matrix sets the ceiling** — to raise one, run
@@ -123,7 +123,7 @@ resolve the package onto 3.8–3.10, and the nox matrix only ever runs 3.11 — 
 tested. Raising it also costs nothing measurable, because **`abi3` cannot touch
 the compute path**: `#[polars_expr]` compiles to a `#[no_mangle] extern "C"`
 symbol that polars calls directly over the Arrow C interface, never through
-pyo3, and the eager `plugin.<name>` path crosses pyo3 once per call to marshal a
+pyo3, and the eager `kernels.<name>` path crosses pyo3 once per call to marshal a
 Series rather than once per element. The floor governs module import and that
 one marshalling step, nothing hot. What it does buy is headroom: pyo3 gates ~98
 call sites on `Py_3_10` and ~33 on `Py_3_11`, so those APIs are available if a
@@ -167,7 +167,7 @@ The [`check-bindings`](../.claude/commands/check-bindings.md) skill audits these
 
 ## Scope: this is the Cargo side only
 
-This doc covers the compile-time crate pins. The **polars-py range** in [`pyproject.toml`](../pyproject.toml) is a *separate* setting — it governs which polars-py the built `.so` runs against at the FFI guard, not what compiles. The polars-rs ↔ polars-py correspondence is tabulated in [`polars-ffi-version-table.md`](polars-ffi-version-table.md). The current range is `polars>=1.28,<1.44`: the floor is a hard requirement for the eager `bartons.plugin.<name>` pyfunctions (they need `PySeries._export`, first exposed in polars-py 1.28 — see [`test-compat-helpers.md`](test-compat-helpers.md)), and the ceiling is the current test boundary, **not** a hard ABI limit — raise it with `just raise-ceiling`, which tests the newest polars-py and only moves the number if it passes. The expression path alone works down to polars-py 1.0, but the package floors at 1.28 so its whole public API is usable.
+This doc covers the compile-time crate pins. The **polars-py range** in [`pyproject.toml`](../pyproject.toml) is a *separate* setting — it governs which polars-py the built `.so` runs against at the FFI guard, not what compiles. The polars-rs ↔ polars-py correspondence is tabulated in [`polars-ffi-version-table.md`](polars-ffi-version-table.md). The current range is `polars>=1.28,<1.44`: the floor is a hard requirement for the eager `bartons.kernels.<name>` pyfunctions (they need `PySeries._export`, first exposed in polars-py 1.28 — see [`test-compat-helpers.md`](test-compat-helpers.md)), and the ceiling is the current test boundary, **not** a hard ABI limit — raise it with `just raise-ceiling`, which tests the newest polars-py and only moves the number if it passes. The expression path alone works down to polars-py 1.0, but the package floors at 1.28 so its whole public API is usable.
 
 ## Related
 
