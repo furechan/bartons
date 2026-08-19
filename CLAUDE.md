@@ -56,8 +56,8 @@ just raise-ceiling # test the newest polars-py; raise the pyproject ceiling if i
 just clean         # remove Rust target/ and compiled .so files
 
 # Native Rust bench/example targets must link libpython. The default
-# extension-module feature deliberately does not. `just test` configures this
-# linkage automatically for tests using the project's uv-managed Python.
+# extension-module feature deliberately does not. `.envrc` configures PyO3 and
+# the runtime linker to use the project's uv-managed Python.
 cargo bench --manifest-path bartons/Cargo.toml --no-default-features
 ```
 

@@ -51,7 +51,7 @@ bump:
     python scripts/bump-version.py
 
 test:
-    PYO3_PYTHON="$PWD/.venv/bin/python" LD_LIBRARY_PATH="$("$PWD/.venv/bin/python" -c 'import sysconfig; print(sysconfig.get_config_var("LIBDIR"))')" cargo test --manifest-path bartons/Cargo.toml --no-default-features
+    cargo test --manifest-path bartons/Cargo.toml --no-default-features
     pytest
 
 # Build optimized, then run a benchmark against one baseline, e.g. `just bench`
