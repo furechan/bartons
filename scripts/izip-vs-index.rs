@@ -24,6 +24,8 @@
 //!              instead of a shared one — isolates cursor count from chunk logic
 //!   fastiter   `chunked`'s hand-rolled cursor expressed as an Iterator behind a
 //!              `FastIter` trait — measures what that abstraction costs
+//!   fast-iternext  three `FastIter` cursors advanced by hand with `.next()`,
+//!              isolating `izip!` from the custom iterator implementation
 //!   fastpath   single-chunk inputs take the hoisted loop, everything else
 //!              takes `chunked` <- the candidate
 //!
@@ -50,18 +52,12 @@
 //! Divergence section of the doc. Anything measured here is a claim about a
 //! `cargo run --release` build and nothing else.
 //!
-//! Run it from a throwaway crate (~1 min, mostly compiling polars). Match the
-//! polars pin in `bartons/Cargo.toml` or the numbers describe another version:
+//! Run it as a bartons example so every path uses the shared deterministic
+//! `random_prices` fixture:
 //!
 //! ```sh
-//! cargo new /tmp/ivi && cd /tmp/ivi
-//! cargo add polars@0.55.1 --features dtype-struct
-//! cargo add itertools@0.14
-//! cargo add polars-arrow@0.55.1 --no-default-features
-//! cp <repo>/scripts/izip-vs-index.rs src/main.rs
-//! cargo run --release                      # release only; debug measures nothing
-//! cargo run --release -- --out report.out  # also write the report to a file
-//! cargo run --release -- rechunk izip      # or name variants to reorder them
+//! cargo run --release --manifest-path bartons/Cargo.toml \
+//!   --no-default-features --example izip-vs-index
 //! ```
 //!
 //! Timing is noisy run to run — compare `min`, and treat differences under ~10%
@@ -69,6 +65,7 @@
 //! artifacts, which is worth doing before believing any gap.
 
 use itertools::izip;
+use plugin::samples::{random_prices, RandomPricesOptions};
 use polars_arrow::array::PrimitiveArray;
 use polars::prelude::*;
 use std::fmt::Write as _;
@@ -112,51 +109,15 @@ impl TrangeFilter {
     }
 }
 
-/// Three correlated series as a reproducible random walk, with a leading null
-/// in each so the nullable path (validity bitmap) is exercised.
-fn make_input(n: usize) -> (Float64Chunked, Float64Chunked, Float64Chunked) {
-    let mut hi: Vec<Option<f64>> = Vec::with_capacity(n);
-    let mut lo: Vec<Option<f64>> = Vec::with_capacity(n);
-    let mut cl: Vec<Option<f64>> = Vec::with_capacity(n);
-    hi.push(None);
-    lo.push(None);
-    cl.push(None);
-    let mut acc = 100.0f64;
-    let mut state: u64 = 0x9E37_79B9_7F4A_7C15;
-    for _ in 1..n {
-        // xorshift64 for reproducible pseudo-random steps
-        state ^= state << 13;
-        state ^= state >> 7;
-        state ^= state << 17;
-        let u = (state >> 11) as f64 / ((1u64 << 53) as f64);
-        acc += u - 0.5;
-        hi.push(Some(acc + 0.5));
-        lo.push(Some(acc - 0.5));
-        cl.push(Some(acc));
-    }
-    (
-        hi.iter().copied().collect(),
-        lo.iter().copied().collect(),
-        cl.iter().copied().collect(),
-    )
-}
-
-/// Split a single-chunk array into `parts` chunks, to vary fragmentation.
-fn split_chunks(ca: &Float64Chunked, parts: usize) -> Float64Chunked {
-    let n = ca.len();
-    let step = n.div_ceil(parts);
-    let mut out: Option<Float64Chunked> = None;
-    let mut off = 0usize;
-    while off < n {
-        let take = step.min(n - off);
-        let piece = ca.slice(off as i64, take);
-        match out.as_mut() {
-            None => out = Some(piece),
-            Some(acc) => acc.append(&piece).unwrap(),
-        }
-        off += take;
-    }
-    out.unwrap()
+fn make_input(n_rows: usize, n_chunks: usize) -> DataFrame {
+    random_prices(RandomPricesOptions {
+        n_rows,
+        n_chunks,
+        n_tickers: 1,
+        seed: 0,
+        null_first: true,
+    })
+    .unwrap()
 }
 
 fn v_izip(a: &Float64Chunked, b: &Float64Chunked, c: &Float64Chunked) -> Float64Chunked {
@@ -236,37 +197,31 @@ fn v_rechunk(a: &Float64Chunked, b: &Float64Chunked, c: &Float64Chunked) -> Floa
 
 struct Ema {
     alpha: f64,
-    prev: Option<f64>,
-    seen: usize,
+    value: f64,
+    count: usize,
     period: usize,
-    sum: f64,
 }
 
 impl Ema {
     fn new(period: usize) -> Self {
-        Self { alpha: 2.0 / (period as f64 + 1.0), prev: None, seen: 0, period, sum: 0.0 }
+        Self {
+            alpha: 2.0 / (period as f64 + 1.0),
+            value: f64::NAN,
+            count: 0,
+            period,
+        }
     }
+
     #[inline]
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
-        let x = input?;
-        match self.prev {
-            Some(p) => {
-                let v = p + self.alpha * (x - p);
-                self.prev = Some(v);
-                Some(v)
-            }
-            None => {
-                self.seen += 1;
-                self.sum += x;
-                if self.seen == self.period {
-                    let v = self.sum / self.period as f64;
-                    self.prev = Some(v);
-                    Some(v)
-                } else {
-                    None
-                }
-            }
+        let value = input?;
+        if self.count == 0 {
+            self.value = value;
+        } else {
+            self.value += self.alpha * (value - self.value);
         }
+        self.count += 1;
+        (self.count >= self.period).then_some(self.value)
     }
 }
 
@@ -577,6 +532,34 @@ fn v_fastiter(a: &Float64Chunked, b: &Float64Chunked, c: &Float64Chunked) -> Flo
     builder.finish()
 }
 
+/// The same three `FastIter` cursors as `v_fastiter`, advanced explicitly.
+/// Comparing these two isolates `izip!` while holding the iterator types fixed.
+fn v_fast_iternext(
+    a: &Float64Chunked,
+    b: &Float64Chunked,
+    c: &Float64Chunked,
+) -> Float64Chunked {
+    let mut f = TrangeFilter::default();
+    let len = a.len();
+    let mut builder = PrimitiveChunkedBuilder::<Float64Type>::new("trange".into(), len);
+    let mut ia = a.fast_iter();
+    let mut ib = b.fast_iter();
+    let mut ic = c.fast_iter();
+
+    for _ in 0..len {
+        let triple = (
+            ia.next().unwrap(),
+            ib.next().unwrap(),
+            ic.next().unwrap(),
+        );
+        match f.next(triple) {
+            Some(v) => builder.append_value(v),
+            None => builder.append_null(),
+        }
+    }
+    builder.finish()
+}
+
 fn same(x: &Float64Chunked, y: &Float64Chunked) -> bool {
     x.len() == y.len()
         && x.iter().zip(y.iter()).all(|(p, q)| match (p, q) {
@@ -623,7 +606,7 @@ fn main() {
         args.drain(i..=(i + 1).min(args.len() - 1));
     }
     let order: Vec<&str> = if args.is_empty() {
-        vec!["izip", "iternext", "index", "unchecked", "rechunk", "chunked", "fastiter", "ziparr", "valiter", "threeidx", "fastpath"]
+        vec!["izip", "iternext", "index", "unchecked", "rechunk", "chunked", "fastiter", "fast-iternext", "ziparr", "valiter", "threeidx", "fastpath"]
     } else {
         args.iter().map(|s| s.as_str()).collect()
     };
@@ -636,39 +619,37 @@ fn main() {
     ));
     rep.line(String::new());
 
-    let (h1, l1, c1) = make_input(n);
-    let (u1, _, _) = make_input(11_006);
+    let inputs = [1usize, 8, 64]
+        .map(|n_chunks| (n_chunks, make_input(n, n_chunks)));
 
     rep.line("--- unary (EMA): is it iter() itself? ---".to_string());
-    for parts in [1usize, 8, 32, 64, 128, 178] {
-        let h = if parts == 1 { u1.clone() } else { split_chunks(&u1, parts) };
-        let series = h.clone().into_series();
-        let expected = u_iter(&h, period);
-        assert!(same(&expected, &u_rechunk(&h, period)), "unary variants disagree");
-        assert!(same(&expected, &u_fastiter(&h, period)), "unary fastiter disagrees");
-        assert!(same(&expected, &u_arrowchunks(&h, period)), "unary arrowchunks disagrees");
-        if parts == 1 {
-            assert!(same(&expected, &u_arrowiter(&h, period)), "unary arrowiter disagrees");
+    for (n_chunks, frame) in &inputs {
+        let close = frame.column("close").unwrap().f64().unwrap().clone();
+        let series = close.clone().into_series();
+        let expected = u_iter(&close, period);
+        assert!(same(&expected, &u_rechunk(&close, period)), "unary variants disagree");
+        assert!(same(&expected, &u_fastiter(&close, period)), "unary fastiter disagrees");
+        assert!(same(&expected, &u_arrowchunks(&close, period)), "unary arrowchunks disagrees");
+        if *n_chunks == 1 {
+            assert!(same(&expected, &u_arrowiter(&close, period)), "unary arrowiter disagrees");
         }
-        rep.line(format!("chunks = {}", h.chunks().len()));
-        bench(&mut rep, "iter", runs, || u_iter(&h, period));
-        bench(&mut rep, "rechunk", runs, || u_rechunk(&h, period));
-        bench(&mut rep, "fastiter", runs, || u_fastiter(&h, period));
-        bench(&mut rep, "arrowchunks", runs, || u_arrowchunks(&h, period));
+        rep.line(format!("chunks = {}", close.chunks().len()));
+        bench(&mut rep, "iter", runs, || u_iter(&close, period));
+        bench(&mut rep, "rechunk", runs, || u_rechunk(&close, period));
+        bench(&mut rep, "fastiter", runs, || u_fastiter(&close, period));
+        bench(&mut rep, "arrowchunks", runs, || u_arrowchunks(&close, period));
         bench(&mut rep, "runstyle", runs, || u_runstyle(&series, period));
-        if parts == 1 {
-            bench(&mut rep, "arrowiter", runs, || u_arrowiter(&h, period));
+        if *n_chunks == 1 {
+            bench(&mut rep, "arrowiter", runs, || u_arrowiter(&close, period));
         }
         rep.line(String::new());
     }
 
     rep.line("--- ternary (TRANGE) ---".to_string());
-    for parts in [1usize, 8, 64] {
-        let (h, l, c) = if parts == 1 {
-            (h1.clone(), l1.clone(), c1.clone())
-        } else {
-            (split_chunks(&h1, parts), split_chunks(&l1, parts), split_chunks(&c1, parts))
-        };
+    for (n_chunks, frame) in &inputs {
+        let h = frame.column("high").unwrap().f64().unwrap().clone();
+        let l = frame.column("low").unwrap().f64().unwrap().clone();
+        let c = frame.column("close").unwrap().f64().unwrap().clone();
 
         // Agreement first — timings mean nothing if the variants disagree.
         let a = v_izip(&h, &l, &c);
@@ -677,11 +658,12 @@ fn main() {
             && same(&a, &v_rechunk(&h, &l, &c))
             && same(&a, &v_fastpath(&h, &l, &c))
             && same(&a, &v_chunked(&h, &l, &c))
-            && same(&a, &v_iternext(&h, &l, &c));
+            && same(&a, &v_iternext(&h, &l, &c))
+            && same(&a, &v_fast_iternext(&h, &l, &c));
         // `ziparr` reads one chunk only, so it is correct — and benchmarked —
-        // solely at parts == 1. Running it elsewhere silently truncates the
+        // solely at one chunk. Running it elsewhere silently truncates the
         // output and reports an absurdly fast time.
-        if parts == 1 {
+        if *n_chunks == 1 {
             ok = ok && same(&a, &v_ziparr(&h, &l, &c)) && same(&a, &v_valiter(&h, &l, &c)) && same(&a, &v_threeidx(&h, &l, &c));
         }
         assert!(ok, "implementations disagree — timings are meaningless");
@@ -701,19 +683,20 @@ fn main() {
                 "fastpath" => bench(&mut rep, "fastpath", runs, || v_fastpath(&h, &l, &c)),
                 "chunked" => bench(&mut rep, "chunked", runs, || v_chunked(&h, &l, &c)),
                 "fastiter" => bench(&mut rep, "fastiter", runs, || v_fastiter(&h, &l, &c)),
+                "fast-iternext" => bench(&mut rep, "fast-iternext", runs, || v_fast_iternext(&h, &l, &c)),
                 "iternext" => bench(&mut rep, "iternext", runs, || v_iternext(&h, &l, &c)),
                 "threeidx" => {
-                    if parts == 1 {
+                    if *n_chunks == 1 {
                         bench(&mut rep, "threeidx", runs, || v_threeidx(&h, &l, &c))
                     }
                 }
                 "valiter" => {
-                    if parts == 1 {
+                    if *n_chunks == 1 {
                         bench(&mut rep, "valiter", runs, || v_valiter(&h, &l, &c))
                     }
                 }
                 "ziparr" => {
-                    if parts == 1 {
+                    if *n_chunks == 1 {
                         bench(&mut rep, "ziparr", runs, || v_ziparr(&h, &l, &c))
                     }
                 }

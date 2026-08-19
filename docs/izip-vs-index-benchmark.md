@@ -24,6 +24,7 @@ per-element logic and the output path held constant — manual `match` into a
 | `iternext` | three `ChunkedArray::iter()` advanced by hand with `.next()` instead of `izip!` — isolates the zipping machinery from the per-call cost of `next` |
 | `valiter` | three raw `values_iter()` slice iterators, validity read by index — isolates the `ZipValidity` wrapper. Single-chunk only |
 | `fastiter` | `chunked`'s hand-rolled cursor expressed as an `Iterator` behind a `FastIter` extension trait, so it reads as `ca.fast_iter()` |
+| `fast-iternext` | advances the same three `FastIter` cursors explicitly with `.next()`, isolating `izip!` while holding the custom iterator types fixed |
 | `threeidx` | the hoisted loop with one index per array instead of a shared one — isolates cursor count from chunk logic. Single-chunk only |
 | `ziparr` | hoists the downcast, then zips the *arrow array* iterators — the same iteration without `ChunkedArray`'s `FlatMap`-over-chunks layer. Single-chunk only, so measured at 1 chunk alone |
 | `slices` | the hoisted single-chunk loop itself: three arrays indexed by one `i`, no chunk logic. Not run directly; reached through `fastpath` |
@@ -52,6 +53,23 @@ All variants produce bit-identical output; the program asserts this before
 timing. Figures are stable across repeats and independent of benchmark order
 (checked by running the variants in several permutations — at 1 chunk, reversed
 order gives `rechunk` 362 against `izip` 878).
+
+### `FastIter`: `izip!` versus explicit `.next()`
+
+An additional control holds the three custom iterator types fixed and changes
+only how they are advanced. Minimum µs over 200 runs:
+
+| chunks | `izip!(fast_iter...)` | explicit `.next()` | `izip!` advantage |
+|---|---:|---:|---:|
+| 1 | 442.9 | 471.7 | 6.1% |
+| 8 | 354.0 | 374.1 | 5.4% |
+| 64 | 345.9 | 366.0 | 5.5% |
+
+Unlike the Polars iterator pair, these two are not identical: `izip!` is
+slightly faster. This reinforces that the macro is not the source of the slow
+Polars path. Its `Zip` structure gives LLVM at least as much optimization
+opportunity as spelling out the three calls manually, and a little more for
+the custom cursor.
 
 ## Reading
 
@@ -173,10 +191,10 @@ direct-index single-chunk dispatch remains unimplemented.
 
 ## Reproduction
 
-The source is [../scripts/izip-vs-index.rs](../scripts/izip-vs-index.rs), with
-the recipe in its header comment: a `cargo new` throwaway crate, `cargo add
-polars` and `itertools`, copy the file to `src/main.rs`, `cargo run --release`.
-About a minute, almost all of it compiling polars.
+The source is [../scripts/izip-vs-index.rs](../scripts/izip-vs-index.rs),
+registered as a Cargo example so it can use bartons' shared `random_prices`
+fixture. Run it with `cargo run --release --manifest-path bartons/Cargo.toml
+--no-default-features --example izip-vs-index`.
 
 `cargo run --release -- --out report.out` also writes the report to a file.
 Trailing arguments name variants to run, in that order, which is how the

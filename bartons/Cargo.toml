@@ -19,6 +19,18 @@ name = "plugin"
 # crate-type = ["cdylib", "rlib"]
 crate-type= ["cdylib", "rlib"]
 
+[[example]]
+name = "fast-iter"
+path = "../scripts/fast-iter.rs"
+
+[[example]]
+name = "fast-iter-bis"
+path = "../scripts/fast-iter-bis.rs"
+
+[[example]]
+name = "izip-vs-index"
+path = "../scripts/izip-vs-index.rs"
+
 [features]
 # Python wheels use the default: extension modules resolve Python symbols from
 # the interpreter that loads them and therefore must not link libpython.
