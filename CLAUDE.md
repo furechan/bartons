@@ -4,41 +4,10 @@ Polars plugin providing financial/technical analysis expressions, implemented in
 
 ## Architecture
 
-One crate, one Python package:
-
-- `bartons/` — PyO3 `cdylib` crate, compiles to `python/bartons/kernels.abi3.so`
-- `python/bartons/` — Python package wrapping the compiled plugin
-
-The crate directory is named after the Cargo package (`bartons`), which is what
-a Rust reader expects to find. Its `[lib] name = "kernels"` is what makes the
-compiled module `bartons.kernels`.
-
-**The two layers are not mirrors.** Rust holds *kernels* — materialized vector
-computations, series in and series out, written where polars cannot express the
-logic or would be materially slower. Python holds *indicators* — expression
-factories that compose on top. Today the sets happen to coincide (seven of each),
-but that is incidental: a composite like BBANDS is `SMA ± k·std` and belongs in
-Python with no Rust counterpart. The directories are named for those roles
-(`bartons/src/kernels/` vs `python/bartons/indicators/`) precisely so the
-divergence reads as intended rather than as drift.
-
-Rust source layout: each indicator's kernel lives in `bartons/src/kernels/<name>.rs`
-and is declared in `bartons/src/kernels/mod.rs`; the shared `Filter` trait, the
-`run_unary`/`run_ternary` drivers and the `check_len!` length guard are in
-`bartons/src/utils.rs` (crate root); and `bartons/src/lib.rs` is the `#[pymodule]` glue
-that registers each eager pyfunction flat as `bartons.kernels.<name>`.
-
-`Filter` carries an associated `Input`: `Option<f64>` for the single-series
-kernels, and a three-tuple for TRANGE/ATR — spelled `utils::Triple` on the
-arity-generic driver side and re-aliased `kernels::Hlc` on the kernel side.
-
-The flat layout is deliberate — a `kernels.indicators` submodule was built and
-rejected (`import bartons.kernels.indicators` needs a manual `sys.modules` hack that
-isn't worth it). See
-[docs/considered-alternatives.md](docs/considered-alternatives.md) for that and
-other deferred designs.
-
-The Python package and distribution are both `bartons`; the Rust module is imported as `bartons.kernels`. The name `bartons` was chosen to avoid colliding with the separate `bearta` TA library. Polars expressions are registered via `polars.plugins.register_plugin_function`.
+Bartons has a Rust kernel layer and a Python expression layer; they serve
+different roles and are not required to mirror one another. See
+[docs/architecture.md](docs/architecture.md) for the source layout, boundaries,
+and deliberate design choices.
 
 ## Build & test
 
@@ -73,6 +42,45 @@ link libpython, while the Python extension resolves those symbols from its host
 interpreter.
 
 Requires the `.venv` to be active. The build tool is `uv`; use `uv sync` to set up the environment.
+
+## Git workflow
+
+Unless the user explicitly requests a different workflow, work directly on the
+`main` branch and push commits directly to `main`. Do not create a feature branch
+or pull request by default.
+
+## Release workflow
+
+Run releases from a clean branch that is fully synchronized with its upstream.
+Do not publish from a branch that is ahead, behind, or has uncommitted work that
+is not intended for the release.
+
+1. Fetch and verify repository state with `git fetch`, `git status`, and
+   `git rev-list --left-right --count @{upstream}...HEAD`. Both counts must be
+   zero before proceeding.
+2. Review `README.md` against the release as it now stands. Update it when the
+   public API, supported versions, examples, installation instructions, or
+   documented indicator set changed.
+3. Review the complete diff and commit all intended release changes, including
+   any README update. Do not create an empty checkpoint commit when nothing
+   changed.
+4. Run `just build full`. This creates the native Linux ARM64 wheel, the
+   cross-compiled Linux AMD64 wheel, and the sdist in `dist/`.
+5. Run the full Nox matrix with `uv run nox`, then test the newest locally
+   installable wheel explicitly with `uv run nox -s wheel_smoke`. This repository
+   uses Nox, not Tox. The AMD64 wheel cannot be imported on the ARM64 development
+   host and must be exercised on an AMD64 runner when one is available.
+6. Inspect the repository and artifacts again. Commit any intentional tracked
+   changes resulting from release preparation; do not commit `dist/` artifacts
+   or create an empty commit.
+7. Run `just publish`. Publishing always performs a fresh full build before the
+   guarded PyPI upload.
+8. Run `just bump` immediately after a successful upload so the repository names
+   the next release, then commit the version bump and push.
+
+Never continue past a failed build, test, synchronization check, version guard,
+or upload. Since `just publish` rebuilds the artifacts, retain and review its
+build output as part of the release record.
 
 ## Rust notebooks
 
@@ -152,6 +160,7 @@ EMA and SMA are the reference implementations.
 
 Open work is tracked in [BACKLOG.md](BACKLOG.md).
 
+- [docs/architecture.md](docs/architecture.md) — project layers, boundaries, and source layout
 - [docs/adding-an-indicator.md](docs/adding-an-indicator.md) — the end-to-end checklist
 - [docs/design-review.md](docs/design-review.md) — review of the `Filter` + driver core; all three items resolved or deliberately declined
 - [docs/considered-alternatives.md](docs/considered-alternatives.md) — designs deliberately not taken

@@ -20,10 +20,28 @@ develop-debug:
 #
 # Build as often as you like; the version in pyproject.toml already names the next
 # release, so nothing needs editing first.
-build:
+# Pass `full` to include a cross-compiled Linux AMD64 wheel alongside the native
+# wheel and sdist: `just build full`.
+build mode="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mode={{quote(mode)}}
+    case "$mode" in
+        ""|full) ;;
+        *)
+            echo "unknown build option: $mode (supported: full)" >&2
+            exit 2
+            ;;
+    esac
     rm -rf dist
-    maturin build --release --sdist --out dist
-    @ls -l dist
+    uv run maturin build --release --sdist --out dist
+    if [[ "$mode" == full ]]; then
+        rustup target add x86_64-unknown-linux-gnu
+        uv run --with 'maturin[zig]' maturin build --release \
+            --target x86_64-unknown-linux-gnu --zig \
+            --compatibility manylinux2014 --out dist
+    fi
+    ls -l dist
 
 # Inspect what actually went into the sdist.
 dump:
@@ -38,12 +56,13 @@ dump:
 # and no token is ever at rest in the repo.
 #
 # The release ritual:
-#   just publish          # builds fresh, then uploads
+#   just publish          # builds native + AMD64 + sdist, then uploads
 #   git commit -am "Release 0.1.0" && git push
 #   just bump && git commit -am "Bump version" && git push
-publish: build
+publish:
+    just build full
     python scripts/check-release-version.py
-    maturin upload dist/*
+    uv run maturin upload dist/*
 
 # Bump the patch version in pyproject.toml, so the repo names the next release
 # again. Run right after publishing, not before.

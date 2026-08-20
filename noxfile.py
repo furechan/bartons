@@ -19,6 +19,8 @@ import os
 import shutil
 
 import nox
+from packaging.tags import sys_tags
+from packaging.utils import parse_wheel_filename
 
 nox.options.default_venv_backend = "uv"
 
@@ -67,6 +69,19 @@ def _wheel(session: nox.Session) -> str:
         session.run("maturin", "build", "--release", "--out", "dist", env=env)
         (_WHEEL,) = glob.glob("dist/bartons-*.whl")  # exactly one after the clean above
     return _WHEEL
+
+
+def _latest_wheel(session: nox.Session) -> str:
+    """Return the newest locally installable wheel in ``dist/`` without building it."""
+    supported = set(sys_tags())
+    wheels = [
+        wheel
+        for wheel in glob.glob(os.path.abspath("dist/bartons-*.whl"))
+        if not parse_wheel_filename(os.path.basename(wheel))[3].isdisjoint(supported)
+    ]
+    if not wheels:
+        session.error("no locally installable wheel found in dist/; run `just build` first")
+    return max(wheels, key=os.path.getmtime)
 
 
 # --- what the matrix runs -------------------------------------------------------
@@ -170,6 +185,24 @@ def locked(session: nox.Session) -> None:
     plv = _locked_polars()
     session.log(f"uv.lock pins polars-py {plv}")
     _run_against(session, plv)
+
+
+@nox.session(python=PY, default=False)
+def wheel_smoke(session: nox.Session) -> None:
+    """Install the newest existing dist wheel and run one test outside the checkout.
+
+    This deliberately does not build: it checks the artifact currently waiting in
+    ``dist/``. Running pytest from Nox's temporary directory prevents ``bartons``
+    from being imported from the source tree by accident.
+
+        uv run nox -s wheel_smoke
+    """
+    wheel = _latest_wheel(session)
+    session.log(f"testing {wheel}")
+    session.install(wheel, "pytest")
+    test = os.path.abspath("tests/test_bartons.py")
+    session.chdir(session.create_tmp())
+    session.run("pytest", test)
 
 
 @nox.session(python=PY)
