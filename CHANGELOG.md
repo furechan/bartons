@@ -2,6 +2,17 @@
 
 ## 0.1.1
 
+- Reimplement CCI as a Rust kernel instead of a native expression composition.
+  The SMA and MAD terms previously kept two separate windows over the same data
+  and computed the same window mean twice; `MadFilter::next_stats` now yields
+  `(mean, mad)` from one window, so the SMA term is free. The kernel takes
+  typical price as its single input rather than the three raw columns — that
+  reduction is elementwise and stateless, unlike ATR's true range, so leaving it
+  to Polars keeps one column crossing the plugin boundary instead of three,
+  which is what `.over()` partitions per group. About 2.2x faster on a single
+  symbol and 1.7x under `.over()` at period 20; the gain narrows as the period
+  grows, since MAD's per-row window rescan comes to dominate. Values are
+  bit-identical to the composition it replaces.
 - Make bundled `sample_prices` frames contiguous at load time. The mintalib
   chunk-sensitivity benchmark no longer depends on the CSV reader's accidental
   physical layout: it uses `random_prices` with explicit row, ticker and chunk

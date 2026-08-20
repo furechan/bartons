@@ -37,12 +37,15 @@ impl MadFilter {
             sum: 0.0,
         })
     }
-}
 
-impl Filter for MadFilter {
-    type Input = Option<f64>;
-
-    fn next(&mut self, input: Option<f64>) -> Option<f64> {
+    /// Advance the window and return its `(mean, mad)` for a full window.
+    ///
+    /// The mean is the window's arithmetic mean — the same value SMA computes —
+    /// and MAD is derived from it, so both fall out of one pass. [`CciFilter`]
+    /// needs the pair; [`Filter::next`] keeps only the second.
+    ///
+    /// [`CciFilter`]: crate::kernels::cci::CciFilter
+    pub fn next_stats(&mut self, input: Option<f64>) -> Option<(f64, f64)> {
         let Some(value) = input else {
             self.idx = 0;
             self.count = 0;
@@ -72,7 +75,15 @@ impl Filter for MadFilter {
             .iter()
             .map(|value| (value - mean).abs())
             .sum::<f64>();
-        Some(deviation / self.period as f64)
+        Some((mean, deviation / self.period as f64))
+    }
+}
+
+impl Filter for MadFilter {
+    type Input = Option<f64>;
+
+    fn next(&mut self, input: Option<f64>) -> Option<f64> {
+        self.next_stats(input).map(|(_, mad)| mad)
     }
 }
 

@@ -17,3 +17,4 @@ pub mod wma;
 pub mod rsi;
 pub mod trange;
 pub mod atr;
+pub mod cci;

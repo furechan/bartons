@@ -29,18 +29,12 @@ impl Filter for TrangeFilter {
     type Input = Hlc;
 
     fn next(&mut self, (high, low, close): Hlc) -> Option<f64> {
-        let tr = match (high, low) {
-            (Some(hi), Some(lo)) => {
-                let mut tr = hi - lo;
-                if let Some(pc) = self.prev_close {
-                    // For a valid OHLC bar (`hi >= lo`), true range is the
-                    // width of the envelope containing the bar and prev close.
-                    tr = hi.max(pc) - lo.min(pc);
-                }
-                Some(tr)
-            }
-            _ => None,
-        };
+        let tr = high.zip(low).map(|(hi, lo)| match self.prev_close {
+            // For a valid OHLC bar (`hi >= lo`), true range is the width of
+            // the envelope containing the bar and prev close.
+            Some(pc) => hi.max(pc) - lo.min(pc),
+            None => hi - lo,
+        });
         // The current close becomes the previous close for the next bar.
         self.prev_close = close;
         tr
@@ -64,7 +58,7 @@ fn trange_expr(inputs: &[Series]) -> PolarsResult<Series> {
 ///     close: close prices.
 ///
 /// Returns:
-///     A Float64 series; the first row is null (no prior close).
+///     A Float64 series; the first bar uses high - low (no prior close).
 #[pyfunction]
 #[pyo3(name = "trange", signature = (high, low, close))]
 pub fn trange_py(high: PySeries, low: PySeries, close: PySeries) -> PyResult<PySeries> {

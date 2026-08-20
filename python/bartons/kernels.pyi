@@ -26,6 +26,22 @@ def atr(high: pl.Series, low: pl.Series, close: pl.Series, *, period: int = 14) 
     ...
 
 
+def cci(high: pl.Series, low: pl.Series, close: pl.Series, *, period: int = 20) -> pl.Series:
+    """
+    Commodity Channel Index.
+
+    Args:
+        high: high prices.
+        low: low prices.
+        close: close prices.
+        period: window length (default 20).
+
+    Returns:
+        A Float64 series; null during the warmup period.
+    """
+    ...
+
+
 def ema(series: pl.Series, *, period: int = 20) -> pl.Series:
     """
     Exponential moving average.
@@ -123,7 +139,7 @@ def trange(high: pl.Series, low: pl.Series, close: pl.Series) -> pl.Series:
         close: close prices.
 
     Returns:
-        A Float64 series; the first row is null (no prior close).
+        A Float64 series; the first bar uses high - low (no prior close).
     """
     ...
 
