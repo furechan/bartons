@@ -107,3 +107,34 @@ def test_named_applies_through_the_src_wrapper():
     # The expression-first form, which is what `.pipe` reaches (covered for the
     # real factories in test_pipe.py).
     assert df.select(THING(pl.col("high"), 2)).columns == ["thing"]
+
+
+# Kernel-backed indicators, paired with the eager pyfunction and the series it
+# takes. The two names have independent sources — a hardcoded literal in the
+# Rust `run_unary`/`run_ternary` call, and the Python factory's `__name__` — so
+# nothing but this test keeps them from drifting apart.
+KERNEL_BACKED = ["EMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI"]
+
+
+@pytest.mark.parametrize("name", KERNEL_BACKED)
+def test_kernel_and_expression_names_agree(name):
+    """The eager surface names its output in Rust, the expression surface in
+    Python. Neither can see the other, so pin them to the same string."""
+    from bartons import kernels
+
+    df = _df()
+    series = {k: df[k] for k in ("high", "low", "close")}
+    period = ARGS.get(name, ())
+
+    if name in ("TRANGE", "ATR"):
+        eager = getattr(kernels, name.lower())(
+            series["high"], series["low"], series["close"],
+            **({"period": period[0]} if period else {}),
+        )
+    elif name == "CCI":
+        typical = (series["high"] + series["low"] + series["close"]) / 3.0
+        eager = kernels.cci(typical, period=period[0])
+    else:
+        eager = getattr(kernels, name.lower())(series["close"], period=period[0])
+
+    assert eager.name == df.select(_build(name)).columns[0] == name.lower()
