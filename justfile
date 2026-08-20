@@ -47,30 +47,64 @@ build mode="":
 dump:
     tar -ztvf dist/*.tar.gz
 
-# Upload the wheel + sdist to PyPI. Guarded: refuses a version already published,
-# which is the "forgot to bump" mistake and is unrecoverable — PyPI never permits
-# reusing a version or filename, even after deletion.
+# Build and validate the release artifacts, then stamp them as ready to publish.
+# dist/ is cleared by the build, so a failed preflight can never leave an older
+# success stamp behind. The stamp certifies only these local artifacts: publish
+# checks that every upload file still predates it.
+preflight:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    uv run python scripts/check-release-version.py
+    just build full
+    BARTONS_USE_DIST=1 uv run nox
+    BARTONS_USE_DIST=1 uv run nox -s wheel_smoke
+    uv run --with twine twine check dist/*
+    sha256sum dist/*
+    touch dist/.preflight-ok
+    echo "preflight passed; inspect dist/, then run: just publish"
+
+# Upload the wheel + sdist already qualified by `just preflight`. Guarded:
+# refuses a missing/stale stamp, artifacts for another version, or a version
+# already published. PyPI never permits reusing a version or filename, even
+# after deletion.
 #
 # Credentials come from MATURIN_PYPI_TOKEN, which .envrc supplies by importing the
 # `pypi` sops bundle — so an active direnv in this directory is all that is needed,
 # and no token is ever at rest in the repo.
 #
-# The release ritual is deliberately linear: preflight the committed source,
-# build once, test and inspect those exact files, upload them, verify their PyPI
-# hashes, then bump. Commit and push the bump after this recipe succeeds.
+# Publishing never compiles. It uploads the exact local artifacts qualified by
+# preflight, verifies their PyPI hashes, then bumps. Commit and push the bump
+# after this recipe succeeds.
 publish:
     #!/usr/bin/env bash
     set -euo pipefail
+    shopt -s nullglob
+    stamp=dist/.preflight-ok
+    [[ -f "$stamp" ]] || { echo "no valid preflight stamp; run: just preflight" >&2; exit 1; }
+    wheels=(dist/*.whl)
+    sdists=(dist/*.tar.gz)
+    [[ ${#wheels[@]} -eq 2 && ${#sdists[@]} -eq 1 ]] || {
+        echo "expected two wheels and one sdist from: just preflight" >&2
+        exit 1
+    }
+    artifacts=("${wheels[@]}" "${sdists[@]}")
+    version=$(uv version --short)
+    for artifact in "${artifacts[@]}"; do
+        [[ ! "$artifact" -nt "$stamp" ]] || {
+            echo "$artifact changed after preflight; rerun: just preflight" >&2
+            exit 1
+        }
+        filename=${artifact#dist/}
+        [[ "$filename" == bartons-"$version"-*.whl || "$filename" == bartons-"$version".tar.gz ]] || {
+            echo "$artifact does not belong to bartons $version; rerun: just preflight" >&2
+            exit 1
+        }
+    done
     uv run python scripts/check-release-version.py
-    just build full
-    BARTONS_RELEASE=1 uv run nox
-    BARTONS_RELEASE=1 uv run nox -s wheel_smoke
-    uv run --with twine twine check dist/*
-    sha256sum dist/*
     read -r -p "Upload these exact artifacts to PyPI? [y/N] " answer
     [[ "$answer" == y || "$answer" == Y ]] || { echo "publish cancelled"; exit 1; }
-    uv run maturin upload --non-interactive dist/*
-    uv run python scripts/check-release-version.py --verify dist/*
+    uv run maturin upload --non-interactive "${artifacts[@]}"
+    uv run python scripts/check-release-version.py --verify "${artifacts[@]}"
     just bump
 
 # Bump the patch version in pyproject.toml, so the repo names the next release

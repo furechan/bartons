@@ -2,12 +2,13 @@
 
 ## 0.1.0
 
-- Make PyPI publishing a fail-closed, exact-artifact pipeline: require a clean
-  branch synchronized with its upstream and an unpublished stable version;
-  build once; run the full compatibility matrix and wheel smoke test against
-  that exact wheel; validate and hash the artifacts before confirmation; verify
-  the uploaded PyPI filenames and SHA-256 hashes; then bump both project metadata
-  and the lockfile for the next release.
+- Make PyPI publishing a fail-closed, exact-artifact pipeline split at its
+  irreversible boundary. `just preflight` requires a clean synchronized branch
+  and unpublished stable version, builds once, validates that exact wheel through
+  the full matrix and smoke test, and writes a local success stamp only at the
+  end. `just publish` never compiles: it accepts only the stamped artifact set,
+  verifies the uploaded PyPI filenames and SHA-256 hashes, then bumps both project
+  metadata and the lockfile for the next release.
 - Rename the compiled and eager materialized API from `bartons.plugin` to
   `bartons.kernels`. The direct public namespace now describes what it contains,
   matches the Rust source layout, and avoids exposing build-system terminology.

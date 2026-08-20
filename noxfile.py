@@ -61,7 +61,7 @@ def _wheel(session: nox.Session) -> str:
     """
     global _WHEEL
     if _WHEEL is None:
-        if os.environ.get("BARTONS_RELEASE") == "1":
+        if os.environ.get("BARTONS_USE_DIST") == "1":
             supported = set(sys_tags())
             wheels = [
                 wheel

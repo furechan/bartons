@@ -16,7 +16,8 @@ just develop       # maturin develop --release — optimized, installed into .ve
 just develop-debug # maturin develop — fast unoptimized build (~20x slower at runtime)
 just build         # maturin build — wheel + sdist into dist/, installs nothing
 just dump          # list what went into the sdist
-just publish       # guarded upload of dist/ to PyPI
+just preflight     # build and validate the exact release artifacts, then stamp them
+just publish       # upload only artifacts carrying a current preflight stamp
 just test          # native Rust tests, then pytest
 just bench         # develop, then benchmark vs a baseline
                    # (default vs-native; also vs-talib, vs-mintalib)
@@ -64,16 +65,20 @@ is not intended for the release.
 3. Review the complete diff and commit and push all intended release changes,
    including any README update. Do not create an empty checkpoint commit when
    nothing changed.
-4. Run `just publish`. Its fail-closed preflight requires the tree to be clean
-   and exactly synchronized with its upstream and the version to be an unpublished
-   stable `X.Y.Z`. It then builds the native Linux ARM64 wheel, cross-compiled
-   Linux AMD64 wheel and sdist exactly once; runs the full Nox matrix and wheel
-   smoke test against that exact native artifact; validates metadata and prints
-   SHA-256 hashes for inspection; pauses for confirmation; uploads those files;
-   verifies their PyPI hashes; and bumps the patch version.
-5. The AMD64 wheel cannot be imported on the ARM64 development host and must be
+4. Run `just preflight`. It requires the tree to be clean and synchronized and
+   the version to be an unpublished stable `X.Y.Z`; clears `dist/`; builds the
+   native Linux ARM64 wheel, cross-compiled Linux AMD64 wheel and sdist once; runs
+   the full Nox matrix and wheel smoke test against that exact native artifact;
+   validates metadata; prints SHA-256 hashes; and only then creates the local
+   `dist/.preflight-ok` stamp.
+5. Inspect the prepared files and preflight output. The AMD64 wheel cannot be
+   imported on the ARM64 development host and must be
    exercised on an AMD64 runner when one is available.
-6. After `just publish` succeeds, review the version bump, commit it, and push.
+6. Run `just publish`. It never compiles: it requires exactly the two wheels and
+   one sdist, refuses files newer than the preflight stamp or named for another
+   version, rechecks release eligibility, pauses for confirmation, uploads those
+   exact files, verifies their PyPI hashes, and bumps the patch version.
+7. After `just publish` succeeds, review the version bump, commit it, and push.
 
 Never continue past a failed build, test, synchronization check, version guard,
 artifact validation, upload, or PyPI verification. Retain and review the publish

@@ -16,7 +16,8 @@ Preflight also requires a clean tree exactly synchronized with its upstream and
 fails closed if PyPI cannot be checked. After upload, ``--verify dist/*`` checks
 that PyPI has exactly the local filenames and SHA-256 hashes.
 
-Run from the project root. Used by `just publish`; also fine standalone.
+Run from the project root. Used by `just preflight` and `just publish`; also fine
+standalone.
 """
 
 import argparse
