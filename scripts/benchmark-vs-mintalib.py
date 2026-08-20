@@ -2,8 +2,8 @@
 
 bartons is a Rust polars plugin (single-pass streaming kernels); mintalib wraps
 Cython kernels. Two scenarios: single symbol (~11k rows) and a 500-ticker synthetic
-dataset with .over(). Each is measured twice: with the chunks produced by the sample
-loader and after `.rechunk()` outside the timed region. Each scenario ends with an
+dataset with .over(). Each is measured twice with an explicit controlled chunk
+count and after `.rechunk()` outside the timed region. Each scenario ends with an
 "ALL combined" row — every indicator in one df.select(), showing how each backend
 parallelises / CSEs across expressions vs the one-by-one sum. The first OHLC row of
 each input series is null, so the benchmark does not give either backend a
@@ -23,7 +23,7 @@ import timeit
 
 import polars as pl
 
-from bartons.samples import sample_prices, sample_dataset
+from bartons.samples import random_prices
 from bartons.indicators import ATR, CCI, EMA, RMA, RSI, SMA, TRANGE, WMA
 from mintalib.expressions import (
     SMA as M_SMA, EMA as M_EMA, WMA as M_WMA, RMA as M_RMA,
@@ -43,6 +43,11 @@ PAIRS = [
     ("CCI(20)", CCI(20),  M_CCI(20)),
 ]
 
+SINGLE_ROWS = 11_006
+SINGLE_CHUNKS = 178
+OVER_TICKERS = 500
+OVER_CHUNKS = 11
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def bench(df: pl.DataFrame, expr: pl.Expr, *, repeat: int = 5, number: int = 10) -> float:
@@ -57,20 +62,6 @@ def bench_over(df: pl.DataFrame, expr: pl.Expr, *, repeat: int = 3, number: int 
 
 def fmt_ms(s: float) -> str:
     return f"{s * 1000:.3f}"
-
-
-def null_first_ohlc_row(df: pl.DataFrame) -> pl.DataFrame:
-    """Set the first chronological OHLC row to null in each input series."""
-    time_col = "date" if "date" in df.columns else "datetime"
-    first = pl.col(time_col) == (
-        pl.col(time_col).min().over("ticker")
-        if "ticker" in df.columns
-        else pl.col(time_col).min()
-    )
-    return df.with_columns(
-        pl.when(first).then(None).otherwise(pl.col(column)).alias(column)
-        for column in ("open", "high", "low", "close")
-    )
 
 
 def bench_combined(
@@ -133,7 +124,9 @@ def main() -> None:
         if not pairs:
             raise SystemExit(f"No benchmark found for {args.indicator!r}")
 
-    prices_fragmented = null_first_ohlc_row(sample_prices())
+    prices_fragmented = random_prices(
+        SINGLE_ROWS, n_chunks=SINGLE_CHUNKS, null_first=True
+    )
     prices_contiguous = prices_fragmented.rechunk()
 
     print("\nWarming up ...")
@@ -157,7 +150,12 @@ def main() -> None:
         run(prices, pairs, runner=bench, over=False, repeat=args.repeat, number=args.number)
 
     if not args.no_over:
-        sp_fragmented = null_first_ohlc_row(sample_dataset())
+        sp_fragmented = random_prices(
+            SINGLE_ROWS,
+            n_chunks=OVER_CHUNKS,
+            n_tickers=OVER_TICKERS,
+            null_first=True,
+        )
         sp_contiguous = sp_fragmented.rechunk()
         n_tickers = sp_fragmented["ticker"].n_unique()
 

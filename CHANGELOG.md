@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+- Make bundled `sample_prices` frames contiguous at load time. The mintalib
+  chunk-sensitivity benchmark no longer depends on the CSV reader's accidental
+  physical layout: it uses `random_prices` with explicit row, ticker and chunk
+  counts for both scenarios.
+
 ## 0.1.0
 
 - Make PyPI publishing a fail-closed, exact-artifact pipeline split at its

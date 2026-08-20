@@ -48,6 +48,11 @@ def test_sample_prices_ohlcv_numeric(freq):
         assert df.schema[col].is_numeric(), f"{col} not numeric in {freq}"
 
 
+@pytest.mark.parametrize("freq", SAMPLE_FREQUENCIES)
+def test_sample_prices_is_contiguous(freq):
+    assert {series.n_chunks() for series in sample_prices(freq)} == {1}
+
+
 def test_max_bars_returns_most_recent_rows():
     full = sample_prices("daily")
     tail = sample_prices("daily", max_bars=5)
