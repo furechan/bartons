@@ -37,9 +37,7 @@ arity-generic driver side and re-aliased as `kernels::Hlc` on the kernel side.
 
 The flat native-module layout is deliberate. A `kernels.indicators` submodule
 was built and rejected because `import bartons.kernels.indicators` requires a
-manual `sys.modules` workaround that is not worth its cost. See
-[considered-alternatives.md](considered-alternatives.md) for this and other
-deferred designs.
+manual `sys.modules` workaround that is not worth its cost.
 
 ## Python layout
 
