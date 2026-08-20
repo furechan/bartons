@@ -40,8 +40,12 @@ def test_mad_eager(xs, period):
 
 
 def test_mad_defaults_to_close():
-    frame = pl.DataFrame({"close": [1.0, 2.0, 3.0]})
-    assert frame.select(MAD(2)).columns == ["close"]
+    """`MAD(n)` reads `close`, which is now checked by value: the output is
+    named after the factory, so the column name no longer reveals the source."""
+    frame = pl.DataFrame({"close": [1.0, 2.0, 3.0], "other": [9.0, 9.0, 9.0]})
+    default = frame.select(MAD(2))["mad"]
+    explicit = frame.select(MAD(2, src=pl.col("close")))["mad"]
+    assert_series_equal(default, explicit)
 
 
 @pytest.mark.parametrize("period", [0, -1])

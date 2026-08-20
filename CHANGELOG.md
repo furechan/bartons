@@ -2,6 +2,22 @@
 
 ## 0.1.1
 
+- **Every indicator now names its output after itself.** Polars names a plugin
+  or arithmetic expression after its leftmost input column, so `EMA(20)`
+  returned a column called `close` and `ATR(14)` one called `high`:
+  `with_columns(EMA(20))` overwrote the very column it read, and
+  `with_columns(EMA(20), SMA(20))` failed as a duplicate name. A `_named` step
+  in the prelude decorators aliases each result with the factory's own
+  lowercased name, and a new `@wrap_indicator` covers the multi-input factories
+  (TRANGE, ATR, the price transforms) that were previously undecorated. An
+  outer `.alias` still wins, and `MACD`'s `ExprBundle` is left alone since its
+  members already name themselves. This is at the expression layer rather than
+  in Rust: the kernels already name their output — `kernels.ema` returns a
+  series called `ema` — but the expression engine discards it, so naming there
+  would not reach the affected surface and would miss the five kernel-free
+  factories. The name is the bare factory name, so `EMA(20)` and `EMA(50)`
+  still collide by design and still want an explicit alias.
+
 - **Add the TA-Lib price transforms: `AVGPRICE`, `MEDPRICE`, `WCLPRICE`.**
   Native expression factories with no kernel behind them, joining `TYPPRICE` in
   a new `indicators/price.py` — grouped in one module because the

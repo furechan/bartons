@@ -1,0 +1,109 @@
+"""Every factory names its output after itself.
+
+Polars names a plugin or arithmetic expression after its leftmost input column,
+so without the `_named` step in the prelude decorators each factory would return
+a column called `close` or `high` — overwriting the column it read, and
+colliding with any sibling reading the same source.
+"""
+
+import polars as pl
+import pytest
+
+from bartons import indicators
+from bartons.bundle import ExprBundle
+from bartons.prelude import wrap_indicator, wrap_src_indicator
+
+
+# Leading positional args needed to build each factory, by name.
+ARGS = {
+    "EMA": (2,), "SMA": (2,), "RMA": (2,), "WMA": (2,), "RSI": (2,),
+    "ATR": (2,), "MAD": (2,), "CCI": (2,), "MACD": (2, 3, 2),
+}
+SINGLE = [name for name in indicators.__all__ if name != "MACD"]
+
+OHLC = {
+    "open": [1.0, 2.0, 3.0, 4.0],
+    "high": [3.0, 4.0, 5.0, 6.0],
+    "low": [1.0, 1.0, 2.0, 3.0],
+    "close": [2.0, 3.0, 4.0, 5.0],
+}
+
+
+def _df():
+    return pl.DataFrame({k: pl.Series(v, dtype=pl.Float64) for k, v in OHLC.items()})
+
+
+def _build(name):
+    return getattr(indicators, name)(*ARGS.get(name, ()))
+
+
+@pytest.mark.parametrize("name", SINGLE)
+def test_output_is_named_after_the_factory(name):
+    assert _df().select(_build(name)).columns == [name.lower()]
+
+
+@pytest.mark.parametrize("name", SINGLE)
+def test_source_column_survives(name):
+    """`with_columns` adds a column rather than overwriting the input it read."""
+    got = _df().with_columns(_build(name))
+    assert set(OHLC) <= set(got.columns)
+
+
+@pytest.mark.parametrize("name", SINGLE)
+def test_outer_alias_wins(name):
+    assert _df().select(_build(name).alias("chosen")).columns == ["chosen"]
+
+
+def test_whole_catalogue_composes_in_one_context():
+    """No two factories collide on a default name."""
+    got = _df().with_columns([_build(name) for name in SINGLE])
+    assert got.columns == list(OHLC) + [name.lower() for name in SINGLE]
+
+
+def test_bundle_members_keep_their_own_names():
+    """MACD returns an ExprBundle, which names its members and is left alone."""
+    assert _df().select(*_build("MACD")).columns == ["macd", "macdsignal", "macdhist"]
+
+
+def test_same_indicator_twice_still_needs_an_alias():
+    """The name is the bare factory name, so parameterizations collide by design."""
+    df = _df()
+    with pytest.raises(pl.exceptions.PolarsError, match="duplicate"):
+        df.with_columns(indicators.EMA(2), indicators.EMA(3))
+    assert df.with_columns(
+        indicators.EMA(2).alias("ema2"), indicators.EMA(3).alias("ema3")
+    ).columns[-2:] == ["ema2", "ema3"]
+
+
+def test_wrap_indicator_rejects_a_src_factory():
+    """A `src` factory belongs to wrap_src_indicator, which also routes `src`."""
+    with pytest.raises(TypeError, match="wrap_src_indicator"):
+
+        @wrap_indicator
+        def HasSrc(period, *, src=None):
+            return pl.lit(period)
+
+
+def test_named_leaves_bundles_alone():
+    """A bundle has no single name to give its members."""
+
+    @wrap_indicator
+    def PAIR():
+        return ExprBundle(a=pl.lit(1), b=pl.lit(2))
+
+    assert isinstance(PAIR(), ExprBundle)
+    assert pl.DataFrame({"x": [1]}).select(*PAIR()).columns == ["a", "b"]
+
+
+def test_named_applies_through_the_src_wrapper():
+    """wrap_src_indicator names its output too, on both calling conventions."""
+
+    @wrap_src_indicator
+    def THING(period, *, src=None):
+        return (src if src is not None else pl.col("close")) * period
+
+    df = _df()
+    assert df.select(THING(2)).columns == ["thing"]
+    # The expression-first form, which is what `.pipe` reaches (covered for the
+    # real factories in test_pipe.py).
+    assert df.select(THING(pl.col("high"), 2)).columns == ["thing"]

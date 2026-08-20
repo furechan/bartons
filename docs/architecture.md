@@ -47,6 +47,26 @@ one-file-per-indicator rule tracks kernels, and they have none. They stay
 re-exported flat from `indicators/__init__.py`, so there is still exactly one
 import path.
 
+## Output names
+
+Polars names a plugin or arithmetic expression after its leftmost input column,
+so an undecorated factory would return a column called `close` or `high` —
+overwriting the column it read, and colliding with any sibling reading the same
+source. The `_named` step inside `wrap_indicator` and `wrap_src_indicator`
+aliases each result with the factory's own lowercased name.
+
+This lives at the expression layer, not in Rust. The kernels do name their
+output — `run_unary` takes a name and `kernels.ema` returns a series called
+`ema` — but the expression engine discards it, so naming there would not reach
+the surface that needs it, and would cover only the kernel-backed factories.
+`MACD` and the price transforms have no kernel to take a name from. An output
+name is a presentation concern of the indicator layer.
+
+The name is the bare factory name, matching the kernels and bearta, so
+`EMA(20)` and `EMA(50)` still collide and still want an explicit `.alias`. An
+outer alias always wins. An `ExprBundle` is left alone: its members carry their
+own names and the bundle has none of its own.
+
 ## Rust layout
 
 Each indicator kernel lives in `bartons/src/kernels/<name>.rs` and is declared

@@ -24,7 +24,7 @@ from bartons.samples import sample_prices
 
 prices = sample_prices("daily")
 
-prices.select("date", "close", ema=EMA(20), rsi=RSI(14), atr=ATR(14)).tail(3)
+prices.select("date", "close", EMA(20), RSI(14), ATR(14)).tail(3)
 ```
 
 ```
@@ -35,6 +35,16 @@ prices.select("date", "close", ema=EMA(20), rsi=RSI(14), atr=ATR(14)).tail(3)
 │ 2024-08-08 ┆ 213.309998 ┆ 217.229501 ┆ 45.237928 ┆ 6.809686 │
 │ 2024-08-09 ┆ 216.240005 ┆ 217.135264 ┆ 49.118920 ┆ 6.666851 │
 └────────────┴────────────┴────────────┴───────────┴──────────┘
+```
+
+Each indicator names its output after itself, so it adds a column rather than
+overwriting the one it read, and siblings reading the same source do not
+collide. The name is the bare factory name, so two parameterizations of one
+indicator still want an explicit alias:
+
+```python
+prices.with_columns(EMA(20), SMA(20))                     # -> "ema", "sma"
+prices.with_columns(EMA(20).alias("fast"), EMA(50).alias("slow"))
 ```
 
 Single-source indicators default to `pl.col("close")` and also accept an explicit

@@ -21,11 +21,13 @@ indicator TA-Lib gives it to.
 
 import polars as pl
 
+from ..prelude import wrap_indicator
 from ..typing import IntoExprColumn
 
 __all__ = ["AVGPRICE", "MEDPRICE", "TYPPRICE", "WCLPRICE"]
 
 
+@wrap_indicator
 def AVGPRICE(
     *,
     open: IntoExprColumn = "open",
@@ -44,6 +46,7 @@ def AVGPRICE(
     return (_expr(open) + _expr(high) + _expr(low) + _expr(close)) / 4.0
 
 
+@wrap_indicator
 def MEDPRICE(
     *,
     high: IntoExprColumn = "high",
@@ -61,6 +64,7 @@ def MEDPRICE(
     return (_expr(high) + _expr(low)) / 2.0
 
 
+@wrap_indicator
 def TYPPRICE(
     *,
     high: IntoExprColumn = "high",
@@ -79,6 +83,7 @@ def TYPPRICE(
     return (_expr(high) + _expr(low) + _expr(close)) / 3.0
 
 
+@wrap_indicator
 def WCLPRICE(
     *,
     high: IntoExprColumn = "high",

@@ -97,10 +97,14 @@ imported from [`bartons.prelude`](../python/bartons/prelude.py), and
 `IntoExprColumn` from the parent. Follow the mintalib convention: **period
 first, `src` keyword-only defaulting to `pl.col("close")`**.
 
-For a single-source factory, wrap it with `@wrap_src_indicator` (also from the
-prelude) so it accepts its source column as the leading positional argument and
-composes with `Expr.pipe` (`pl.col("close").pipe(EMA, 5)`). Multi-input
-factories (TRANGE/ATR) take their columns explicitly and are *not* wrapped.
+Wrap every factory. `@wrap_src_indicator` (also from the prelude) is for
+single-source factories: it accepts the source column as the leading positional
+argument, so the factory composes with `Expr.pipe` (`pl.col("close").pipe(EMA,
+5)`). `@wrap_indicator` is for multi-input factories (TRANGE, ATR, the price
+transforms), which take their columns explicitly. Both name the output after
+the factory — see [Output names](architecture.md#output-names) — and each
+rejects the other's shape at decoration time, so reaching for the wrong one
+fails immediately.
 
 An indicator whose extra inputs collapse *elementwise* into one series is
 single-source, not multi-input: build the reduction as its own expression
