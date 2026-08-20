@@ -19,7 +19,7 @@ pip install bartons
 
 ```python
 import polars as pl
-from bartons.indicators import ATR, CCI, EMA, MACD, MAD, RSI, TYPPRICE
+from bartons.indicators import ATR, CCI, EMA, MACD, RSI, SMA, TYPPRICE
 from bartons.samples import sample_prices
 
 prices = sample_prices("daily")
@@ -85,6 +85,11 @@ pl.col("close").pipe(CCI, 20)                         # over some other series
 | `TYPPRICE()` | Typical price, `(high + low + close) / 3` |
 | `WCLPRICE()` | Weighted close price, `(high + low + 2 * close) / 4` |
 | `CCI(period=20)` | Commodity Channel Index |
+
+The price transforms are named after TA-Lib. Note that TA-Lib — and so bartons
+— calls `(high + low) / 2` **MEDPRICE**, reserving **MIDPRICE** for the rolling
+midpoint of the highest high and lowest low over a period. Some libraries use
+`midprice` for the first of those.
 
 Multi-output native indicators return an `ExprBundle`, which Polars accepts as
 one argument and expands into ordinary columns:
