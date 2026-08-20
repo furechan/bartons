@@ -61,26 +61,23 @@ is not intended for the release.
 2. Review `README.md` against the release as it now stands. Update it when the
    public API, supported versions, examples, installation instructions, or
    documented indicator set changed.
-3. Review the complete diff and commit all intended release changes, including
-   any README update. Do not create an empty checkpoint commit when nothing
-   changed.
-4. Run `just build full`. This creates the native Linux ARM64 wheel, the
-   cross-compiled Linux AMD64 wheel, and the sdist in `dist/`.
-5. Run the full Nox matrix with `uv run nox`, then test the newest locally
-   installable wheel explicitly with `uv run nox -s wheel_smoke`. This repository
-   uses Nox, not Tox. The AMD64 wheel cannot be imported on the ARM64 development
-   host and must be exercised on an AMD64 runner when one is available.
-6. Inspect the repository and artifacts again. Commit any intentional tracked
-   changes resulting from release preparation; do not commit `dist/` artifacts
-   or create an empty commit.
-7. Run `just publish`. Publishing always performs a fresh full build before the
-   guarded PyPI upload.
-8. Run `just bump` immediately after a successful upload so the repository names
-   the next release, then commit the version bump and push.
+3. Review the complete diff and commit and push all intended release changes,
+   including any README update. Do not create an empty checkpoint commit when
+   nothing changed.
+4. Run `just publish`. Its fail-closed preflight requires the tree to be clean
+   and exactly synchronized with its upstream and the version to be an unpublished
+   stable `X.Y.Z`. It then builds the native Linux ARM64 wheel, cross-compiled
+   Linux AMD64 wheel and sdist exactly once; runs the full Nox matrix and wheel
+   smoke test against that exact native artifact; validates metadata and prints
+   SHA-256 hashes for inspection; pauses for confirmation; uploads those files;
+   verifies their PyPI hashes; and bumps the patch version.
+5. The AMD64 wheel cannot be imported on the ARM64 development host and must be
+   exercised on an AMD64 runner when one is available.
+6. After `just publish` succeeds, review the version bump, commit it, and push.
 
 Never continue past a failed build, test, synchronization check, version guard,
-or upload. Since `just publish` rebuilds the artifacts, retain and review its
-build output as part of the release record.
+artifact validation, upload, or PyPI verification. Retain and review the publish
+output as part of the release record.
 
 ## Rust notebooks
 

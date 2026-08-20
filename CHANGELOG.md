@@ -2,6 +2,12 @@
 
 ## 0.1.0
 
+- Make PyPI publishing a fail-closed, exact-artifact pipeline: require a clean
+  branch synchronized with its upstream and an unpublished stable version;
+  build once; run the full compatibility matrix and wheel smoke test against
+  that exact wheel; validate and hash the artifacts before confirmation; verify
+  the uploaded PyPI filenames and SHA-256 hashes; then bump both project metadata
+  and the lockfile for the next release.
 - Rename the compiled and eager materialized API from `bartons.plugin` to
   `bartons.kernels`. The direct public namespace now describes what it contains,
   matches the Rust source layout, and avoids exposing build-system terminology.

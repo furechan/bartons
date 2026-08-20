@@ -55,19 +55,29 @@ dump:
 # `pypi` sops bundle — so an active direnv in this directory is all that is needed,
 # and no token is ever at rest in the repo.
 #
-# The release ritual:
-#   just publish          # builds native + AMD64 + sdist, then uploads
-#   git commit -am "Release 0.1.0" && git push
-#   just bump && git commit -am "Bump version" && git push
+# The release ritual is deliberately linear: preflight the committed source,
+# build once, test and inspect those exact files, upload them, verify their PyPI
+# hashes, then bump. Commit and push the bump after this recipe succeeds.
 publish:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    uv run python scripts/check-release-version.py
     just build full
-    python scripts/check-release-version.py
-    uv run maturin upload dist/*
+    BARTONS_RELEASE=1 uv run nox
+    BARTONS_RELEASE=1 uv run nox -s wheel_smoke
+    uv run --with twine twine check dist/*
+    sha256sum dist/*
+    read -r -p "Upload these exact artifacts to PyPI? [y/N] " answer
+    [[ "$answer" == y || "$answer" == Y ]] || { echo "publish cancelled"; exit 1; }
+    uv run maturin upload --non-interactive dist/*
+    uv run python scripts/check-release-version.py --verify dist/*
+    just bump
 
 # Bump the patch version in pyproject.toml, so the repo names the next release
-# again. Run right after publishing, not before.
+# again, and refresh uv.lock without syncing the environment. Run right after
+# publishing, not before.
 bump:
-    python scripts/bump-version.py
+    uv version --bump patch --no-sync
 
 test:
     cargo test --manifest-path bartons/Cargo.toml --no-default-features
