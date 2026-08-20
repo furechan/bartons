@@ -104,7 +104,9 @@ factories (TRANGE/ATR) take their columns explicitly and are *not* wrapped.
 
 An indicator whose extra inputs collapse *elementwise* into one series is
 single-source, not multi-input: build the reduction as its own expression
-factory and make that the default `src`. CCI does this with `TYPPRICE()`. See
+factory and make that the default `src`. CCI does this with `TYPPRICE()`, which
+lives with the other OHLC transforms in
+[python/bartons/indicators/price.py](../python/bartons/indicators/price.py). See
 [Elementwise reductions stay out of Rust](architecture.md#elementwise-reductions-stay-out-of-rust)
 for why the reduction gets no kernel, and for the ATR case where it does not
 apply.

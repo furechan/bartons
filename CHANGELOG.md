@@ -2,6 +2,17 @@
 
 ## 0.1.1
 
+- **Add the TA-Lib price transforms: `AVGPRICE`, `MEDPRICE`, `WCLPRICE`.**
+  Native expression factories with no kernel behind them, joining `TYPPRICE` in
+  a new `indicators/price.py` — grouped in one module because the
+  one-file-per-indicator rule tracks kernels and these have none. They stay
+  re-exported flat from `bartons.indicators`, so there is still one import path.
+  Named after TA-Lib rather than bearta and mintalib, which call `(high + low)
+  / 2` *midprice*: TA-Lib reserves `MIDPRICE` for the rolling midpoint of the
+  highest high and lowest low over a period, a different indicator, and bartons
+  is benchmarked against both libraries. All four agree with TA-Lib to within
+  one ULP; `MEDPRICE` and `WCLPRICE` are bit-identical.
+
 - **Add `TYPPRICE()` and make `CCI` single-source.** `(high + low + close) / 3`
   had two implementations — a polars expression on the lazy path and
   `HlcCciFilter` inside the kernel for the eager one — kept in step by a comment

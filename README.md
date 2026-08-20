@@ -46,9 +46,10 @@ EMA(pl.col("open"), 20)          # explicit source
 pl.col("close").pipe(EMA, 5).pipe(RSI, 14)
 ```
 
-`TRANGE`, `ATR` and `TYPPRICE` read `high`, `low` and `close`, each overridable by
-keyword. `CCI` is single-source like the rest, but defaults its source to
-`TYPPRICE()` rather than `pl.col("close")`:
+`TRANGE`, `ATR` and the price transforms read `high`, `low` and `close` (plus
+`open`, for `AVGPRICE`), each overridable by keyword. `CCI` is single-source
+like the rest, but defaults its source to `TYPPRICE()` rather than
+`pl.col("close")`:
 
 ```python
 CCI(20)                                              # standard, over typical price
@@ -69,7 +70,10 @@ pl.col("close").pipe(CCI, 20)                         # over some other series
 | `ATR(period)` | Average true range |
 | `MACD(fast=12, slow=26, signal=9)` | MACD, signal and histogram expressions |
 | `MAD(period=20)` | Rolling mean absolute deviation |
+| `AVGPRICE()` | Average price, `(open + high + low + close) / 4` |
+| `MEDPRICE()` | Median price, `(high + low) / 2` |
 | `TYPPRICE()` | Typical price, `(high + low + close) / 3` |
+| `WCLPRICE()` | Weighted close price, `(high + low + 2 * close) / 4` |
 | `CCI(period=20)` | Commodity Channel Index |
 
 Multi-output native indicators return an `ExprBundle`, which Polars accepts as

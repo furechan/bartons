@@ -25,7 +25,7 @@ from .trange import TRANGE
 from .atr import ATR
 from .macd import MACD
 from .mad import MAD
-from .typprice import TYPPRICE
+from .price import AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE
 from .cci import CCI
 
 __all__ = [
@@ -38,6 +38,9 @@ __all__ = [
     "ATR",
     "MACD",
     "MAD",
+    "AVGPRICE",
+    "MEDPRICE",
     "TYPPRICE",
+    "WCLPRICE",
     "CCI",
 ]
