@@ -4,7 +4,7 @@ import pytest
 from helpers import assert_series_equal
 
 from bartons import kernels
-from bartons.indicators import CCI
+from bartons.indicators import CCI, TYPPRICE
 from refimpl import ref_cci
 
 
@@ -46,6 +46,11 @@ def _df(highs, lows, closes):
     )
 
 
+def _typical(df):
+    """Typical price as an eager Series — the pyfunction's input."""
+    return (df["high"] + df["low"] + df["close"]) / 3.0
+
+
 @pytest.mark.parametrize("highs,lows,closes,period", CASES)
 def test_cci_expression(highs, lows, closes, period):
     df = _df(highs, lows, closes)
@@ -57,10 +62,8 @@ def test_cci_expression(highs, lows, closes, period):
 
 @pytest.mark.parametrize("highs,lows,closes,period", CASES)
 def test_cci_pyfunction(highs, lows, closes, period):
-    h = pl.Series("high", highs, dtype=pl.Float64)
-    l = pl.Series("low", lows, dtype=pl.Float64)
-    c = pl.Series("close", closes, dtype=pl.Float64)
-    got = kernels.cci(h, l, c, period=period)
+    """The kernel takes one series; the caller supplies typical price."""
+    got = kernels.cci(_typical(_df(highs, lows, closes)), period=period)
     assert_series_equal(
         got, expected_series(highs, lows, closes, period),
         check_names=False, check_exact=False, rel_tol=1e-12,
@@ -72,8 +75,16 @@ def test_pyfunction_matches_expression():
     highs, lows, closes, period = CASES[1]  # the null-reset case
     df = _df(highs, lows, closes)
     expr_out = df.select(CCI(period).alias("cci"))["cci"]
-    func_out = kernels.cci(df["high"], df["low"], df["close"], period=period)
+    func_out = kernels.cci(_typical(df), period=period)
     assert_series_equal(expr_out, func_out, check_names=False)
+
+
+def test_cci_default_src_is_typical_price():
+    """`CCI(n)` is exactly `CCI(n, src=TYPPRICE())` — no separate reduction."""
+    df = _df(HIGHS, LOWS, CLOSES)
+    default = df.select(CCI(3).alias("cci"))["cci"]
+    explicit = df.select(CCI(3, src=TYPPRICE()).alias("cci"))["cci"]
+    assert_series_equal(default, explicit)
 
 
 def test_cci_custom_column_names():
@@ -82,21 +93,27 @@ def test_cci_custom_column_names():
     closes = [9.0, 11.0, None, 14.0, 15.0, 16.0]
     frame = pl.DataFrame({"h": highs, "l": lows, "c": closes})
 
-    got = frame.select(CCI(2, high="h", low="l", close="c").alias("cci"))["cci"]
+    src = TYPPRICE(high="h", low="l", close="c")
+    got = frame.select(CCI(2, src=src).alias("cci"))["cci"]
     assert_series_equal(
         got, expected_series(highs, lows, closes, 2), check_exact=False, rel_tol=1e-12
     )
 
 
-def test_cci_accepts_expressions():
-    frame = pl.DataFrame({"high": HIGHS, "low": LOWS, "close": CLOSES})
-    names = frame.select(CCI(3).alias("cci"))
-    expressions = frame.select(
-        CCI(3, high=pl.col("high"), low=pl.col("low"), close=pl.col("close")).alias(
-            "cci"
-        )
-    )
-    assert names.equals(expressions)
+def test_cci_runs_over_any_series():
+    """Nothing in the kernel is specific to typical price."""
+    df = pl.DataFrame({"close": pl.Series(CLOSES, dtype=pl.Float64)})
+    got = df.select(CCI(3, src=pl.col("close")).alias("cci"))["cci"]
+    expected = kernels.cci(df["close"], period=3)
+    assert_series_equal(got, expected, check_names=False)
+
+
+def test_cci_pipes():
+    """CCI is a single-source factory, so it composes with Expr.pipe."""
+    df = _df(HIGHS, LOWS, CLOSES)
+    piped = df.select(TYPPRICE().pipe(CCI, 3).alias("cci"))["cci"]
+    kwarg = df.select(CCI(3, src=TYPPRICE()).alias("cci"))["cci"]
+    assert_series_equal(piped, kwarg)
 
 
 def test_cci_flat_window_is_nan():
@@ -121,25 +138,9 @@ def test_cci_period_one_is_all_nan():
 
 def test_integer_input_is_cast():
     """Non-f64 input is cast to Float64 rather than panicking."""
-    h = pl.Series("high", [10, 12, 13, 15], dtype=pl.Int64)
-    l = pl.Series("low", [8, 9, 10, 11], dtype=pl.Int64)
-    c = pl.Series("close", [9, 11, 12, 14], dtype=pl.Int64)
-    got = kernels.cci(h, l, c, period=2)
+    series = pl.Series("x", [9, 11, 12, 14], dtype=pl.Int64)
+    got = kernels.cci(series, period=2)
     assert got.dtype == pl.Float64
-    assert_series_equal(
-        got,
-        expected_series([10.0, 12.0, 13.0, 15.0], [8.0, 9.0, 10.0, 11.0], [9.0, 11.0, 12.0, 14.0], 2),
-        check_names=False, check_exact=False, rel_tol=1e-12,
-    )
-
-
-def test_mismatched_lengths_raise():
-    """CCI shares the ternary driver's length guard."""
-    h = pl.Series("high", [10.0, 12.0, 13.0], dtype=pl.Float64)
-    l = pl.Series("low", [8.0, 9.0], dtype=pl.Float64)
-    c = pl.Series("close", [9.0, 11.0, 12.0], dtype=pl.Float64)
-    with pytest.raises(ValueError, match="input lengths differ"):
-        kernels.cci(h, l, c, period=2)
 
 
 def test_cci_rejects_invalid_period():
@@ -149,8 +150,6 @@ def test_cci_rejects_invalid_period():
 
 
 def test_invalid_period_pyfunction():
-    h = pl.Series("high", [10.0, 12.0, 13.0], dtype=pl.Float64)
-    l = pl.Series("low", [8.0, 9.0, 10.0], dtype=pl.Float64)
-    c = pl.Series("close", [9.0, 11.0, 12.0], dtype=pl.Float64)
+    series = pl.Series("x", [9.0, 11.0, 12.0], dtype=pl.Float64)
     with pytest.raises(ValueError, match="period must be > 0"):
-        kernels.cci(h, l, c, period=0)
+        kernels.cci(series, period=0)

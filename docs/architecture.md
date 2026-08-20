@@ -18,10 +18,28 @@ logic or would be materially slower. Python holds *indicators*: expression
 factories that compose on top.
 
 The sets may sometimes coincide, but that is incidental. A composite such as
-BBANDS (`SMA ± k·std`) belongs in Python and needs no Rust counterpart. The
-directories are named for these roles (`bartons/src/kernels/` and
-`python/bartons/indicators/`) so their divergence reads as intended rather than
-as drift.
+BBANDS (`SMA ± k·std`) belongs in Python and needs no Rust counterpart; `MACD`
+and `TYPPRICE` are the shipped cases. The directories are named for these roles
+(`bartons/src/kernels/` and `python/bartons/indicators/`) so their divergence
+reads as intended rather than as drift.
+
+### Elementwise reductions stay out of Rust
+
+An indicator that reduces several columns elementwise — `TYPPRICE`'s
+`(high + low + close) / 3` — gets no kernel, and the kernel behind it takes the
+reduced series. Polars already computes the reduction vectorized on both
+surfaces: as an expression on the lazy path, and as `Series` arithmetic on the
+eager one, so `kernels.cci((high + low + close) / 3)` is the eager form. Adding
+a kernel would buy nothing and cost the plugin boundary, where `.over()`
+partitions every input column per group — a ternary CCI measured 0.51x there.
+
+The test is whether the step needs the bar's values *together over time*, not
+merely together. ATR's true range does — it reaches back to the previous
+close — so `TrangeFilter` takes three columns and `run_ternary` exists for it.
+Typical price does not.
+
+Keeping the reduction in one place also keeps it defined once. `CCI` supplies
+`TYPPRICE()` as its default `src`; nothing restates the formula.
 
 ## Rust layout
 

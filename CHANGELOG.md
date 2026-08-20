@@ -2,6 +2,22 @@
 
 ## 0.1.1
 
+- **Add `TYPPRICE()` and make `CCI` single-source.** `(high + low + close) / 3`
+  had two implementations — a polars expression on the lazy path and
+  `HlcCciFilter` inside the kernel for the eager one — kept in step by a comment
+  asserting they agreed bit for bit. It now has one, the new `TYPPRICE()`
+  expression factory, which `CCI` supplies as its default `src`. `kernels.cci`
+  takes a single series like the kernel it wraps, so the eager caller writes
+  `kernels.cci((high + low + close) / 3, period=20)`; `HlcCciFilter` and CCI's
+  use of `run_ternary` are gone. `CCI(period, *, src=...)` replaces the
+  `high`/`low`/`close` keywords — `CCI(20)` is unchanged, other column names go
+  through `CCI(20, src=TYPPRICE(high=..., ...))` — and CCI joins the `.pipe`
+  family. No kernel backs `TYPPRICE`: the reduction is elementwise and
+  stateless, so polars computes it vectorized on both surfaces, and a kernel
+  would only re-add the plugin boundary the single-input design avoids.
+  `docs/architecture.md` records the rule and where it stops (ATR's true range
+  reaches back a bar, so it stays ternary).
+
 - Reimplement CCI as a Rust kernel instead of a native expression composition.
   The SMA and MAD terms previously kept two separate windows over the same data
   and computed the same window mean twice; `MadFilter::next_stats` now yields

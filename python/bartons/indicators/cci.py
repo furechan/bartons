@@ -2,48 +2,38 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from ..prelude import PLUGIN_PATH
+from ..prelude import PLUGIN_PATH, wrap_src_indicator
 from ..typing import IntoExprColumn
+from .typprice import TYPPRICE
 
 
-def CCI(
-    period: int = 20,
-    *,
-    high: IntoExprColumn = "high",
-    low: IntoExprColumn = "low",
-    close: IntoExprColumn = "close",
-) -> pl.Expr:
+@wrap_src_indicator
+def CCI(period: int = 20, *, src: IntoExprColumn | None = None) -> pl.Expr:
     """Commodity Channel Index.
 
-    ``(typical - SMA(typical)) / (0.015 * MAD(typical))``, where ``typical`` is
-    ``(high + low + close) / 3``. A multi-input indicator: pass the high, low
-    and close columns (names or expressions); they default to ``"high"``,
-    ``"low"`` and ``"close"``.
+    ``(src - SMA(src)) / (0.015 * MAD(src))``. Conventionally run over typical
+    price, which is what ``src`` defaults to, so ``CCI(20)`` on a frame with
+    ``high``/``low``/``close`` columns is standard CCI.
 
-    The typical price is built as a native polars expression and the kernel
-    takes it as its single input, so the SMA and MAD terms share one window
-    while only one column crosses the plugin boundary.
+    The kernel takes a single series, so nothing here is specific to typical
+    price. For other column names, or to run CCI over some other series, pass
+    ``src``::
+
+        CCI(20, src=TYPPRICE(high="h", low="l", close="c"))
+        pl.col("close").pipe(CCI, 20)
 
     Args:
         period: window length (conventionally 20).
-        high: high column expression or name.
-        low: low column expression or name.
-        close: close column expression or name.
+        src: input column expression; defaults to :func:`TYPPRICE`, i.e.
+            ``(high + low + close) / 3``. A column name string is also accepted.
     """
-    typical = (_expr(high) + _expr(low) + _expr(close)) / 3.0
+    if src is None:
+        src = TYPPRICE()
 
     return register_plugin_function(
-        args=[typical],
+        args=[src],
         plugin_path=PLUGIN_PATH,
         function_name="cci_expr",
         is_elementwise=False,
         kwargs=dict(period=period),
     )
-
-
-def _expr(value: IntoExprColumn) -> pl.Expr:
-    if isinstance(value, str):
-        return pl.col(value)
-    if isinstance(value, pl.Series):
-        return pl.lit(value)
-    return value

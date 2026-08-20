@@ -19,7 +19,7 @@ pip install bartons
 
 ```python
 import polars as pl
-from bartons.indicators import ATR, CCI, EMA, MACD, MAD, RSI
+from bartons.indicators import ATR, CCI, EMA, MACD, MAD, RSI, TYPPRICE
 from bartons.samples import sample_prices
 
 prices = sample_prices("daily")
@@ -46,7 +46,15 @@ EMA(pl.col("open"), 20)          # explicit source
 pl.col("close").pipe(EMA, 5).pipe(RSI, 14)
 ```
 
-`TRANGE` and `ATR` read `high`, `low` and `close`, each overridable by keyword.
+`TRANGE`, `ATR` and `TYPPRICE` read `high`, `low` and `close`, each overridable by
+keyword. `CCI` is single-source like the rest, but defaults its source to
+`TYPPRICE()` rather than `pl.col("close")`:
+
+```python
+CCI(20)                                              # standard, over typical price
+CCI(20, src=TYPPRICE(high="h", low="l", close="c"))   # other column names
+pl.col("close").pipe(CCI, 20)                         # over some other series
+```
 
 ## Indicators
 
@@ -61,6 +69,7 @@ pl.col("close").pipe(EMA, 5).pipe(RSI, 14)
 | `ATR(period)` | Average true range |
 | `MACD(fast=12, slow=26, signal=9)` | MACD, signal and histogram expressions |
 | `MAD(period=20)` | Rolling mean absolute deviation |
+| `TYPPRICE()` | Typical price, `(high + low + close) / 3` |
 | `CCI(period=20)` | Commodity Channel Index |
 
 Multi-output native indicators return an `ExprBundle`, which Polars accepts as

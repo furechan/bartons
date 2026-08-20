@@ -102,6 +102,13 @@ prelude) so it accepts its source column as the leading positional argument and
 composes with `Expr.pipe` (`pl.col("close").pipe(EMA, 5)`). Multi-input
 factories (TRANGE/ATR) take their columns explicitly and are *not* wrapped.
 
+An indicator whose extra inputs collapse *elementwise* into one series is
+single-source, not multi-input: build the reduction as its own expression
+factory and make that the default `src`. CCI does this with `TYPPRICE()`. See
+[Elementwise reductions stay out of Rust](architecture.md#elementwise-reductions-stay-out-of-rust)
+for why the reduction gets no kernel, and for the ATR case where it does not
+apply.
+
 ```python
 from polars.plugins import register_plugin_function
 

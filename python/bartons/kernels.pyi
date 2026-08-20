@@ -26,14 +26,16 @@ def atr(high: pl.Series, low: pl.Series, close: pl.Series, *, period: int = 14) 
     ...
 
 
-def cci(high: pl.Series, low: pl.Series, close: pl.Series, *, period: int = 20) -> pl.Series:
+def cci(series: pl.Series, *, period: int = 20) -> pl.Series:
     """
     Commodity Channel Index.
 
+    Takes the price series to run over, conventionally typical price:
+    ``kernels.cci((high + low + close) / 3, period=20)``. The reduction is
+    plain Series arithmetic, which polars already vectorizes.
+
     Args:
-        high: high prices.
-        low: low prices.
-        close: close prices.
+        series: input prices.
         period: window length (default 20).
 
     Returns:
