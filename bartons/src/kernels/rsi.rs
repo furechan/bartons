@@ -46,14 +46,10 @@ impl Filter for RsiFilter {
         // A null is skipped entirely: emit null but carry all state across the gap
         // — the gain/loss averages (feeding them None would be a no-op now) and
         // `prev`, so the next valid bar measures the real change across the gap.
-        let Some(price) = input else {
-            return None;
-        };
+        let price = input?;
 
         // First value of the series: store it, no delta to measure yet.
-        let Some(prev) = self.prev.replace(price) else {
-            return None;
-        };
+        let prev = self.prev.replace(price)?;
 
         let delta = price - prev;
         let avg_gain = self.gain.next(Some(delta.max(0.0)));

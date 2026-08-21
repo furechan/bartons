@@ -47,9 +47,7 @@ impl Filter for RmaFilter {
 
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         // A null is skipped: emit null but carry the running state across the gap.
-        let Some(val) = input else {
-            return None;
-        };
+        let val = input?;
 
         self.count += 1;
         if self.count <= self.period {

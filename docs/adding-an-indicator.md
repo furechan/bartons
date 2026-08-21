@@ -204,6 +204,12 @@ build is ~20x slower and misleading.
   indicator belongs to. Note "skip" here means *emit a null row*, not `break`: every input
   row must still produce exactly one output row, or the output length won't match
   the input and polars errors.
+- **`?` vs `let...else`** for the null branch: use `input?` when the branch is
+  pure propagation — the recursive filters carry their state by doing *nothing*,
+  so there is nothing to spell out. Use `let...else` only when the branch does
+  work: `KerFilter` resets its window there, which `?` cannot express. The
+  spelling then tells the reader which family they are looking at, and clippy's
+  `question_mark` lint stays quiet without an `allow`.
 - **Warmup**: emit `null` until enough values are accumulated (`count >= period`).
 - **NaN** is used only as the kernel's "unseeded" marker, never as a stand-in for
   a null input (nulls come through the `Option` from `ca.iter()`).
