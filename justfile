@@ -47,6 +47,42 @@ build mode="":
 dump:
     tar -ztvf dist/*.tar.gz
 
+# Refuse to publish anything that does not correspond to a pushed commit.
+#
+# A wheel built from a dirty tree, or from a commit that never reached the
+# remote, matches no public revision — and PyPI never permits reusing a version
+# or filename, even after deletion, so that can never be corrected, only
+# superseded by a new version. Those two checks are the whole point.
+#
+# The PyPI lookup is a third, cheaper thing: it catches a forgotten bump. It sits
+# here rather than at upload time because preflight runs the entire nox matrix —
+# failing in two seconds beats failing after several minutes. It fails closed:
+# the test is `== 404`, so a timeout or a 5xx blocks the release too.
+release-guard:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    [[ -z $(git status --porcelain) ]] || {
+        echo "refusing to publish: the working tree is not clean" >&2
+        exit 1
+    }
+    upstream=$(git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null) || {
+        echo "refusing to publish: no upstream branch to compare against" >&2
+        exit 1
+    }
+    read -r behind ahead < <(git rev-list --left-right --count '@{upstream}...HEAD')
+    [[ "$behind" -eq 0 && "$ahead" -eq 0 ]] || {
+        echo "refusing to publish: HEAD is $ahead ahead and $behind behind $upstream" >&2
+        exit 1
+    }
+    version=$(uv version --short)
+    code=$(curl -sS -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/bartons/$version/json")
+    [[ "$code" == 404 ]] || {
+        echo "refusing to publish bartons $version: already on PyPI (HTTP $code) — bump the version" >&2
+        exit 1
+    }
+    echo "ok: clean, synchronized $(git branch --show-current) at $(git rev-parse --short HEAD)"
+    echo "ok: bartons $version is not yet on PyPI"
+
 # Build and validate the release artifacts, then stamp them as ready to publish.
 # dist/ is cleared by the build, so a failed preflight can never leave an older
 # success stamp behind. The stamp certifies only these local artifacts: publish
@@ -54,7 +90,7 @@ dump:
 preflight:
     #!/usr/bin/env bash
     set -euo pipefail
-    uv run python scripts/check-release-version.py
+    just release-guard
     just build full
     BARTONS_USE_DIST=1 uv run nox
     BARTONS_USE_DIST=1 uv run nox -s wheel_smoke
@@ -73,8 +109,7 @@ preflight:
 # and no token is ever at rest in the repo.
 #
 # Publishing never compiles. It uploads the exact local artifacts qualified by
-# preflight, verifies their PyPI hashes, then bumps. Commit and push the bump
-# after this recipe succeeds.
+# preflight, then bumps. Commit and push the bump after this recipe succeeds.
 publish:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -100,11 +135,10 @@ publish:
             exit 1
         }
     done
-    uv run python scripts/check-release-version.py
+    just release-guard
     read -r -p "Upload these exact artifacts to PyPI? [y/N] " answer
     [[ "$answer" == y || "$answer" == Y ]] || { echo "publish cancelled"; exit 1; }
     uv run maturin upload --non-interactive "${artifacts[@]}"
-    uv run python scripts/check-release-version.py --verify "${artifacts[@]}"
     just bump
 
 # Bump the patch version in pyproject.toml, so the repo names the next release

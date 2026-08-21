@@ -65,8 +65,8 @@ is not intended for the release.
 3. Review the complete diff and commit and push all intended release changes,
    including any README update. Do not create an empty checkpoint commit when
    nothing changed.
-4. Run `just preflight`. It requires the tree to be clean and synchronized and
-   the version to be an unpublished stable `X.Y.Z`; clears `dist/`; builds the
+4. Run `just preflight`. It runs `just release-guard` — clean tree, synchronized
+   with upstream, version not already on PyPI; clears `dist/`; builds the
    native Linux ARM64 wheel, cross-compiled Linux AMD64 wheel and sdist once; runs
    the full Nox matrix and wheel smoke test against that exact native artifact;
    validates metadata; prints SHA-256 hashes; and only then creates the local
@@ -76,8 +76,8 @@ is not intended for the release.
    exercised on an AMD64 runner when one is available.
 6. Run `just publish`. It never compiles: it requires exactly the two wheels and
    one sdist, refuses files newer than the preflight stamp or named for another
-   version, rechecks release eligibility, pauses for confirmation, uploads those
-   exact files, verifies their PyPI hashes, and bumps the patch version.
+   version, reruns `just release-guard`, pauses for confirmation, uploads those
+   exact files, and bumps the patch version.
 7. After `just publish` succeeds, review the version bump, commit it, and push.
 
 Never continue past a failed build, test, synchronization check, version guard,
