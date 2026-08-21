@@ -5,11 +5,14 @@
 # mints a short-lived PyPI credential from its GitHub identity, which is why it
 # is the only job granted `id-token: write`.
 #
-# Release ritual (see CHANGELOG.md for why the version carries `.devN`):
-#   1. drop the `.dev0` suffix in pyproject.toml, finalize the CHANGELOG heading
-#   2. git commit -am "Release 0.2.0" && git tag -a v0.2.0 -m "0.2.0"
+# Release ritual. pyproject.toml already names the *next* release, plain, with no
+# `.devN` suffix, so the tree is publishable at any time and nothing needs editing
+# before a build (see CHANGELOG.md — a `.devN` scheme was tried first and dropped):
+#   1. finalize the CHANGELOG heading for the version pyproject already carries
+#   2. git tag -a v0.2.0 -m "0.2.0"        # must match pyproject, or `guard` fails
 #   3. git push --follow-tags
-#   4. bump to the next `X.Y.Z.dev0` and push
+#   4. after the publish job succeeds: `just bump`, then commit and push, so the
+#      repo names the release after this one
 name: Release
 
 on:
@@ -20,47 +23,41 @@ permissions: {}
 
 jobs:
   # Runs before anything is built: a mismatch here is cheap to fix, but a tag
-  # that has already been consumed by a build is not.
+  # that has already been consumed by a build is not. These are the same two
+  # remote-state checks `just release-guard` makes locally — the local recipe
+  # adds clean-tree and upstream-sync, which CI satisfies by construction, and
+  # this adds tag-matching, which has no local equivalent.
   guard:
-    name: Verify tag matches version
+    name: Verify tag and PyPI availability
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-
-      - name: Compare tag against pyproject version
+      - name: Compare tag against pyproject, and check PyPI
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          python - <<'PY'
-          import os, sys, tomllib
+          version=$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)
 
-          tag = os.environ["TAG"]
-          with open("pyproject.toml", "rb") as fh:
-              version = tomllib.load(fh)["project"]["version"]
+          # Tagging a commit that predates the version bump would otherwise
+          # publish the older version under a tag claiming the newer one, and
+          # PyPI can never be corrected — only superseded and yanked.
+          [[ "$TAG" == "v$version" ]] || {
+            echo "tag $TAG does not match pyproject version $version (expected v$version)" >&2
+            echo "tag the release commit, not an earlier one" >&2
+            exit 1
+          }
 
-          expected = f"v{version}"
-          problems = []
-          if tag != expected:
-              problems.append(
-                  f"tag {tag!r} does not match pyproject version {version!r} "
-                  f"(expected tag {expected!r}) — tag the release commit, not an earlier one"
-              )
-          # Main sits on `.devN` between releases. A tag pointing at one means the
-          # release commit that drops the suffix was never made.
-          if ".dev" in version or "+" in version:
-              problems.append(
-                  f"version {version!r} is a development version and must not be published"
-              )
+          # /pypi/{name}/{version}/json is 404 until that version exists, so this
+          # needs no parsing. Testing for == 404 also fails closed: a timeout or a
+          # 5xx blocks the release rather than waving it through.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/bartons/$version/json")
+          [[ "$code" == 404 ]] || {
+            echo "bartons $version is already on PyPI (HTTP $code) — bump the version" >&2
+            exit 1
+          }
 
-          if problems:
-              print("\n".join(f"error: {p}" for p in problems), file=sys.stderr)
-              sys.exit(1)
-          print(f"ok: {tag} == v{version}")
-          PY
+          echo "ok: $TAG == v$version, not yet on PyPI"
 
   build:
     name: Build

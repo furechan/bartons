@@ -103,11 +103,15 @@ These are properties of the project, not of CI:
   stock-price skeleton by the same author, superseded by `bardata`. It should be
   yanked before or alongside the first real release.
 - **Version policy** (kept in the repo, unrelated to CI): `pyproject.toml` is the
-  single authoritative version, the crate's stays at `0.0.0`, and the in-repo
-  version points at the *next* release with a `.devN` suffix. Releasing drops the
-  suffix; the following commit opens the next `.dev0`. This applies to manual
-  releases exactly as it did to tagged ones — drop `.dev0` before building
-  anything you intend to publish.
+  single authoritative version and the crate's stays at `0.0.0`. The in-repo
+  version names the *next* release, **plain — no `.devN` suffix**, so the tree is
+  publishable at any moment and nothing needs editing before a build. Releasing
+  uploads what the version already says; `just bump` afterwards names the one
+  after. A `.devN` scheme was tried first and dropped before 0.1.0. This README
+  and `release.yml` both described that retired scheme until 2026-08-21; the
+  decision to keep stable-only rather than restore it is recorded in
+  `BACKLOG.md`, and rests on the PyPI-availability check in `guard` making a
+  re-publish structurally impossible — the protection `.devN` was buying.
 
 ## Reviving it
 
