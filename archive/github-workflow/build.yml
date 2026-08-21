@@ -9,9 +9,16 @@
 # it is actually load-bearing — a release tag — and everything else defaults to
 # the linux-only `scope`, which bills ~19.
 #
-# Triggers, deliberately narrow:
-#   workflow_dispatch  the button; pick `linux` or `full` by hand
-#   workflow_call      release.yml passes scope=full
+# One trigger: workflow_dispatch — the button; pick `linux` or `full` by hand.
+#
+# There is intentionally no `workflow_call` either. A reusable workflow uploads
+# its artifacts to the CALLER's run, which would put the wheels somewhere
+# release.yml never looks — it resolves a build by searching commit -> run ->
+# artifacts, and a called build has no run of its own to find. Re-adding a
+# `uses:` would produce a pipeline that looks right and skips every provenance
+# check. release.yml publishes what a dispatched run already built; it does not
+# build.
+#
 # There is intentionally NO push trigger. Pushing to main costs nothing; when you
 # want a cross-platform check, press the button.
 #
@@ -30,11 +37,6 @@ on:
         type: choice
         options: [linux, full]
         default: linux
-  workflow_call:
-    inputs:
-      scope:
-        type: string
-        default: full
 
 permissions: {}
 
@@ -47,9 +49,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Selects the matrix so the expensive targets are opt-in. Both remaining
-  # triggers supply `scope` (dispatch defaults to linux, workflow_call to full),
-  # so the `|| 'linux'` fallback is now belt-and-braces rather than load-bearing.
+  # Selects the matrix so the expensive targets are opt-in. The single trigger
+  # always supplies `scope` (dispatch defaults to linux), so the `|| 'linux'`
+  # fallback is belt-and-braces rather than load-bearing. A release needs the
+  # complete set, so it wants `-f scope=full`; release.yml's guard says so by
+  # name when the set is short.
   setup:
     name: Select targets
     runs-on: ubuntu-latest

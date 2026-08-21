@@ -11,7 +11,7 @@ A complete PyPI release pipeline for `bartons`:
 
 - **`build.yml`** — builds five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
   arm64/x86_64, Windows x64) plus the sdist. A `setup` job emits the matrix as
-  JSON so the target list can be scoped at dispatch time.
+  JSON so the target list can be scoped at dispatch time (`linux` or `full`).
 - **`release.yml`** — on manual dispatch: resolve the `build.yml` run for this
   commit, verify it, and publish its artifacts to PyPI over OIDC. Builds nothing.
   `dry_run` defaults to true, so the default invocation resolves and reports
@@ -50,10 +50,22 @@ windows ×2, macOS ×10. The full six-job matrix bills roughly:
 | sdist | ~1 min | ×1 | 1 |
 | | | | **~195** |
 
-That number is why the final version had no `push` trigger at all: a README fix
-landing on `main` would otherwise have cost ~200 billed minutes. Pull requests
-built linux only, and only when packaging or compiled code changed; the full
-matrix ran on a release tag or an explicit manual dispatch.
+That number is why there is no `push` trigger at all: a README fix landing on
+`main` would otherwise have cost ~200 billed minutes.
+
+As archived, `build.yml` also ran on pull requests (linux only, and only when
+packaging or compiled code changed) and could be called by `release.yml` via
+`workflow_call`. Both were removed on 2026-08-21, leaving `workflow_dispatch`
+alone: every build is now something asked for by name. `workflow_call` in
+particular is incompatible with how `release.yml` now works — a reusable
+workflow uploads its artifacts to the *caller's* run, so a called build has no
+run of its own for the commit -> run -> artifacts search to find.
+
+Two costs of that, both deliberate. `workflow_dispatch` is resolved from the
+**default branch**, so a change to `build.yml` cannot be exercised before it
+merges — `pull_request` was the only pre-merge path that ran it. And the dispatch
+default is `linux`, so a release wants `-f scope=full`; `release.yml`'s guard
+names the missing artifacts when it is short.
 
 **Wheels must not be accumulated across runs without proving provenance.** GitHub
 artifacts are scoped to their run, so assembling a release from an earlier run
