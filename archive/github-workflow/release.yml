@@ -119,7 +119,12 @@ jobs:
   publish:
     name: Publish to PyPI
     needs: guard
-    if: ${{ !inputs.dry_run }}
+    # Spelled `== false` rather than `!inputs.dry_run` so it fails safe. The
+    # input only exists for a workflow_dispatch; on any other event it is null,
+    # and `!null` is TRUE in GitHub expressions — so adding a tag or push
+    # trigger later would silently arm an automatic upload. `null == false` is
+    # false, so an unexpected event skips publishing instead.
+    if: ${{ inputs.dry_run == false }}
     runs-on: ubuntu-latest
     environment:
       name: pypi
