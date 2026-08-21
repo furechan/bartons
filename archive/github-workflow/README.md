@@ -100,7 +100,11 @@ mechanism; the gate becomes an option if the repo goes public.
 
 Note the interaction with **artifact retention**: with build and publish fused,
 artifacts only had to survive minutes. Split apart, the retention window is how
-long a build stays releasable.
+long a build stays releasable — `release.yml` refuses expired artifacts, so an
+aged-out build must be rebuilt. `build.yml` sets `retention-days: 30` rather than
+the 90-day default: a generous deadline that still needs ~15 full matrices in a
+month to press the 500 MB Free storage quota, a full run being ~33 MB. Actions
+storage is free on public repos, so this only binds while the repo is private.
 
 **Publishing failure is atomic.** `publish` declared `needs: build`, so any failing
 target meant nothing was published. A broken release is a wasted run and a deleted

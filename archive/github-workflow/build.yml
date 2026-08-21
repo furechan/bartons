@@ -95,6 +95,12 @@ jobs:
   wheel:
     name: ${{ matrix.name }}
     needs: setup
+    # `permissions: {}` above zeroes the token for every job, and
+    # actions/checkout clones with it — without this the checkout 403s on a
+    # private repo. `setup` needs none: it runs an inline script and never
+    # checks out.
+    permissions:
+      contents: read
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -126,13 +132,21 @@ jobs:
           python -c "import bartons; from bartons.indicators import EMA; print('import ok')"
           python -m pytest -q
 
+      # Retention is a release deadline, not just a quota knob: release.yml
+      # publishes a PREVIOUS run's artifacts and refuses any that have expired,
+      # so this is how long a build stays publishable. 30 days is a generous
+      # window that still needs ~15 full matrices in a month to press the 500 MB
+      # Free storage quota (a full run is ~33 MB).
       - uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.name }}
           path: dist/*.whl
+          retention-days: 30
 
   sdist:
     name: sdist
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -173,3 +187,4 @@ jobs:
         with:
           name: dist-sdist
           path: dist/*.tar.gz
+          retention-days: 30
