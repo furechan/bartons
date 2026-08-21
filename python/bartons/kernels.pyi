@@ -58,6 +58,43 @@ def ema(series: pl.Series, *, period: int = 20) -> pl.Series:
     ...
 
 
+def kama(series: pl.Series, *, period: int = 10, fastn: int = 2, slown: int = 30) -> pl.Series:
+    """
+    Kaufman Adaptive Moving Average.
+
+    An exponential moving average whose smoothing constant is re-derived each
+    bar from the efficiency ratio, so it tracks clean trends closely and flattens
+    out in chop.
+
+    Args:
+        series: input values.
+        period: number of changes in the efficiency-ratio window (default 10).
+        fastn: period of the fast smoothing bound (default 2).
+        slown: period of the slow smoothing bound (default 30).
+
+    Returns:
+        A Float64 series; null during the warmup period.
+    """
+    ...
+
+
+def ker(series: pl.Series, *, period: int = 10) -> pl.Series:
+    """
+    Kaufman Efficiency Ratio.
+
+    The net move over a window divided by the total distance travelled within
+    it, in 0..=1.
+
+    Args:
+        series: input values.
+        period: number of changes in the window (default 10).
+
+    Returns:
+        A Float64 series; null during the warmup period.
+    """
+    ...
+
+
 def mad(series: pl.Series, *, period: int = 20) -> pl.Series:
     """
     Rolling mean absolute deviation.

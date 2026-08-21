@@ -18,3 +18,5 @@ pub mod rsi;
 pub mod trange;
 pub mod atr;
 pub mod cci;
+pub mod ker;
+pub mod kama;

@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.1.2
+
+- **Add the `KER` and `KAMA` kernels.** KAMA is an exponential moving average
+  whose smoothing constant is re-derived every bar from the Kaufman efficiency
+  ratio — `alpha = (slow + KER * (fast - slow))**2` — so it tracks a clean trend
+  closely and goes nearly flat in chop. The coefficient depends on the data, so
+  there is no `ewm_mean` spelling to reach for; this is the first kernel added
+  for that reason rather than for consistency or speed. `KER` ships as its own
+  kernel and `KamaFilter` holds a `KerFilter`, mirroring how `CciFilter` holds a
+  `MadFilter`. Unlike typical price, the ratio cannot be hoisted out and passed
+  in as a precomputed series — it is stateful over time rather than elementwise —
+  so it has to live inside the kernel, and exposing it there is what keeps
+  `bartons.indicators.KER` from becoming a second definition of the formula.
+
+- **`KER` is absolute (`0..=1`), not signed.** The numerator is the magnitude of
+  the net move over the window, following TA-Lib and Kaufman's original. bearta
+  divides the *signed* sum instead, giving `-1..=1`, which reads well for a
+  standalone indicator but makes KAMA's smoothing constant asymmetric: a perfect
+  downtrend would smooth at `(2*slow - fast)**2` where a perfect rally smooths at
+  `fast**2`. One kernel serves both surfaces here, so it takes the definition
+  KAMA needs.
+
+- **`KER` deliberately does not match mintalib's `calc_ker`.** mintalib spans
+  `period - 1` changes in the numerator against `period` in the denominator, so
+  its ratio comes out systematically low and its KAMA correspondingly slow. A
+  monotone ramp is the tell: it is perfectly efficient by definition, so the
+  ratio must be exactly 1.0, and mintalib returns 0.833 at `period = 3`, drifting
+  further down as the period grows. This is the one place bartons knowingly
+  departs from mintalib's numbers rather than its conventions; the two are still
+  paired in `scripts/benchmark-vs-mintalib.py`, which times them rather than
+  comparing them.
+
+- **`KER` resets on a null, diverging from both mintalib and bearta.** Both
+  references carry the previous value across a gap and let the window span it.
+  `KER` is windowed, so it takes the windowed family's convention (SMA, WMA,
+  MAD) and drops the window *and* the previous value, which means no change is
+  ever formed across a gap. That is also what makes the kernel agree row for row
+  — including which rows are null — with the natural polars spelling,
+  `diff().rolling_sum(period, min_samples=period)`; `test_ker_matches_native_polars`
+  pins it. KAMA is the hybrid: the ratio's window resets while the running
+  average carries across the gap like EMA and RMA, so smoothing resumes from the
+  pre-gap value once the ratio has warmed up again.
+
+- Defaults follow mintalib: `KER(period=10)` and `KAMA(period=10, fastn=2,
+  slown=30)`. bearta defaults KAMA's period to 20.
+
 ## 0.1.1
 
 - **Every indicator now names its output after itself.** Polars names a plugin

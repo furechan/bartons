@@ -69,7 +69,7 @@ own names and the bundle has none of its own.
 
 The two names are therefore independent strings — a literal in the Rust
 `run_unary`/`run_ternary` call, and the Python factory's `__name__` — for the
-nine kernel-backed indicators, which have both. Neither side can see the other,
+eleven kernel-backed indicators, which have both. Neither side can see the other,
 so `test_kernel_and_expression_names_agree` pins them together.
 
 ## Rust layout

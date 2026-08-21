@@ -27,7 +27,7 @@ import timeit
 import polars as pl
 
 from bartons.samples import sample_prices, sample_dataset
-from bartons.indicators import EMA, SMA, RMA, WMA, RSI, TRANGE, ATR
+from bartons.indicators import EMA, SMA, RMA, WMA, RSI, TRANGE, ATR, KER
 
 
 # ── Native polars equivalents ───────────────────────────────────────────────────
@@ -55,6 +55,18 @@ def native_atr(period: int) -> pl.Expr:
     return native_trange().ewm_mean(alpha=1.0 / period, adjust=False)
 
 
+def native_ker(period: int) -> pl.Expr:
+    """KER composed from native exprs: |net move| over path length.
+
+    KAMA has no native counterpart at all — its smoothing constant is
+    re-derived per bar from this ratio — so only the ratio is paired here.
+    """
+    changes = pl.col("close").diff()
+    direction = changes.rolling_sum(period, min_samples=period).abs()
+    volatility = changes.abs().rolling_sum(period, min_samples=period)
+    return pl.when(volatility == 0).then(1.0).otherwise(direction / volatility)
+
+
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
 
 PAIRS = [
@@ -65,6 +77,7 @@ PAIRS = [
     ("RSI(14)", RSI(14),  native_rsi(14)),
     ("TRANGE",  TRANGE(), native_trange()),
     ("ATR(14)", ATR(14),  native_atr(14)),
+    ("KER(10)", KER(10),  native_ker(10)),
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

@@ -27,6 +27,8 @@ from .macd import MACD
 from .mad import MAD
 from .price import AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE
 from .cci import CCI
+from .ker import KER
+from .kama import KAMA
 
 __all__ = [
     "EMA",
@@ -43,4 +45,6 @@ __all__ = [
     "TYPPRICE",
     "WCLPRICE",
     "CCI",
+    "KER",
+    "KAMA",
 ]

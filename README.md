@@ -85,6 +85,8 @@ pl.col("close").pipe(CCI, 20)                         # over some other series
 | `TYPPRICE()` | Typical price, `(high + low + close) / 3` |
 | `WCLPRICE()` | Weighted close price, `(high + low + 2 * close) / 4` |
 | `CCI(period=20)` | Commodity Channel Index |
+| `KER(period=10)` | Kaufman efficiency ratio |
+| `KAMA(period=10, fastn=2, slown=30)` | Kaufman adaptive moving average |
 
 The price transforms are named after TA-Lib. Note that TA-Lib — and so bartons
 — calls `(high + low) / 2` **MEDPRICE**, reserving **MIDPRICE** for the rolling

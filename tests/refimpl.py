@@ -9,8 +9,9 @@ and the composite indicators reuse the primitives: `ref_atr` is `ref_rma` of
 
 The output is `None` during warmup. A `None` input is skipped by the recursive
 oracles (EMA, RMA — and thus RSI, ATR): they emit `None` but carry their running
-state across the gap, matching mintalib/polars. The windowed oracles (SMA, WMA)
-reset their window on a `None`.
+state across the gap, matching mintalib/polars. The windowed oracles (SMA, WMA,
+KER) reset their window on a `None`. `ref_kama` is the hybrid: its window resets
+while its running average carries.
 """
 
 from __future__ import annotations
@@ -213,3 +214,51 @@ def ref_rsi(xs, period):
 def ref_atr(highs, lows, closes, period):
     """ATR is Wilder's RMA of the True Range — `ref_rma` of `ref_trange`."""
     return ref_rma(ref_trange(highs, lows, closes), period)
+
+
+def ref_ker(xs, period):
+    """Kaufman Efficiency Ratio: the magnitude of the net move over a window of
+    `period` changes divided by the total distance travelled within it, in
+    0..=1; a window that never moved counts as perfectly efficient (1.0).
+
+    `period` changes span `period + 1` values, so warmup ends one row later than
+    a plain rolling window. A null resets both the window and the previous
+    value, so no change ever spans a gap. Recomputed directly per window (not
+    incrementally) to catch kernel bugs."""
+    out = []
+    window = []
+    for x in xs:
+        if x is None:
+            window = []
+            out.append(None)
+            continue
+        window.append(x)
+        if len(window) > period + 1:
+            window.pop(0)
+        if len(window) == period + 1:
+            direction = abs(window[-1] - window[0])
+            volatility = sum(abs(b - a) for a, b in zip(window, window[1:]))
+            out.append(1.0 if volatility == 0.0 else direction / volatility)
+        else:
+            out.append(None)
+    return out
+
+
+def ref_kama(xs, period=10, fastn=2, slown=30):
+    """Kaufman Adaptive Moving Average composed from the independent KER oracle:
+    an EMA whose alpha is `(slow + KER * (fast - slow)) ** 2`, seeded on the
+    first row the ratio is available for. The ratio's window resets on a null
+    while the running average carries across the gap."""
+    fast = 2.0 / (fastn + 1.0)
+    slow = 2.0 / (slown + 1.0)
+    ratios = ref_ker(xs, period)
+    kama = None
+    out = []
+    for x, ratio in zip(xs, ratios):
+        if x is None or ratio is None:
+            out.append(None)
+            continue
+        alpha = (slow + ratio * (fast - slow)) ** 2.0
+        kama = x if kama is None else kama + alpha * (x - kama)
+        out.append(kama)
+    return out

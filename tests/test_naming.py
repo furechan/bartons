@@ -17,7 +17,8 @@ from bartons.prelude import wrap_indicator, wrap_src_indicator
 # Leading positional args needed to build each factory, by name.
 ARGS = {
     "EMA": (2,), "SMA": (2,), "RMA": (2,), "WMA": (2,), "RSI": (2,),
-    "ATR": (2,), "MAD": (2,), "CCI": (2,), "MACD": (2, 3, 2),
+    "ATR": (2,), "MAD": (2,), "CCI": (2,), "KER": (2,), "KAMA": (2,),
+    "MACD": (2, 3, 2),
 }
 SINGLE = [name for name in indicators.__all__ if name != "MACD"]
 
@@ -113,7 +114,9 @@ def test_named_applies_through_the_src_wrapper():
 # takes. The two names have independent sources — a hardcoded literal in the
 # Rust `run_unary`/`run_ternary` call, and the Python factory's `__name__` — so
 # nothing but this test keeps them from drifting apart.
-KERNEL_BACKED = ["EMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI"]
+KERNEL_BACKED = [
+    "EMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI", "KER", "KAMA",
+]
 
 
 @pytest.mark.parametrize("name", KERNEL_BACKED)

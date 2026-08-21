@@ -33,6 +33,8 @@ PARAM_TYPES = {
     "low": "pl.Series",
     "close": "pl.Series",
     "period": "int",
+    "fastn": "int",
+    "slown": "int",
     "n_rows": "int",
     "n_chunks": "int",
     "n_tickers": "int",

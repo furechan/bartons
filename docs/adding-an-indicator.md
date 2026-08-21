@@ -198,8 +198,10 @@ build is ~20x slower and misleading.
   matching polars/pandas `ewm` and mintalib. The windowed indicators (SMA, WMA)
   reset the window on a null. RSI additionally keeps `prev` across the gap, so the
   next bar measures the real change across it (a deliberate divergence from
-  mintalib, which re-seeds — see CHANGELOG). Match the family your indicator
-  belongs to. Note "skip" here means *emit a null row*, not `break`: every input
+  mintalib, which re-seeds — see CHANGELOG). KER is windowed and resets, which
+  also aligns it with `diff().rolling_sum(...)`; KAMA is the hybrid, resetting
+  its ratio's window while carrying its running average. Match the family your
+  indicator belongs to. Note "skip" here means *emit a null row*, not `break`: every input
   row must still produce exactly one output row, or the output length won't match
   the input and polars errors.
 - **Warmup**: emit `null` until enough values are accumulated (`count >= period`).

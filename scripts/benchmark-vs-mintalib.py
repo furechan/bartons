@@ -24,10 +24,11 @@ import timeit
 import polars as pl
 
 from bartons.samples import random_prices
-from bartons.indicators import ATR, CCI, EMA, RMA, RSI, SMA, TRANGE, WMA
+from bartons.indicators import ATR, CCI, EMA, KAMA, KER, RMA, RSI, SMA, TRANGE, WMA
 from mintalib.expressions import (
     SMA as M_SMA, EMA as M_EMA, WMA as M_WMA, RMA as M_RMA,
     RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, CCI as M_CCI,
+    KER as M_KER, KAMA as M_KAMA,
 )
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
@@ -41,6 +42,11 @@ PAIRS = [
     ("TRANGE",  TRANGE(), M_TRANGE()),
     ("ATR(14)", ATR(14),  M_ATR(14)),
     ("CCI(20)", CCI(20),  M_CCI(20)),
+    # KER/KAMA are timing pairs only: mintalib's calc_ker spans period-1 changes
+    # in the numerator against period in the denominator, so its numbers differ
+    # from these. See CHANGELOG 0.1.2.
+    ("KER(10)", KER(10),  M_KER(10)),
+    ("KAMA(10)", KAMA(10), M_KAMA(10)),
 ]
 
 SINGLE_ROWS = 11_006
