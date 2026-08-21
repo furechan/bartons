@@ -10,22 +10,19 @@
 # the linux-only `scope`, which bills ~19.
 #
 # Triggers, deliberately narrow:
-#   pull_request     linux scope, and only when packaging or compiled code changed
 #   workflow_dispatch  the button; pick `linux` or `full` by hand
-#   workflow_call    release.yml passes scope=full
+#   workflow_call      release.yml passes scope=full
 # There is intentionally NO push trigger. Pushing to main costs nothing; when you
 # want a cross-platform check, press the button.
+#
+# A `pull_request` trigger existed (linux scope, filtered to packaging and
+# compiled code) and was removed on 2026-08-21: every build is now something you
+# asked for by name. The cost is that `workflow_dispatch` is read from the
+# DEFAULT BRANCH, so a change to this file cannot be exercised until it is
+# merged — there is no longer a pre-merge path that runs it.
 name: Wheels
 
 on:
-  pull_request:
-    # Docs, notebooks and backlog edits cannot break a wheel.
-    paths:
-      - "bartons/**"
-      - "python/**"
-      - "tests/**"
-      - "pyproject.toml"
-      - ".github/workflows/wheels.yml"
   workflow_dispatch:
     inputs:
       scope:
@@ -42,12 +39,17 @@ on:
 permissions: {}
 
 concurrency:
+  # Serialize runs on a ref without killing any: every run is now deliberate
+  # (a dispatch or a release), and cancelling one would only waste the minutes
+  # already spent. This was `github.event_name == 'pull_request'`, which can no
+  # longer be true.
   group: wheels-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 jobs:
-  # Selects the matrix so the expensive targets are opt-in. `inputs.scope` is
-  # empty for `pull_request`, hence the fallback.
+  # Selects the matrix so the expensive targets are opt-in. Both remaining
+  # triggers supply `scope` (dispatch defaults to linux, workflow_call to full),
+  # so the `|| 'linux'` fallback is now belt-and-braces rather than load-bearing.
   setup:
     name: Select targets
     runs-on: ubuntu-latest
