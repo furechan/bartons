@@ -79,8 +79,8 @@
 
 - **Install the CI workflows.** `build.yml` and `release.yml` move from
   `archive/github-workflow/` into `.github/workflows/`, and the archive README
-  becomes [docs/release-pipeline.md](docs/release-pipeline.md), reframed from an
-  account of why the pipeline was shelved into documentation of a live one. Both
+  becomes [docs/github-workflow.md](docs/github-workflow.md). They are
+  **experimental and have never run** — `just publish` still owns releases. Both
   are **dispatch-only** — no push, pull-request, tag, schedule or `workflow_call`
   trigger — and `release.yml` defaults to a dry run that resolves and reports
   without publishing. Nothing has ever run: `workflow_dispatch` is resolved from

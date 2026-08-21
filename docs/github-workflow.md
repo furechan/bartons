@@ -1,17 +1,23 @@
-# Release pipeline
+# GitHub Actions workflows
 
-The two GitHub Actions workflows in `.github/workflows/`, and the reasoning behind
-them. Both are **dispatch-only** — nothing here runs on a push, a pull request, a
-tag or a schedule, and `release.yml` publishes nothing unless explicitly told to.
+**Experimental. This is not the release mechanism.** Releases are cut locally with
+`just preflight` and `just publish` — see the Release workflow section of
+[CLAUDE.md](../CLAUDE.md). The two workflows described here have never run, and
+nothing should be published through them until that is a deliberate decision
+rather than a default. In particular they are a *second* upload path for the same
+artifacts, and PyPI never frees a filename, so only one path may own a release.
 
-Built 2026-08-17, archived unused the same day, then reworked and installed on
-2026-08-21. The history matters because much of what follows was learned while
-deciding *not* to run this, and the cost analysis is why it is shaped the way it
-is.
+Both are **dispatch-only** — nothing runs on a push, a pull request, a tag or a
+schedule — and `release.yml` publishes nothing unless explicitly told to.
+
+Built 2026-08-17, archived unused the same day, then reworked and installed for
+experimentation on 2026-08-21. The history matters because much of what follows
+was learned while deciding *not* to run this, and the cost analysis is why it is
+shaped the way it is.
 
 ## What this is
 
-A PyPI release pipeline for `bartons`:
+A PyPI release pipeline for `bartons`, on trial:
 
 - **`build.yml`** — builds five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
   arm64/x86_64, Windows x64) plus the sdist. A `setup` job emits the matrix as
