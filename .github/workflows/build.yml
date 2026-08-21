@@ -5,11 +5,21 @@
 #
 # COST. This is a private repo, so runner minutes are metered with per-OS
 # multipliers: linux x1, windows x2, macOS x10. A full six-job matrix bills
-# ~195 minutes, ~160 of it the two macOS jobs. So the full matrix runs only where
-# it is actually load-bearing — a release tag — and everything else defaults to
-# the linux-only `scope`, which bills ~19.
+# ~195 minutes, ~160 of it the two macOS jobs — so `full` is opt-in per dispatch
+# and the default is the linux-only `scope`, which bills ~19.
 #
 # One trigger: workflow_dispatch — the button; pick `linux` or `full` by hand.
+#
+#   gh workflow run build.yml                    # linux only, ~19 billed minutes
+#   gh workflow run build.yml -f scope=full      # all six targets, ~195
+#   gh run list --workflow=build.yml --limit 1   # find the run id
+#   gh run watch <run-id>
+#   gh run download <run-id> --dir /tmp/check    # inspect the real artifacts
+#
+# A release needs the complete set, so it wants `scope=full`. release.yml names
+# the missing artifacts if you dispatched `linux` by mistake, rather than
+# publishing a partial release — PyPI never frees a filename, so a release short
+# a wheel cannot be completed later, only superseded.
 #
 # There is intentionally no `workflow_call` either. A reusable workflow uploads
 # its artifacts to the CALLER's run, which would put the wheels somewhere
