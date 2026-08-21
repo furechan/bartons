@@ -12,8 +12,10 @@ A complete PyPI release pipeline for `bartons`:
 - **`build.yml`** — builds five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
   arm64/x86_64, Windows x64) plus the sdist. A `setup` job emits the matrix as
   JSON so the target list can be scoped at dispatch time.
-- **`release.yml`** — on a `v*` tag: verify the tag against the version, build
-  everything through `build.yml`, publish to PyPI over OIDC.
+- **`release.yml`** — on manual dispatch: resolve the `build.yml` run for this
+  commit, verify it, and publish its artifacts to PyPI over OIDC. Builds nothing.
+  `dry_run` defaults to true, so the default invocation resolves and reports
+  without publishing.
 A step-by-step release handoff also existed; it was dropped rather than archived,
 being wholly CI-specific. The parts of it that outlive CI — the version policy and
 the PyPI notes — are recorded below.
@@ -53,20 +55,40 @@ landing on `main` would otherwise have cost ~200 billed minutes. Pull requests
 built linux only, and only when packaging or compiled code changed; the full
 matrix ran on a release tag or an explicit manual dispatch.
 
-**Wheels must be built in one run, not accumulated.** GitHub artifacts are scoped
-to their run, so assembling a release from several earlier runs means pulling
-artifacts by run ID — and nothing then guarantees they came from the same commit.
-Wheels from different runs can carry identical version numbers and different code.
-Building everything inside the tag's own run rules that out by construction, at
-the cost of rebuilding artifacts you may have just built by hand.
+**Wheels must not be accumulated across runs without proving provenance.** GitHub
+artifacts are scoped to their run, so assembling a release from an earlier run
+means pulling artifacts by run ID — and by itself nothing then guarantees they
+came from the commit being released. Wheels from different runs can carry
+identical version numbers and different code.
 
-**The approval gate is what makes that acceptable.** `environment: pypi` with
-required reviewers pauses the publish job after the build. The artifacts are
-already uploaded and downloadable (`gh run download <id>`), so the sequence is
-build once → inspect the real artifacts → approve → publish exactly those bits.
-That is the local build-check-publish flow, with better provenance. The
-environment was declared in `release.yml`; enabling required reviewers on it was a
-repository setting, never turned on.
+The original design ruled that out by building everything inside the tag's own
+run, at the cost of rebuilding artifacts you may have just built by hand — and it
+then needed an approval gate to make the result inspectable before upload.
+
+**The current design closes the gap directly instead** (rewritten 2026-08-21).
+Every run records the `head_sha` it was built from, and each artifact belongs to
+exactly one run, so `release.yml` searches commit -> run -> artifacts: the run it
+resolves must have `head_sha` equal to the commit being released, must have
+succeeded, must carry the complete artifact set, and none of them may have
+expired. That is the same guarantee the single-run design got structurally, made
+explicit — which is the trade, since it is now code that can have bugs rather
+than an invariant that cannot be violated.
+
+What it buys is a build step and a publish step that are genuinely separate: build
+on demand, inspect the real artifacts at leisure, publish exactly those. It also
+halves the cost, since the release no longer rebuilds what you already built.
+
+**On the approval gate.** `environment: pypi` with required reviewers pauses the
+publish job, giving the same inspect-then-ship shape within one run. It is
+declared in `release.yml` and the environment was created on 2026-08-17, but
+required reviewers were never enabled — and cannot be, on a **private** repo on
+the **Free** plan, where environment protection rules are unavailable. The
+two-step flow above needs no plan and no pause, which is why it is the primary
+mechanism; the gate becomes an option if the repo goes public.
+
+Note the interaction with **artifact retention**: with build and publish fused,
+artifacts only had to survive minutes. Split apart, the retention window is how
+long a build stays releasable.
 
 **Publishing failure is atomic.** `publish` declared `needs: build`, so any failing
 target meant nothing was published. A broken release is a wasted run and a deleted

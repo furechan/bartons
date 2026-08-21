@@ -1,79 +1,126 @@
-# Publish to PyPI on a `v*` tag.
+# Publish to PyPI the artifacts an earlier `build.yml` run already produced and
+# smoke-tested. Nothing is built here.
 #
-# Flow: verify the tag agrees with pyproject -> build everything through
-# build.yml -> publish over OIDC. No API token exists anywhere; the publish job
-# mints a short-lived PyPI credential from its GitHub identity, which is why it
-# is the only job granted `id-token: write`.
+# Two steps on purpose. A release that rebuilt would publish bits nobody looked
+# at — and if anything landed on the branch meanwhile, bits compiled from
+# different source than the ones inspected. Instead: build on demand, inspect
+# what it made, then publish exactly those files.
+#
+# `dry_run` defaults to true, so the careless invocation is the harmless one:
+#
+#   gh workflow run release.yml                    # resolve and report only
+#   gh workflow run release.yml -f dry_run=false   # actually publish
+#
+# No API token exists anywhere; the publish job mints a short-lived PyPI
+# credential from its GitHub identity, which is why it is the only job granted
+# `id-token: write`.
 #
 # Release ritual. pyproject.toml already names the *next* release, plain, with no
 # `.devN` suffix, so the tree is publishable at any time and nothing needs editing
 # before a build (see CHANGELOG.md — a `.devN` scheme was tried first and dropped):
 #   1. finalize the CHANGELOG heading for the version pyproject already carries
-#   2. git tag -a v0.2.0 -m "0.2.0"        # must match pyproject, or `guard` fails
-#   3. git push --follow-tags
-#   4. after the publish job succeeds: `just bump`, then commit and push, so the
-#      repo names the release after this one
+#   2. gh workflow run build.yml -f scope=full        # builds and tests
+#   3. gh run download <id> --dir /tmp/check          # inspect the real artifacts
+#   4. gh workflow run release.yml                    # dry run: what would ship
+#   5. gh workflow run release.yml -f dry_run=false   # publish
+#   6. git tag -a v0.2.0 -m "0.2.0" && git push --follow-tags
+#   7. `just bump`, then commit and push, so the repo names the release after this
 name: Release
 
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Resolve and report only — do not publish"
+        type: boolean
+        default: true
 
 permissions: {}
 
 jobs:
-  # Runs before anything is built: a mismatch here is cheap to fix, but a tag
-  # that has already been consumed by a build is not. These are the same two
-  # remote-state checks `just release-guard` makes locally — the local recipe
-  # adds clean-tree and upstream-sync, which CI satisfies by construction, and
-  # this adds tag-matching, which has no local equivalent.
+  # Finds the build to publish, and refuses to name one that should not be.
+  #
+  # The artifacts carry no record of the commit they were compiled from, but
+  # their *run* does, and each artifact belongs to exactly one run — so the
+  # search goes commit -> run -> artifacts. Matching `head_sha` against the
+  # commit this workflow was dispatched at is the whole provenance link: it is
+  # what guarantees the wheels being published were built from this source.
   guard:
-    name: Verify tag and PyPI availability
+    name: Resolve the build to publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: read   # checkout, to read the version out of pyproject
+      actions: read    # list other runs and their artifacts
+    outputs:
+      run_id: ${{ steps.resolve.outputs.run_id }}
+      version: ${{ steps.resolve.outputs.version }}
     steps:
       - uses: actions/checkout@v7
 
-      - name: Compare tag against pyproject, and check PyPI
+      - id: resolve
         env:
-          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           version=$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)
-
-          # Tagging a commit that predates the version bump would otherwise
-          # publish the older version under a tag claiming the newer one, and
-          # PyPI can never be corrected — only superseded and yanked.
-          [[ "$TAG" == "v$version" ]] || {
-            echo "tag $TAG does not match pyproject version $version (expected v$version)" >&2
-            echo "tag the release commit, not an earlier one" >&2
-            exit 1
-          }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "releasing bartons $version from ${GITHUB_SHA:0:7}"
 
           # /pypi/{name}/{version}/json is 404 until that version exists, so this
           # needs no parsing. Testing for == 404 also fails closed: a timeout or a
           # 5xx blocks the release rather than waving it through.
           code=$(curl -sS -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/bartons/$version/json")
           [[ "$code" == 404 ]] || {
-            echo "bartons $version is already on PyPI (HTTP $code) — bump the version" >&2
+            echo "::error::bartons $version is already on PyPI (HTTP $code) — bump the version"
             exit 1
           }
 
-          echo "ok: $TAG == v$version, not yet on PyPI"
+          # A partial matrix must never be publishable: PyPI never frees a
+          # filename, so a release missing a wheel cannot be completed later,
+          # only superseded. Requiring the whole set also disambiguates a
+          # `scope=linux` run from a `scope=full` one at the same commit.
+          need=(dist-linux-x86_64 dist-linux-aarch64 dist-macos-arm64
+                dist-macos-x86_64 dist-windows-x64 dist-sdist)
 
-  build:
-    name: Build
-    needs: guard
-    uses: ./.github/workflows/build.yml
-    # The one place the expensive macOS/Windows targets are non-negotiable.
-    with:
-      scope: full
+          found=""
+          runs=$(gh api \
+            "/repos/$GITHUB_REPOSITORY/actions/workflows/build.yml/runs?head_sha=$GITHUB_SHA&status=success&per_page=20" \
+            --jq '.workflow_runs[].id')
+
+          for run in $runs; do
+            # Expired artifacts are still listed; skipping them here is what
+            # stops a resolved run from downloading nothing.
+            have=$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run/artifacts" \
+              --jq '[.artifacts[] | select(.expired | not) | .name] | join(" ")')
+            missing=""
+            for name in "${need[@]}"; do
+              [[ " $have " == *" $name "* ]] || missing+=" $name"
+            done
+            if [[ -z "$missing" ]]; then found=$run; break; fi
+            echo "run $run: incomplete, missing$missing"
+          done
+
+          [[ -n "$found" ]] || {
+            echo "::error::no successful build.yml run at ${GITHUB_SHA:0:7} has a complete, unexpired artifact set — run: gh workflow run build.yml -f scope=full"
+            exit 1
+          }
+
+          echo "run_id=$found" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Ready to publish bartons $version"
+            echo "- commit \`${GITHUB_SHA:0:7}\`, build run [\`$found\`]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$found)"
+            echo "- artifacts: $(echo "${need[@]}" | tr ' ' ', ')"
+            echo "- \`$version\` is not yet on PyPI"
+            if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+              echo ""
+              echo "Dry run — nothing was published. Rerun with \`-f dry_run=false\` to publish."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   publish:
     name: Publish to PyPI
-    needs: build
+    needs: guard
+    if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
-    # Gate: configure required reviewers on this environment if a pushed tag
-    # alone should not be able to ship. The environment name must also match the
-    # trusted publisher registered on PyPI.
     environment:
       name: pypi
       url: https://pypi.org/p/bartons
@@ -81,14 +128,17 @@ jobs:
       # The whole authentication story. Lets the job mint the OIDC token it
       # trades for a 15-minute, project-scoped PyPI credential.
       id-token: write
+      actions: read    # download artifacts belonging to another run
     steps:
       - uses: actions/download-artifact@v8
         with:
           pattern: dist-*
           merge-multiple: true
           path: dist
+          run-id: ${{ needs.guard.outputs.run_id }}
+          github-token: ${{ github.token }}
 
-      - name: List artifacts
+      - name: List what will be uploaded
         run: ls -l dist
 
       # No `password:` — the action performs the OIDC exchange itself.
