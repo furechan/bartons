@@ -77,6 +77,17 @@
   original zip, so the 2026-08-17 record survives. The `.yml` files are inert
   where they sit: GitHub only runs workflows under `.github/workflows/`.
 
+- **Install the CI workflows.** `build.yml` and `release.yml` move from
+  `archive/github-workflow/` into `.github/workflows/`, and the archive README
+  becomes [docs/release-pipeline.md](docs/release-pipeline.md), reframed from an
+  account of why the pipeline was shelved into documentation of a live one. Both
+  are **dispatch-only** — no push, pull-request, tag, schedule or `workflow_call`
+  trigger — and `release.yml` defaults to a dry run that resolves and reports
+  without publishing. Nothing has ever run: `workflow_dispatch` is resolved from
+  the default branch, so these could not be exercised until they landed. Note
+  that `just publish` and `release.yml` are now two upload paths for the same
+  artifacts, and only one may own a given release.
+
 ## 0.1.1
 
 - **Every indicator now names its output after itself.** Polars names a plugin

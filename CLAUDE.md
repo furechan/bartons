@@ -52,6 +52,15 @@ or pull request by default.
 
 ## Release workflow
 
+**Two upload paths now exist and only one may own a release.** `just publish`
+uploads from the dev machine; `.github/workflows/release.yml` publishes artifacts
+a `build.yml` run already produced and tested. Running both for one version means
+the second hits PyPI's duplicate-filename rejection, and PyPI never frees a
+filename. The local path below is still the one in use — CI has never run. See
+[docs/release-pipeline.md](docs/release-pipeline.md) for the CI path and what its
+setup still needs.
+
+
 Run releases from a clean branch that is fully synchronized with its upstream.
 Do not publish from a branch that is ahead, behind, or has uncommitted work that
 is not intended for the release.
@@ -163,6 +172,9 @@ EMA and SMA are the reference implementations.
 Open work is tracked in [BACKLOG.md](BACKLOG.md).
 
 - [docs/architecture.md](docs/architecture.md) — project layers, boundaries, and source layout
+- [docs/release-pipeline.md](docs/release-pipeline.md) — the two dispatch-only GitHub Actions
+  workflows in `.github/workflows/`, the cost analysis behind their shape, and the PyPI
+  facts (immutable `Requires-Dist`, filenames never reusable, yank-not-delete)
 - [docs/adding-an-indicator.md](docs/adding-an-indicator.md) — the end-to-end checklist
 - [docs/unified-run-driver.md](docs/unified-run-driver.md) — deferred proposal to collapse the two drivers into one; revisit when a fourth input arity appears
 - [docs/builder-vs-collect-benchmark.md](docs/builder-vs-collect-benchmark.md) — recorded kernel micro-benchmark (2026-08-17): the `Filter` abstraction is free, `append_option` costs ~1.6× — read before touching the append in `run_unary`/`run_ternary`

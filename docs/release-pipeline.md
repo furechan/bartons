@@ -1,13 +1,17 @@
-# Archived: GitHub Actions release automation
+# Release pipeline
 
-Built 2026-08-17, archived the same day, unused. Kept because the analysis behind
-it is worth more than the YAML, and because reviving it is a matter of unzipping
-into `.github/` if the project ever has consumers beyond the two machines it was
-written for.
+The two GitHub Actions workflows in `.github/workflows/`, and the reasoning behind
+them. Both are **dispatch-only** — nothing here runs on a push, a pull request, a
+tag or a schedule, and `release.yml` publishes nothing unless explicitly told to.
 
-## What this was
+Built 2026-08-17, archived unused the same day, then reworked and installed on
+2026-08-21. The history matters because much of what follows was learned while
+deciding *not* to run this, and the cost analysis is why it is shaped the way it
+is.
 
-A complete PyPI release pipeline for `bartons`:
+## What this is
+
+A PyPI release pipeline for `bartons`:
 
 - **`build.yml`** — builds five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
   arm64/x86_64, Windows x64) plus the sdist. A `setup` job emits the matrix as
@@ -20,7 +24,7 @@ A step-by-step release handoff also existed; it was dropped rather than archived
 being wholly CI-specific. The parts of it that outlive CI — the version policy and
 the PyPI notes — are recorded below.
 
-## Why it was archived
+## Why it was archived at first
 
 The repository is private and early, and its only consumers are two machines the
 author controls — an OrbStack VM and `boston`, an EC2 Graviton instance. Both are
@@ -30,8 +34,6 @@ so four of the five CI targets existed for users who do not exist. Building sdis
 and aarch64 wheels from the dev machine is the proportionate answer at this stage.
 
 ## What was learned along the way
-
-Worth keeping whether or not the workflows come back.
 
 **`abi3-py311` collapses the build matrix.** One `cp311-abi3` wheel per (OS, arch)
 serves every Python 3.11+, so there is no Python axis at all. Demonstrated on the
@@ -123,7 +125,7 @@ the publish job only, and a trusted publisher registered on PyPI naming the
 workflow file and environment. A laptop cannot do this — publishing by hand means
 an API token again.
 
-## Notes that outlived the workflows
+## Notes independent of CI
 
 These are properties of the project, not of CI:
 
@@ -151,24 +153,32 @@ These are properties of the project, not of CI:
   `BACKLOG.md`, and rests on the PyPI-availability check in `guard` making a
   re-publish structurally impossible — the protection `.devN` was buying.
 
-## Reviving it
+## Setup still outstanding
+
+The workflows are in place, but the account-side configuration is not finished:
+
+- **PyPI trusted publisher** — registered on 2026-08-17 naming owner/repo, workflow
+  `release.yml`, environment `pypi`, and never removed. This is why `release.yml`
+  must keep that exact filename: trusted publishing is keyed to it, so renaming it
+  breaks OIDC auth at the upload step of a real release.
+- **The `pypi` environment** — created 2026-08-17. Required reviewers were never
+  enabled on it and **cannot be** while the repo is private on the Free plan, where
+  environment protection rules are unavailable. That is not blocking: the two-step
+  build-then-publish flow gives the same inspect-before-ship shape without a pause.
+  The gate becomes available if the repo goes public.
+- **Action versions** in the YAML were current on 2026-08-17 and should be checked
+  before the first real release.
+- **Nothing has ever run.** `workflow_dispatch` is resolved from the default branch,
+  so these could not be exercised until they landed on `main`. The first dispatch of
+  `build.yml` is also the first test of the workflows themselves.
+
+## First run
 
 ```sh
-mkdir -p .github/workflows
-cp archive/github-workflow/release.yml archive/github-workflow/build.yml .github/workflows/
+gh workflow run build.yml -f scope=linux      # cheapest end-to-end check
+gh run watch <run-id>
+gh run download <run-id> --dir /tmp/check
+gh workflow run release.yml                   # dry run: resolves, reports, publishes nothing
 ```
 
-These were a zip until 2026-08-21, unpacked so they can be read and edited in
-place. The `.yml` files are inert here — GitHub only runs what is under
-`.github/workflows/` — and the original zip remains in git history.
-
-Then: register the PyPI trusted publisher (owner/repo, workflow `release.yml`,
-environment `pypi`), create the `pypi` environment in repository settings, and add
-required reviewers to it. Action versions in the YAML were current on 2026-08-17
-and will need refreshing.
-
-Note that the PyPI trusted publisher and the `pypi` environment were both
-configured on 2026-08-17 and were never removed. They are inert while no
-`release.yml` exists — nothing can invoke them — but the trusted publisher entry
-is a standing authorization for a workflow of that name in this repository, and
-can be deleted from the PyPI project settings if that is not wanted.
+The dry run is safe to repeat. Only `-f dry_run=false` uploads.
