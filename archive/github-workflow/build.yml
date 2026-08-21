@@ -20,7 +20,7 @@
 # asked for by name. The cost is that `workflow_dispatch` is read from the
 # DEFAULT BRANCH, so a change to this file cannot be exercised until it is
 # merged — there is no longer a pre-merge path that runs it.
-name: Wheels
+name: Build
 
 on:
   workflow_dispatch:

@@ -1,7 +1,7 @@
 # Publish to PyPI on a `v*` tag.
 #
 # Flow: verify the tag agrees with pyproject -> build everything through
-# wheels.yml -> publish over OIDC. No API token exists anywhere; the publish job
+# build.yml -> publish over OIDC. No API token exists anywhere; the publish job
 # mints a short-lived PyPI credential from its GitHub identity, which is why it
 # is the only job granted `id-token: write`.
 #
@@ -62,7 +62,7 @@ jobs:
   build:
     name: Build
     needs: guard
-    uses: ./.github/workflows/wheels.yml
+    uses: ./.github/workflows/build.yml
     # The one place the expensive macOS/Windows targets are non-negotiable.
     with:
       scope: full

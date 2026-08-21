@@ -9,11 +9,11 @@ written for.
 
 A complete PyPI release pipeline for `bartons`:
 
-- **`wheels.yml`** — builds five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
+- **`build.yml`** — builds five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
   arm64/x86_64, Windows x64) plus the sdist. A `setup` job emits the matrix as
   JSON so the target list can be scoped at dispatch time.
 - **`release.yml`** — on a `v*` tag: verify the tag against the version, build
-  everything through `wheels.yml`, publish to PyPI over OIDC.
+  everything through `build.yml`, publish to PyPI over OIDC.
 A step-by-step release handoff also existed; it was dropped rather than archived,
 being wholly CI-specific. The parts of it that outlive CI — the version policy and
 the PyPI notes — are recorded below.
@@ -117,7 +117,7 @@ These are properties of the project, not of CI:
 
 ```sh
 mkdir -p .github/workflows
-cp archive/github-workflow/release.yml archive/github-workflow/wheels.yml .github/workflows/
+cp archive/github-workflow/release.yml archive/github-workflow/build.yml .github/workflows/
 ```
 
 These were a zip until 2026-08-21, unpacked so they can be read and edited in
