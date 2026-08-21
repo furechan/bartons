@@ -46,6 +46,29 @@
 - Defaults follow mintalib: `KER(period=10)` and `KAMA(period=10, fastn=2,
   slown=30)`. bearta defaults KAMA's period to 20.
 
+- **Replace `scripts/check-release-version.py` with a `just release-guard`
+  recipe.** The script was ~200 lines sized for a job that is three checks. Two
+  are the load-bearing ones: a wheel built from a dirty tree, or from a commit
+  that never reached the remote, corresponds to no public revision, and since
+  PyPI never permits reusing a version or filename that can never be corrected —
+  only superseded and yanked. The third is a PyPI lookup catching a forgotten
+  bump, now two lines because `/pypi/{name}/{version}/json` returns 404 when
+  nothing is published, so no JSON parsing is needed; testing for `== 404` also
+  fails closed on a timeout or 5xx. Both `preflight` and `publish` call the
+  recipe, so the checks still run twice — the tree can change between the two
+  commands. Dropped with the script: the plain-`X.Y.Z` format assertion, which
+  only fires if the version was hand-edited, and the post-upload SHA-256
+  verification, which detected a **partial upload** — twine sends files
+  sequentially, so a mid-upload failure can leave some files permanently
+  occupying their filenames. `maturin upload` still reports a failed upload, so
+  nothing is silently missed; the independent confirmation is the accepted cost.
+
+- Delete the orphaned `scripts/bump-version.py`. Nothing referenced it: `just
+  bump` runs `uv version --bump patch --no-sync`, which also refreshes
+  `uv.lock`, where the script only rewrote `pyproject.toml`. Its docstring still
+  claimed "Used by `just bump`", so it read as the live implementation of an
+  operation it had stopped performing.
+
 ## 0.1.1
 
 - **Every indicator now names its output after itself.** Polars names a plugin
@@ -237,7 +260,7 @@
   moment: build as often as you like, and on release `just publish` uploads what
   the version already says. Afterwards commit and push at that version, then
   `just bump` (patch increment via
-  [scripts/bump-version.py](scripts/bump-version.py)) and push again so the repo
+  `scripts/bump-version.py`, since removed) and push again so the repo
   names the next one. A `.devN` scheme was tried first and dropped: it bought
   pip's `--pre` protection and an unambiguous "this tree is ahead of its release"
   marker, at the cost of an edit before every publishable build — not worth it
