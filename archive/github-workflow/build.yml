@@ -142,6 +142,29 @@ jobs:
           command: sdist
           args: --out dist
 
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      # The sdist is the artifact most likely to break silently: it ships only
+      # what the packaging config selects, so a file left out still compiles here
+      # and fails on a stranger's machine. Installing it exercises the real path
+      # — cargo builds the extension from the included sources — which no wheel
+      # job covers and `twine check` cannot see, validating only metadata.
+      #
+      # The suite comes from the checkout, not the sdist, which ships no tests.
+      # It still exercises the *installed* build: pyproject sets
+      # `python-source = "python"`, so the repo root is not an import path and
+      # `import bartons` cannot resolve to the source tree. Same arrangement as
+      # the wheel jobs' smoke step.
+      - name: Smoke-test the sdist
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.tar.gz pytest
+          python -c "import bartons; from bartons.indicators import KAMA; print('import ok')"
+          python -m pytest -q
+
       - uses: actions/upload-artifact@v7
         with:
           name: dist-sdist
