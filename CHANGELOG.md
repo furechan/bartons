@@ -69,6 +69,14 @@
   claimed "Used by `just bump`", so it read as the live implementation of an
   operation it had stopped performing.
 
+- Unpack `archive/github-workflow.zip` into `archive/github-workflow/`. The
+  workflows were archived as a zip, which made them unreadable on GitHub,
+  invisible to grep, and undiffable — so the stale `.devN` ritual in
+  `release.yml`'s header went unnoticed until it was extracted by hand. As plain
+  files they can be read and edited in place, and git history still holds the
+  original zip, so the 2026-08-17 record survives. The `.yml` files are inert
+  where they sit: GitHub only runs workflows under `.github/workflows/`.
+
 ## 0.1.1
 
 - **Every indicator now names its output after itself.** Polars names a plugin
@@ -241,7 +249,7 @@
   quietly do nothing and let you believe you had published. That is the check
   worth keeping from the deleted tag-guard job.
 - Build a full GitHub Actions release pipeline, then archive it unused as
-  [archive/github-workflow.zip](archive/github-workflow.zip). It published five `cp311-abi3`
+  `archive/github-workflow.zip`. It published five `cp311-abi3`
   wheels plus the sdist to PyPI on a `v*` tag, over OIDC trusted publishing with
   no stored token. It was disproportionate: the repo is private and early, and its
   only consumers are two machines — an OrbStack VM (Ubuntu 25.04, glibc 2.41,

@@ -1,0 +1,98 @@
+# Publish to PyPI on a `v*` tag.
+#
+# Flow: verify the tag agrees with pyproject -> build everything through
+# wheels.yml -> publish over OIDC. No API token exists anywhere; the publish job
+# mints a short-lived PyPI credential from its GitHub identity, which is why it
+# is the only job granted `id-token: write`.
+#
+# Release ritual (see CHANGELOG.md for why the version carries `.devN`):
+#   1. drop the `.dev0` suffix in pyproject.toml, finalize the CHANGELOG heading
+#   2. git commit -am "Release 0.2.0" && git tag -a v0.2.0 -m "0.2.0"
+#   3. git push --follow-tags
+#   4. bump to the next `X.Y.Z.dev0` and push
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+jobs:
+  # Runs before anything is built: a mismatch here is cheap to fix, but a tag
+  # that has already been consumed by a build is not.
+  guard:
+    name: Verify tag matches version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Compare tag against pyproject version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os, sys, tomllib
+
+          tag = os.environ["TAG"]
+          with open("pyproject.toml", "rb") as fh:
+              version = tomllib.load(fh)["project"]["version"]
+
+          expected = f"v{version}"
+          problems = []
+          if tag != expected:
+              problems.append(
+                  f"tag {tag!r} does not match pyproject version {version!r} "
+                  f"(expected tag {expected!r}) — tag the release commit, not an earlier one"
+              )
+          # Main sits on `.devN` between releases. A tag pointing at one means the
+          # release commit that drops the suffix was never made.
+          if ".dev" in version or "+" in version:
+              problems.append(
+                  f"version {version!r} is a development version and must not be published"
+              )
+
+          if problems:
+              print("\n".join(f"error: {p}" for p in problems), file=sys.stderr)
+              sys.exit(1)
+          print(f"ok: {tag} == v{version}")
+          PY
+
+  build:
+    name: Build
+    needs: guard
+    uses: ./.github/workflows/wheels.yml
+    # The one place the expensive macOS/Windows targets are non-negotiable.
+    with:
+      scope: full
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # Gate: configure required reviewers on this environment if a pushed tag
+    # alone should not be able to ship. The environment name must also match the
+    # trusted publisher registered on PyPI.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/bartons
+    permissions:
+      # The whole authentication story. Lets the job mint the OIDC token it
+      # trades for a 15-minute, project-scoped PyPI credential.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: dist-*
+          merge-multiple: true
+          path: dist
+
+      - name: List artifacts
+        run: ls -l dist
+
+      # No `password:` — the action performs the OIDC exchange itself.
+      - uses: pypa/gh-action-pypi-publish@v1.14.2
