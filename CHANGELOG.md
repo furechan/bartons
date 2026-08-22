@@ -91,12 +91,12 @@
 - Rename `release.yml` to `publish.yml`. The workflow builds nothing — it resolves
   an earlier `build.yml` run and uploads its artifacts — so "release" overstated
   it, and `build.yml` / `publish.yml` names the two halves for what they each do.
-  **This invalidates the PyPI trusted publisher**, which was registered on
-  2026-08-17 naming `release.yml`: trusted publishing is keyed to the workflow
-  filename, so the PyPI entry must be updated to `publish.yml` before any real
-  upload, or OIDC auth fails at the last step after the whole matrix has been
-  built. Nothing has been published through it, so nothing is broken — it is
-  configuration to correct before first use, and
+  The rename costs nothing on the PyPI side: the trusted publisher registered on
+  2026-08-17 naming `release.yml` has since been removed, so there is no stale
+  entry to correct — only one to create, naming `publish.yml`, before any upload.
+  The GitHub `pypi` environment is gone too (the API reports zero environments),
+  so both halves of the server-side configuration are absent rather than
+  mismatched.
   [docs/github-workflow.md](docs/github-workflow.md) now records it as such,
   alongside the pipeline's status (experimental, inactive, private repo, releases
   still local), what public would buy, and the next steps.

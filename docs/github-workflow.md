@@ -9,7 +9,7 @@
 | Releases today | cut locally with `just preflight` and `just publish` — see [CLAUDE.md](../CLAUDE.md) |
 | These workflows | installed, dispatch-only, **never used to publish anything** |
 | Repository | private, GitHub Free |
-| Server-side config | **incomplete** — see [Setup still outstanding](#setup-still-outstanding) |
+| Server-side config | **absent** — no PyPI trusted publisher, no GitHub environment |
 | Would benefit from | the repo going public — see [Why public would help](#why-public-would-help) |
 
 Nothing should be published through these until that is a deliberate decision
@@ -172,18 +172,20 @@ These are properties of the project, not of CI:
 
 The workflows are in place, but the account-side configuration is not finished:
 
-- **PyPI trusted publisher — currently MISMATCHED.** One was registered on
-  2026-08-17 naming owner/repo, workflow **`release.yml`**, environment `pypi`, and
-  never removed. That workflow was renamed to `publish.yml` on 2026-08-21, so the
-  registered publisher no longer matches anything in this repository. Trusted
-  publishing is keyed to the workflow *filename*, so **the PyPI entry must be
-  updated to `publish.yml`** before any real upload — otherwise OIDC auth fails at
-  the last step of a release, after the whole matrix has been built. Nothing has
-  been published through it, so nothing is broken yet; it is simply configuration
-  that has to be corrected before first use.
-- **The `pypi` environment** — created 2026-08-17. Required reviewers were never
-  enabled on it and **cannot be** while the repo is private on the Free plan, where
-  environment protection rules are unavailable. That is not blocking: the two-step
+- **PyPI trusted publisher — none exists.** One was registered on 2026-08-17
+  naming workflow `release.yml`, and has since been removed. Nothing on the PyPI
+  side authorizes this repository today, which also means the 2026-08-21 rename to
+  `publish.yml` costs nothing: there is no stale entry to correct, only one to
+  create. Registering it — owner/repo, workflow **`publish.yml`**, environment
+  `pypi` — is a prerequisite for any upload, since trusted publishing is keyed to
+  the workflow *filename*. Without it, OIDC auth fails at the last step, after the
+  whole matrix has been built.
+- **The `pypi` GitHub environment — does not exist either.** The GitHub API reports
+  zero environments on this repository. `publish.yml` names `environment: pypi`, and
+  GitHub creates an environment implicitly the first time a job references one, so
+  this is not a hard failure — but it will be created bare. Required reviewers, the
+  protection rule that would pause the publish job, **cannot be enabled at all**
+  while the repo is private on the Free plan. That is not blocking: the two-step
   build-then-publish flow gives the same inspect-before-ship shape without a pause.
   The gate becomes available if the repo goes public.
 - **Action versions** in the YAML were current on 2026-08-17 and should be checked
@@ -227,7 +229,8 @@ Nothing here is scheduled; this is what the experiment would do next.
    If they do not, the cache is being written but not restored, and the fix is an
    explicit `actions/cache` or `Swatinem/rust-cache` step.
 
-2. **Correct the PyPI trusted publisher** to name `publish.yml` (see above).
+2. **Register a PyPI trusted publisher** naming owner/repo, workflow
+   `publish.yml`, environment `pypi` — none exists at present (see above).
 
 3. **Run `publish.yml` in dry-run mode** against a real `build.yml` run, to exercise
    the resolution and every guard without uploading anything.
