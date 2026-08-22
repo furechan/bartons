@@ -28,7 +28,7 @@ develop-debug:
 # which needs a Rust toolchain and a full polars build (~12 min), so this is a
 # real narrowing, taken deliberately. Restore it when CI can smoke-test the
 # artifact on a native AMD64 runner; see docs/github-workflow.md.
-build:
+build: readme
     #!/usr/bin/env bash
     set -euo pipefail
     rm -rf dist
@@ -154,6 +154,10 @@ bench baseline="vs-native": develop
 # is how it stays current. Changes nothing on failure; never commits.
 raise-ceiling:
     python scripts/raise-ceiling.py
+
+# Regenerate the README indicator catalog from the public exports.
+readme:
+    uv run python scripts/update-readme.py
 
 # Regenerate python/bartons/kernels.pyi by introspecting the built extension.
 # Depends on `develop` so the module being introspected is current.

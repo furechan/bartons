@@ -37,38 +37,39 @@ prices.select("date", "close", EMA(20), RSI(14), ATR(14)).tail(3)
 └────────────┴────────────┴────────────┴───────────┴──────────┘
 ```
 
-Each indicator names its output after itself, so it adds a column rather than
-overwriting the one it read, and siblings reading the same source do not
-collide. The name is the bare factory name, so two parameterizations of one
-indicator still want an explicit alias:
+Each indicator names its output after itself in lowercase like `ema`, `sma` ... Use explicit aliases to avoid name collisions:
 
 ```python
 prices.with_columns(EMA(20), SMA(20))                     # -> "ema", "sma"
 prices.with_columns(EMA(20).alias("fast"), EMA(50).alias("slow"))
 ```
 
-Single-source indicators default to `pl.col("close")` and also accept an explicit
-source, which makes them chain with `pipe`:
+Most single-source indicators default to `pl.col("close")` as source, but they also accept an explicit source, which makes them chainable with `pipe`:
 
 ```python
-EMA(20)                          # close by default
-EMA(pl.col("open"), 20)          # explicit source
-pl.col("close").pipe(EMA, 5).pipe(RSI, 14)
+EMA(20)                                     # default source
+EMA(pl.col("open"), 20)                     # explicit source
+pl.col("close").pipe(EMA, 5).pipe(RSI, 14)  # chaining with pipe
 ```
 
-`TRANGE`, `ATR` and the price transforms read `high`, `low` and `close` (plus
-`open`, for `AVGPRICE`), each overridable by keyword. `CCI` is single-source
-like the rest, but defaults its source to `TYPPRICE()` rather than
-`pl.col("close")`:
+`TRANGE`, `ATR` and the price transforms like `TYPPRICE` accept multiple inputs like `high`, `low` and `close`, each overridable via keyword arguments:
 
 ```python
-CCI(20)                                              # standard, over typical price
-CCI(20, src=TYPPRICE(high="h", low="l", close="c"))   # other column names
-pl.col("close").pipe(CCI, 20)                         # over some other series
+TYPPRICE()                              # high, low and close
+TYPPRICE(high="h", low="l", close="c")  # other column names
+```
+
+`CCI` is single-source like the rest, but defaults its source to `TYPPRICE()`
+rather than `pl.col("close")`:
+
+```python
+CCI(20)                          # typical price by default
+CCI(20, src=TYPPRICE())          # same thing
 ```
 
 ## Indicators
 
+<!-- indicators:start -->
 | | |
 |---|---|
 | `EMA(period)` | Exponential moving average |
@@ -88,24 +89,20 @@ pl.col("close").pipe(CCI, 20)                         # over some other series
 | `KER(period=10)` | Kaufman efficiency ratio |
 | `KAMA(period=10, fastn=2, slown=30)` | Kaufman adaptive moving average |
 | `SAR(afs=0.02, maxaf=0.2)` | Parabolic Stop and Reverse |
-| `STREAK(condition)` | Consecutive true count |
+| `STREAK(src)` | Consecutive true count |
+<!-- indicators:end -->
 
-The price transforms are named after TA-Lib. Note that TA-Lib — and so bartons
-— calls `(high + low) / 2` **MEDPRICE**, reserving **MIDPRICE** for the rolling
-midpoint of the highest high and lowest low over a period. Some libraries use
-`midprice` for the first of those.
 
-Multi-output native indicators return an `ExprBundle`, which Polars accepts as
-one argument and expands into ordinary columns:
+Multi-output native indicators return an `ExprBundle`, essentially a tuple of expressions:
 
 ```python
-prices.with_columns(MACD())
-prices.with_columns(*MACD(), SMA(20))  # splat when mixing with other expressions
+prices.with_columns(MACD())             # tuple works as single argument
+prices.with_columns(*MACD(), SMA(20))   # splat when mixing with other expressions
 ```
 
 ## Eager API
 
-The compiled kernels are also callable directly on a `pl.Series`, bypassing the
+The compiled kernels are also callable directly on polars series, bypassing the
 expression layer:
 
 ```python
