@@ -71,7 +71,6 @@ dev = [
     "build",
     "pyarrow",
     "ipykernel",
-    "invoke",
     "numpy>=2.2.6",
     "patchelf>=0.17.2.4",
     # Benchmark-only: comparison baselines in scripts/benchmark-*.py.
@@ -117,4 +116,3 @@ exclude = ["evcxr"]
 [tool.pytest.ini_options]
 addopts = ["-p no:cacheprovider"]
 testpaths = ["tests"]
-
