@@ -87,6 +87,8 @@ pl.col("close").pipe(CCI, 20)                         # over some other series
 | `CCI(period=20)` | Commodity Channel Index |
 | `KER(period=10)` | Kaufman efficiency ratio |
 | `KAMA(period=10, fastn=2, slown=30)` | Kaufman adaptive moving average |
+| `SAR(afs=0.02, maxaf=0.2)` | Parabolic Stop and Reverse |
+| `STREAK(condition)` | Consecutive true count |
 
 The price transforms are named after TA-Lib. Note that TA-Lib — and so bartons
 — calls `(high + low) / 2` **MEDPRICE**, reserving **MIDPRICE** for the rolling

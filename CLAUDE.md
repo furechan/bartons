@@ -1,6 +1,6 @@
 # bartons
 
-Polars plugin providing financial/technical analysis expressions, implemented in Rust via PyO3 + Maturin. Currently exposes EMA (Exponential Moving Average), SMA (Simple Moving Average), RMA (Wilder's / running moving average), WMA (Weighted Moving Average), RSI (Wilder's Relative Strength Index), TRANGE (True Range), ATR (Average True Range), MAD (rolling Mean Absolute Deviation), CCI (Commodity Channel Index), KER (Kaufman Efficiency Ratio), KAMA (Kaufman Adaptive Moving Average), and the kernel-free MACD and price transforms (AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE).
+Polars plugin providing financial/technical analysis expressions, implemented in Rust via PyO3 + Maturin. Currently exposes EMA (Exponential Moving Average), SMA (Simple Moving Average), RMA (Wilder's / running moving average), WMA (Weighted Moving Average), RSI (Wilder's Relative Strength Index), TRANGE (True Range), ATR (Average True Range), MAD (rolling Mean Absolute Deviation), CCI (Commodity Channel Index), KER (Kaufman Efficiency Ratio), KAMA (Kaufman Adaptive Moving Average), SAR (Parabolic Stop and Reverse), STREAK (consecutive true count), and the kernel-free MACD and price transforms (AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE).
 
 ## Architecture
 
@@ -181,7 +181,7 @@ Open work is tracked in [BACKLOG.md](BACKLOG.md).
   reusable, yank-not-delete)
 - [docs/adding-an-indicator.md](docs/adding-an-indicator.md) — the end-to-end checklist
 - [docs/unified-run-driver.md](docs/unified-run-driver.md) — deferred proposal to collapse the two drivers into one; revisit when a fourth input arity appears
-- [docs/builder-vs-collect-benchmark.md](docs/builder-vs-collect-benchmark.md) — recorded kernel micro-benchmark (2026-08-17): the `Filter` abstraction is free, `append_option` costs ~1.6× — read before touching the append in `run_unary`/`run_ternary`
+- [docs/builder-vs-collect-benchmark.md](docs/builder-vs-collect-benchmark.md) — recorded kernel micro-benchmark (2026-08-17): the `Filter` abstraction is free, `append_option` costs ~1.6× — read before touching the builder append in `run_filter`
 - [docs/izip-vs-index-benchmark.md](docs/izip-vs-index-benchmark.md) — recorded driver micro-benchmark (2026-08-18): hoisting the per-element downcast beats `ChunkedArray::iter()`; both drivers use `FastIter`, which ties the native Arrow iterator in the unary single-chunk case
 
 **Two artifacts are both called "polars"**, on unrelated version schemes, so a

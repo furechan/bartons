@@ -6,7 +6,7 @@ use pyo3_polars::PySeries;
 use serde::Deserialize;
 
 use super::mad::MadFilter;
-use crate::utils::{run_unary, Filter};
+use crate::utils::{run_filter, Filter};
 
 /// Lambert's constant, which scales CCI so that roughly 70-80% of values fall
 /// in -100..=100. Fixed at the conventional 0.015, as in TA-Lib and mintalib.
@@ -54,6 +54,7 @@ impl CciFilter {
 
 impl Filter for CciFilter {
     type Input = Option<f64>;
+    type Output = f64;
 
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         let (mean, mad) = self.mad.next_stats(input)?;
@@ -67,7 +68,7 @@ impl Filter for CciFilter {
 
 fn cci(series: &Series, period: i64) -> PolarsResult<Series> {
     let filter = CciFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
-    run_unary(series, "cci", filter)
+    run_filter(series, "cci", filter)
 }
 
 #[polars_expr(output_type = Float64)]

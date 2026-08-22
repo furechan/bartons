@@ -58,7 +58,7 @@ def _import_polars_talib():
 pta = _import_polars_talib()
 
 from bartons.samples import sample_prices, sample_dataset
-from bartons.indicators import ATR, CCI, EMA, RSI, SMA, TRANGE, WMA
+from bartons.indicators import ATR, CCI, EMA, KAMA, RSI, SAR, SMA, TRANGE, WMA
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
 
@@ -70,6 +70,12 @@ PAIRS = [
     ("TRANGE",  TRANGE(), pta.trange()),
     ("ATR(14)", ATR(14),  pta.atr(timeperiod=14)),
     ("CCI(20)", CCI(20),  pta.cci(timeperiod=20)),
+    # Timing only: both are adaptive moving averages, but their initialization
+    # differs, so early values do not match exactly.
+    ("KAMA(10)", KAMA(10), pta.kama(timeperiod=10)),
+    # Timing only: bartons follows the mintalib/bearta SAR state machine, which
+    # differs from TA-Lib's initialization and reversal details.
+    ("SAR",     SAR(),     pta.sar(acceleration=0.02, maximum=0.2)),
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

@@ -5,7 +5,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 
-use crate::utils::{run_unary, Filter};
+use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
 pub struct WmaKwargs {
@@ -46,6 +46,7 @@ impl WmaFilter {
 
 impl Filter for WmaFilter {
     type Input = Option<f64>;
+    type Output = f64;
 
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         // A null breaks the current run: reset and emit null.
@@ -81,7 +82,7 @@ impl Filter for WmaFilter {
 
 fn wma(series: &Series, period: i64) -> PolarsResult<Series> {
     let filter = WmaFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
-    run_unary(series, "wma", filter)
+    run_filter(series, "wma", filter)
 }
 
 #[polars_expr(output_type = Float64)]

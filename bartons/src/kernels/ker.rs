@@ -5,7 +5,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use serde::Deserialize;
 
-use crate::utils::{run_unary, Filter};
+use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
 pub struct KerKwargs {
@@ -85,6 +85,7 @@ impl KerFilter {
 
 impl Filter for KerFilter {
     type Input = Option<f64>;
+    type Output = f64;
 
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         let Some(value) = input else {
@@ -134,7 +135,7 @@ impl Filter for KerFilter {
 
 fn ker(series: &Series, period: i64) -> PolarsResult<Series> {
     let filter = KerFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
-    run_unary(series, "ker", filter)
+    run_filter(series, "ker", filter)
 }
 
 #[polars_expr(output_type = Float64)]

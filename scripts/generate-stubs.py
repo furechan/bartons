@@ -35,6 +35,8 @@ PARAM_TYPES = {
     "period": "int",
     "fastn": "int",
     "slown": "int",
+    "afs": "float",
+    "maxaf": "float",
     "n_rows": "int",
     "n_chunks": "int",
     "n_tickers": "int",

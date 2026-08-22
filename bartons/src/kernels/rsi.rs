@@ -6,7 +6,7 @@ use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 
 use super::rma::RmaFilter;
-use crate::utils::{run_unary, Filter};
+use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
 pub struct RsiKwargs {
@@ -41,6 +41,7 @@ impl RsiFilter {
 
 impl Filter for RsiFilter {
     type Input = Option<f64>;
+    type Output = f64;
 
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         // A null is skipped entirely: emit null but carry all state across the gap
@@ -68,7 +69,7 @@ impl Filter for RsiFilter {
 
 fn rsi(series: &Series, period: i64) -> PolarsResult<Series> {
     let filter = RsiFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
-    run_unary(series, "rsi", filter)
+    run_filter(series, "rsi", filter)
 }
 
 #[polars_expr(output_type = Float64)]

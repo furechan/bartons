@@ -8,7 +8,7 @@ use pyo3_polars::derive::polars_expr;
 use super::rma::RmaFilter;
 use super::trange::TrangeFilter;
 use super::Hlc;
-use crate::utils::{run_ternary, Filter};
+use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
 pub struct AtrKwargs {
@@ -38,6 +38,7 @@ impl AtrFilter {
 
 impl Filter for AtrFilter {
     type Input = Hlc;
+    type Output = f64;
 
     fn next(&mut self, hlc: Hlc) -> Option<f64> {
         let tr = self.trange.next(hlc);
@@ -47,7 +48,7 @@ impl Filter for AtrFilter {
 
 fn atr(high: &Series, low: &Series, close: &Series, period: i64) -> PolarsResult<Series> {
     let filter = AtrFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
-    run_ternary(high, low, close, "atr", filter)
+    run_filter((high, low, close), "atr", filter)
 }
 
 #[polars_expr(output_type = Float64)]

@@ -5,7 +5,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use serde::Deserialize;
 
-use crate::utils::{run_unary, Filter};
+use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
 pub struct MadKwargs {
@@ -81,6 +81,7 @@ impl MadFilter {
 
 impl Filter for MadFilter {
     type Input = Option<f64>;
+    type Output = f64;
 
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         self.next_stats(input).map(|(_, mad)| mad)
@@ -89,7 +90,7 @@ impl Filter for MadFilter {
 
 fn mad(series: &Series, period: i64) -> PolarsResult<Series> {
     let filter = MadFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
-    run_unary(series, "mad", filter)
+    run_filter(series, "mad", filter)
 }
 
 #[polars_expr(output_type = Float64)]

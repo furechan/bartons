@@ -154,6 +154,22 @@ def rsi(series: pl.Series, *, period: int = 14) -> pl.Series:
     ...
 
 
+def sar(high: pl.Series, low: pl.Series, *, afs: float = 0.02, maxaf: float = 0.2) -> pl.Series:
+    """
+    Parabolic Stop and Reverse.
+
+    Args:
+        high: high prices.
+        low: low prices.
+        afs: starting acceleration factor (default 0.02).
+        maxaf: maximum acceleration factor (default 0.2; zero disables the cap).
+
+    Returns:
+        A Float64 series; null until the trend is initialized and on invalid bars.
+    """
+    ...
+
+
 def sma(series: pl.Series, *, period: int = 20) -> pl.Series:
     """
     Simple moving average.
@@ -164,6 +180,20 @@ def sma(series: pl.Series, *, period: int = 20) -> pl.Series:
 
     Returns:
         A Float64 series; null during the warmup period.
+    """
+    ...
+
+
+def streak(series: pl.Series) -> pl.Series:
+    """
+    Count consecutive true values.
+
+    Args:
+        series: Boolean input values; false and null reset the count.
+
+    Returns:
+        A non-null Int64 series starting at one within each true run and zero
+        otherwise.
     """
     ...
 

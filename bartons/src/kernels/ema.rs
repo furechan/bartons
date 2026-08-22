@@ -5,7 +5,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 
-use crate::utils::{run_unary, Filter};
+use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
 pub struct EmaKwargs {
@@ -40,6 +40,7 @@ impl EmaFilter {
 
 impl Filter for EmaFilter {
     type Input = Option<f64>;
+    type Output = f64;
 
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         // A null is skipped: emit null but carry the running state across the gap.
@@ -59,7 +60,7 @@ impl Filter for EmaFilter {
 
 fn ema(series: &Series, period: i64) -> PolarsResult<Series> {
     let filter = EmaFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
-    run_unary(series, "ema", filter)
+    run_filter(series, "ema", filter)
 }
 
 #[polars_expr(output_type = Float64)]

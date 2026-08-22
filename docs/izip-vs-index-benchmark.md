@@ -7,16 +7,18 @@
 **polars-rs:** 0.55.2 (resolved from the `0.55.1` pin), default features + `dtype-struct`
 **itertools:** 0.14.0
 
-[`run_ternary`](../bartons/src/utils.rs) walks three series with `izip!`. This
-measures that against the alternatives, with the real TRANGE recurrence as the
-per-element logic and the output path held constant — manual `match` into a
-`PrimitiveChunkedBuilder`, never `append_option`, which
+The ternary driver at the time of this benchmark walked three series with
+`izip!`; that traversal now lives in the float-triple `FilterInput`
+implementation used by `run_filter`. This measures it against the alternatives,
+with the real TRANGE recurrence as the per-element logic and the output path
+held constant — manual `match` into a `PrimitiveChunkedBuilder`, never
+`append_option`, which
 [builder-vs-collect-benchmark.md](builder-vs-collect-benchmark.md) measures at
 ~1.6x.
 
 | variant | how it reads a row |
 |---|---|
-| `izip` | `izip!(a.iter(), b.iter(), c.iter())` — what `run_ternary` does |
+| `izip` | `izip!(a.iter(), b.iter(), c.iter())` — the ternary driver at benchmark time |
 | `index` | `for i in 0..len` with `ca.get(i)` |
 | `unchecked` | same, with `get_unchecked` |
 | `rechunk` | rechunk to one chunk, then index the values slice + validity bitmap directly; rechunk cost is inside the timed region |

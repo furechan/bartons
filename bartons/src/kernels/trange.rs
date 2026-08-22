@@ -5,7 +5,7 @@ use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 
 use super::Hlc;
-use crate::utils::{run_ternary, Filter};
+use crate::utils::{run_filter, Filter};
 
 /// Streaming True Range filter: feed one bar's `(high, low, close)` at a time
 /// via [`Filter::next`].
@@ -27,6 +27,7 @@ impl TrangeFilter {
 
 impl Filter for TrangeFilter {
     type Input = Hlc;
+    type Output = f64;
 
     fn next(&mut self, (high, low, close): Hlc) -> Option<f64> {
         let tr = high.zip(low).map(|(hi, lo)| match self.prev_close {
@@ -42,7 +43,7 @@ impl Filter for TrangeFilter {
 }
 
 fn trange(high: &Series, low: &Series, close: &Series) -> PolarsResult<Series> {
-    run_ternary(high, low, close, "trange", TrangeFilter::new())
+    run_filter((high, low, close), "trange", TrangeFilter::new())
 }
 
 #[polars_expr(output_type = Float64)]

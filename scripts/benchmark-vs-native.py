@@ -27,7 +27,7 @@ import timeit
 import polars as pl
 
 from bartons.samples import sample_prices, sample_dataset
-from bartons.indicators import EMA, SMA, RMA, WMA, RSI, TRANGE, ATR, KER
+from bartons.indicators import EMA, SMA, RMA, WMA, RSI, TRANGE, ATR, KER, STREAK
 
 
 # ── Native polars equivalents ───────────────────────────────────────────────────
@@ -67,6 +67,14 @@ def native_ker(period: int) -> pl.Expr:
     return pl.when(volatility == 0).then(1.0).otherwise(direction / volatility)
 
 
+def native_streak(src: pl.Expr) -> pl.Expr:
+    """Consecutive true count without the slower `rle_id().over(...)` path."""
+    value = src.fill_null(False)
+    total = value.cast(pl.Int64).cum_sum()
+    anchor = pl.when(~value).then(total).forward_fill().fill_null(0)
+    return pl.when(value).then(total - anchor).otherwise(0)
+
+
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
 
 PAIRS = [
@@ -78,6 +86,11 @@ PAIRS = [
     ("TRANGE",  TRANGE(), native_trange()),
     ("ATR(14)", ATR(14),  native_atr(14)),
     ("KER(10)", KER(10),  native_ker(10)),
+    (
+        "STREAK(up)",
+        STREAK(pl.col("close").diff() > 0),
+        native_streak(pl.col("close").diff() > 0),
+    ),
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

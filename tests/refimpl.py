@@ -262,3 +262,68 @@ def ref_kama(xs, period=10, fastn=2, slown=30):
         kama = x if kama is None else kama + alpha * (x - kama)
         out.append(kama)
     return out
+
+
+def ref_sar(highs, lows, afs=0.02, maxaf=0.2):
+    """Parabolic SAR, independently spelling the shared mintalib/bearta state
+    machine. Invalid bars emit null and leave all state untouched."""
+    out = []
+    ep = sar = af = None
+    previous = None
+    trend = 0
+
+    for high, low in zip(highs, lows):
+        if high is None or low is None or high < low:
+            out.append(None)
+            continue
+
+        if previous is None:
+            previous = (high, low)
+            out.append(None)
+            continue
+
+        previous_high, previous_low = previous
+        previous = (high, low)
+        high2 = max(previous_high, high)
+        low2 = min(previous_low, low)
+
+        if trend > 0 and low < sar:
+            ep, sar, af, trend = low, ep, afs, -1
+        elif trend < 0 and high > sar:
+            ep, sar, af, trend = high, ep, afs, 1
+
+        out.append(sar)
+
+        if trend == 0:
+            if high > previous_high:
+                ep, sar, af, trend = high2, low2, afs, 1
+            else:
+                ep, sar, af, trend = low2, high2, afs, -1
+        else:
+            assert ep is not None and sar is not None and af is not None
+            sar += af * (ep - sar)
+            if trend > 0:
+                sar = min(sar, low2)
+                if high > ep:
+                    ep = high
+                    af += afs
+            else:
+                sar = max(sar, high2)
+                if low < ep:
+                    ep = low
+                    af += afs
+
+        if maxaf and af > maxaf:
+            af = maxaf
+
+    return out
+
+
+def ref_streak(values):
+    """Count consecutive true values; false and null both reset to zero."""
+    out = []
+    count = 0
+    for value in values:
+        count = count + 1 if value is True else 0
+        out.append(count)
+    return out

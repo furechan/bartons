@@ -35,9 +35,9 @@ cost the plugin boundary, where `.over()` partitions every input column per
 group — a ternary CCI measured 0.51x there.
 
 The test is whether the step needs the bar's values *together over time*, not
-merely together. ATR's true range does — it reaches back to the previous
-close — so `TrangeFilter` takes three columns and `run_ternary` exists for it.
-Typical price does not.
+merely together. ATR's true range does — it reaches back to the previous close —
+so `TrangeFilter` takes three columns and its `Hlc` row type selects the typed
+three-source `run_filter` path. Typical price does not.
 
 Keeping the reduction in one place also keeps it defined once. `CCI` supplies
 `TYPPRICE()` as its default `src`; nothing restates the formula.
@@ -56,7 +56,7 @@ source. The `_named` step inside `wrap_indicator` and `wrap_src_indicator`
 aliases each result with the factory's own lowercased name.
 
 This lives at the expression layer, not in Rust. The kernels do name their
-output — `run_unary` takes a name and `kernels.ema` returns a series called
+output — `run_filter` takes a name and `kernels.ema` returns a series called
 `ema` — but the expression engine discards it, so naming there would not reach
 the surface that needs it, and would cover only the kernel-backed factories.
 `MACD` and the price transforms have no kernel to take a name from. An output
@@ -67,22 +67,27 @@ The name is the bare factory name, matching the kernels and bearta, so
 outer alias always wins. An `ExprBundle` is left alone: its members carry their
 own names and the bundle has none of its own.
 
-The two names are therefore independent strings — a literal in the Rust
-`run_unary`/`run_ternary` call, and the Python factory's `__name__` — for the
-eleven kernel-backed indicators, which have both. Neither side can see the other,
-so `test_kernel_and_expression_names_agree` pins them together.
+The two names are therefore independent strings — a literal in the Rust driver
+call, and the Python factory's `__name__` — for the kernel-backed indicators,
+which have both. Neither side can see the other, so
+`test_kernel_and_expression_names_agree` pins them together.
 
 ## Rust layout
 
 Each indicator kernel lives in `bartons/src/kernels/<name>.rs` and is declared
-in `bartons/src/kernels/mod.rs`. The shared `Filter` trait, the
-`run_unary`/`run_ternary` drivers, and the `check_len!` length guard live in
-`bartons/src/utils.rs`. `bartons/src/lib.rs` is the `#[pymodule]` glue that
-registers each eager pyfunction flat as `bartons.kernels.<name>`.
+in `bartons/src/kernels/mod.rs`. The shared `Filter`, `FilterInput` and
+`FilterOutput` traits, the typed `run_filter` driver, and the `check_len!`
+length guard live in `bartons/src/utils.rs`.
+`bartons/src/lib.rs` is the `#[pymodule]` glue that registers each eager
+pyfunction flat as `bartons.kernels.<name>`.
 
-`Filter` carries an associated `Input`: `Option<f64>` for single-series kernels
-and a three-tuple for TRANGE/ATR. The tuple is spelled `utils::Triple` on the
-arity-generic driver side and re-aliased as `kernels::Hlc` on the kernel side.
+`Filter` carries associated `Input` and `Output` types. The input is
+`Option<f64>` for single-series kernels, a pair for SAR, and a triple for
+TRANGE/ATR. The arity-generic pair and triple are re-aliased as `kernels::Hl`
+and `kernels::Hlc` so the kernels name their domain inputs. `FilterInput` maps
+each row type to its exact Polars source signature, casted storage and traversal.
+STREAK exercises the non-float path: `Option<bool>` from a Boolean series and
+`i64` into an Int64 output builder.
 
 The flat native-module layout is deliberate. A `kernels.indicators` submodule
 was built and rejected because `import bartons.kernels.indicators` requires a

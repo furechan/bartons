@@ -6,7 +6,7 @@ use pyo3_polars::PySeries;
 use serde::Deserialize;
 
 use super::ker::KerFilter;
-use crate::utils::{run_unary, Filter};
+use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
 pub struct KamaKwargs {
@@ -63,6 +63,7 @@ impl KamaFilter {
 
 impl Filter for KamaFilter {
     type Input = Option<f64>;
+    type Output = f64;
 
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         // Feed the ratio unconditionally — a null has to reach it, so that it
@@ -85,7 +86,7 @@ impl Filter for KamaFilter {
 fn kama(series: &Series, period: i64, fastn: i64, slown: i64) -> PolarsResult<Series> {
     let filter =
         KamaFilter::new(period, fastn, slown).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
-    run_unary(series, "kama", filter)
+    run_filter(series, "kama", filter)
 }
 
 #[polars_expr(output_type = Float64)]

@@ -88,22 +88,29 @@ def _named(factory: Callable[P, R]) -> Callable[P, R]:
 
 
 def wrap_indicator(factory: Callable[P, R]) -> Callable[P, R]:
-    """Multi-input indicator decorator: name the output after the factory.
+    """Direct-signature indicator decorator: name the factory's output.
 
-    For factories that take their columns as individual keyword arguments
-    (TRANGE, ATR, and the price transforms) rather than a single ``src``. A
-    factory with a ``src`` parameter belongs to :func:`wrap_src_indicator`,
-    which names the output *and* adds the expression-first calling convention.
-    Mirrors bearta's ``wrap_indicator``.
+    For factories whose native signature already has the desired call grammar:
+    multi-input indicators such as TRANGE and ATR, and source-first indicators
+    such as ``STREAK(src)``. A factory whose ``src`` comes after parameters
+    belongs to :func:`wrap_src_indicator`, which names the output and adds the
+    expression-first calling convention. Mirrors bearta's ``wrap_indicator``.
 
     Raises:
-        TypeError: at decoration time if `factory` declares a `src` parameter,
-            which means the wrong decorator was reached for.
+        TypeError: at decoration time if `factory` declares `src` anywhere but
+            its first positional-capable parameter, which means argument
+            routing is required and the wrong decorator was reached for.
     """
-    if "src" in inspect.signature(factory).parameters:
+    parameters = list(inspect.signature(factory).parameters.values())
+    src = next((parameter for parameter in parameters if parameter.name == "src"), None)
+    if src is not None and (
+        src is not parameters[0]
+        or src.kind
+        not in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    ):
         raise TypeError(
-            f"{getattr(factory, '__name__', factory)!r} has a `src` parameter — "
-            f"use @wrap_src_indicator"
+            f"{getattr(factory, '__name__', factory)!r} has a non-leading `src` "
+            f"parameter — use @wrap_src_indicator"
         )
     return _named(factory)
 

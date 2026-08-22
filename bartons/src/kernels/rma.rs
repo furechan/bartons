@@ -5,7 +5,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 
-use crate::utils::{run_unary, Filter};
+use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
 pub struct RmaKwargs {
@@ -44,6 +44,7 @@ impl RmaFilter {
 
 impl Filter for RmaFilter {
     type Input = Option<f64>;
+    type Output = f64;
 
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         // A null is skipped: emit null but carry the running state across the gap.
@@ -66,7 +67,7 @@ impl Filter for RmaFilter {
 
 fn rma(series: &Series, period: i64) -> PolarsResult<Series> {
     let filter = RmaFilter::new(period).map_err(|e| PolarsError::InvalidOperation(e.into()))?;
-    run_unary(series, "rma", filter)
+    run_filter(series, "rma", filter)
 }
 
 #[polars_expr(output_type = Float64)]

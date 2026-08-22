@@ -204,6 +204,8 @@ build is ~20x slower and misleading.
   indicator belongs to. Note "skip" here means *emit a null row*, not `break`: every input
   row must still produce exactly one output row, or the output length won't match
   the input and polars errors.
+- **Boolean counters**: STREAK treats null as not true — it resets and emits
+  zero — so a predicate built from `diff()` starts at zero on its leading null.
 - **`?` vs `let...else`** for the null branch: use `input?` when the branch is
   pure propagation — the recursive filters carry their state by doing *nothing*,
   so there is nothing to spell out. Use `let...else` only when the branch does

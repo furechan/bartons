@@ -2,6 +2,29 @@
 
 ## 0.1.2
 
+- **Add the Boolean `STREAK` kernel.** `STREAK(condition)` returns the
+  non-negative length of the current true run; false and null reset it to zero.
+  Direction stays explicit expression composition — for example,
+  `STREAK(pl.col("close").diff() > 0)` — rather than being folded into a signed
+  price-specific indicator. This is the first non-float pipeline through the
+  unified driver: `Option<bool>` input to non-null `i64` output.
+
+- **Add the `SAR` kernel.** Parabolic Stop and Reverse is a trend-flip state
+  machine whose extreme point, acceleration factor and projected stop evolve
+  from the preceding bar, so it has no natural rolling-polars expression. The
+  implementation ports the shared mintalib/bearta algorithm and preserves its
+  gap behavior: an invalid high/low bar emits null without resetting state.
+
+- **Introduce the typed `run_filter` path for SAR.** `FilterInput` specializes
+  on the exact row type accepted by `Filter::next`, binding it at compile time
+  to an exact Polars source signature, casted storage and traversal. A separate
+  `FilterOutput` binds output values to their Polars builder. SAR exercised the
+  float-pair-to-float path first; the float-triple implementation now moves
+  TRANGE and ATR onto the same driver, then the unary implementation moves all
+  remaining filters and retires both arity-specific drivers. The design can
+  later add `Option<bool>` input and `i64` output for a kernel such as STREAK
+  without making the driver itself float-specific.
+
 - **Add the `KER` and `KAMA` kernels.** KAMA is an exponential moving average
   whose smoothing constant is re-derived every bar from the Kaufman efficiency
   ratio — `alpha = (slow + KER * (fast - slow))**2` — so it tracks a clean trend

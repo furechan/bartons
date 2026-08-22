@@ -29,6 +29,8 @@ from .price import AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE
 from .cci import CCI
 from .ker import KER
 from .kama import KAMA
+from .sar import SAR
+from .streak import STREAK
 
 __all__ = [
     "EMA",
@@ -47,4 +49,6 @@ __all__ = [
     "CCI",
     "KER",
     "KAMA",
+    "SAR",
+    "STREAK",
 ]

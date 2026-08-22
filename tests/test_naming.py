@@ -35,6 +35,8 @@ def _df():
 
 
 def _build(name):
+    if name == "STREAK":
+        return indicators.STREAK(pl.col("close") > 0)
     return getattr(indicators, name)(*ARGS.get(name, ()))
 
 
@@ -77,12 +79,24 @@ def test_same_indicator_twice_still_needs_an_alias():
 
 
 def test_wrap_indicator_rejects_a_src_factory():
-    """A `src` factory belongs to wrap_src_indicator, which also routes `src`."""
+    """A non-leading `src` needs wrap_src_indicator to route expressions."""
     with pytest.raises(TypeError, match="wrap_src_indicator"):
 
         @wrap_indicator
         def HasSrc(period, *, src=None):
             return pl.lit(period)
+
+
+def test_wrap_indicator_accepts_a_leading_src():
+    """A source-first factory already has the expression-first grammar."""
+
+    @wrap_indicator
+    def HasLeadingSrc(src):
+        return src
+
+    df = _df()
+    assert df.select(HasLeadingSrc(pl.col("close"))).columns == ["hasleadingsrc"]
+    assert df.select(pl.col("close").pipe(HasLeadingSrc)).columns == ["hasleadingsrc"]
 
 
 def test_named_leaves_bundles_alone():
@@ -112,10 +126,10 @@ def test_named_applies_through_the_src_wrapper():
 
 # Kernel-backed indicators, paired with the eager pyfunction and the series it
 # takes. The two names have independent sources — a hardcoded literal in the
-# Rust `run_unary`/`run_ternary` call, and the Python factory's `__name__` — so
+# Rust driver call, and the Python factory's `__name__` — so
 # nothing but this test keeps them from drifting apart.
 KERNEL_BACKED = [
-    "EMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI", "KER", "KAMA",
+    "EMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI", "KER", "KAMA", "SAR", "STREAK",
 ]
 
 
@@ -134,6 +148,10 @@ def test_kernel_and_expression_names_agree(name):
             series["high"], series["low"], series["close"],
             **({"period": period[0]} if period else {}),
         )
+    elif name == "SAR":
+        eager = kernels.sar(series["high"], series["low"])
+    elif name == "STREAK":
+        eager = kernels.streak(series["close"] > 0)
     elif name == "CCI":
         typical = (series["high"] + series["low"] + series["close"]) / 3.0
         eager = kernels.cci(typical, period=period[0])
