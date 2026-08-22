@@ -88,6 +88,19 @@
   that `just publish` and `release.yml` are now two upload paths for the same
   artifacts, and only one may own a given release.
 
+- Rename `release.yml` to `publish.yml`. The workflow builds nothing — it resolves
+  an earlier `build.yml` run and uploads its artifacts — so "release" overstated
+  it, and `build.yml` / `publish.yml` names the two halves for what they each do.
+  **This invalidates the PyPI trusted publisher**, which was registered on
+  2026-08-17 naming `release.yml`: trusted publishing is keyed to the workflow
+  filename, so the PyPI entry must be updated to `publish.yml` before any real
+  upload, or OIDC auth fails at the last step after the whole matrix has been
+  built. Nothing has been published through it, so nothing is broken — it is
+  configuration to correct before first use, and
+  [docs/github-workflow.md](docs/github-workflow.md) now records it as such,
+  alongside the pipeline's status (experimental, inactive, private repo, releases
+  still local), what public would buy, and the next steps.
+
 ## 0.1.1
 
 - **Every indicator now names its output after itself.** Polars names a plugin

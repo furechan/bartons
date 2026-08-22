@@ -52,11 +52,13 @@ or pull request by default.
 
 ## Release workflow
 
-**This local path owns releases.** The workflows in `.github/workflows/` are
-experimental and have never run — see [docs/github-workflow.md](docs/github-workflow.md).
-They are a second upload path for the same artifacts, and PyPI never frees a
-filename, so publishing a version through both is not recoverable. Do not release
-through CI without deciding to move ownership there first.
+**This local path owns releases.** `.github/workflows/build.yml` and
+`publish.yml` are experimental, inactive, and have never published anything — see
+[docs/github-workflow.md](docs/github-workflow.md), which also records that their
+server-side configuration is incomplete. They are a second upload path for the
+same artifacts, and PyPI never frees a filename, so publishing a version through
+both is not recoverable. Do not release through CI without deciding to move
+ownership there first.
 
 
 Run releases from a clean branch that is fully synchronized with its upstream.

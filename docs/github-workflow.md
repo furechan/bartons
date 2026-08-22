@@ -1,14 +1,23 @@
 # GitHub Actions workflows
 
-**Experimental. This is not the release mechanism.** Releases are cut locally with
-`just preflight` and `just publish` — see the Release workflow section of
-[CLAUDE.md](../CLAUDE.md). The two workflows described here have never run, and
-nothing should be published through them until that is a deliberate decision
-rather than a default. In particular they are a *second* upload path for the same
-artifacts, and PyPI never frees a filename, so only one path may own a release.
+## Status
+
+**Experimental. Inactive. Not the release mechanism.**
+
+| | |
+|---|---|
+| Releases today | cut locally with `just preflight` and `just publish` — see [CLAUDE.md](../CLAUDE.md) |
+| These workflows | installed, dispatch-only, **never used to publish anything** |
+| Repository | private, GitHub Free |
+| Server-side config | **incomplete** — see [Setup still outstanding](#setup-still-outstanding) |
+| Would benefit from | the repo going public — see [Why public would help](#why-public-would-help) |
+
+Nothing should be published through these until that is a deliberate decision
+rather than a default. They are a *second* upload path for the same artifacts,
+and PyPI never frees a filename, so only one path may own a release.
 
 Both are **dispatch-only** — nothing runs on a push, a pull request, a tag or a
-schedule — and `release.yml` publishes nothing unless explicitly told to.
+schedule — and `publish.yml` publishes nothing unless explicitly told to.
 
 Built 2026-08-17, archived unused the same day, then reworked and installed for
 experimentation on 2026-08-21. The history matters because much of what follows
@@ -22,7 +31,7 @@ A PyPI release pipeline for `bartons`, on trial:
 - **`build.yml`** — builds five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
   arm64/x86_64, Windows x64) plus the sdist. A `setup` job emits the matrix as
   JSON so the target list can be scoped at dispatch time (`linux` or `full`).
-- **`release.yml`** — on manual dispatch: resolve the `build.yml` run for this
+- **`publish.yml`** — on manual dispatch: resolve the `build.yml` run for this
   commit, verify it, and publish its artifacts to PyPI over OIDC. Builds nothing.
   `dry_run` defaults to true, so the default invocation resolves and reports
   without publishing.
@@ -62,17 +71,17 @@ That number is why there is no `push` trigger at all: a README fix landing on
 `main` would otherwise have cost ~200 billed minutes.
 
 As archived, `build.yml` also ran on pull requests (linux only, and only when
-packaging or compiled code changed) and could be called by `release.yml` via
+packaging or compiled code changed) and could be called by `publish.yml` via
 `workflow_call`. Both were removed on 2026-08-21, leaving `workflow_dispatch`
 alone: every build is now something asked for by name. `workflow_call` in
-particular is incompatible with how `release.yml` now works — a reusable
+particular is incompatible with how `publish.yml` now works — a reusable
 workflow uploads its artifacts to the *caller's* run, so a called build has no
 run of its own for the commit -> run -> artifacts search to find.
 
 Two costs of that, both deliberate. `workflow_dispatch` is resolved from the
 **default branch**, so a change to `build.yml` cannot be exercised before it
 merges — `pull_request` was the only pre-merge path that ran it. And the dispatch
-default is `linux`, so a release wants `-f scope=full`; `release.yml`'s guard
+default is `linux`, so a release wants `-f scope=full`; `publish.yml`'s guard
 names the missing artifacts when it is short.
 
 **Wheels must not be accumulated across runs without proving provenance.** GitHub
@@ -87,7 +96,7 @@ then needed an approval gate to make the result inspectable before upload.
 
 **The current design closes the gap directly instead** (rewritten 2026-08-21).
 Every run records the `head_sha` it was built from, and each artifact belongs to
-exactly one run, so `release.yml` searches commit -> run -> artifacts: the run it
+exactly one run, so `publish.yml` searches commit -> run -> artifacts: the run it
 resolves must have `head_sha` equal to the commit being released, must have
 succeeded, must carry the complete artifact set, and none of them may have
 expired. That is the same guarantee the single-run design got structurally, made
@@ -100,7 +109,7 @@ halves the cost, since the release no longer rebuilds what you already built.
 
 **On the approval gate.** `environment: pypi` with required reviewers pauses the
 publish job, giving the same inspect-then-ship shape within one run. It is
-declared in `release.yml` and the environment was created on 2026-08-17, but
+declared in `publish.yml` and the environment was created on 2026-08-17, but
 required reviewers were never enabled — and cannot be, on a **private** repo on
 the **Free** plan, where environment protection rules are unavailable. The
 two-step flow above needs no plan and no pause, which is why it is the primary
@@ -108,7 +117,7 @@ mechanism; the gate becomes an option if the repo goes public.
 
 Note the interaction with **artifact retention**: with build and publish fused,
 artifacts only had to survive minutes. Split apart, the retention window is how
-long a build stays releasable — `release.yml` refuses expired artifacts, so an
+long a build stays releasable — `publish.yml` refuses expired artifacts, so an
 aged-out build must be rebuilt. `build.yml` sets `retention-days: 30` rather than
 the 90-day default: a generous deadline that still needs ~15 full matrices in a
 month to press the 500 MB Free storage quota, a full run being ~33 MB. Actions
@@ -154,7 +163,7 @@ These are properties of the project, not of CI:
   publishable at any moment and nothing needs editing before a build. Releasing
   uploads what the version already says; `just bump` afterwards names the one
   after. A `.devN` scheme was tried first and dropped before 0.1.0. This README
-  and `release.yml` both described that retired scheme until 2026-08-21; the
+  and `publish.yml` both described that retired scheme until 2026-08-21; the
   decision to keep stable-only rather than restore it is recorded in
   `BACKLOG.md`, and rests on the PyPI-availability check in `guard` making a
   re-publish structurally impossible — the protection `.devN` was buying.
@@ -163,10 +172,15 @@ These are properties of the project, not of CI:
 
 The workflows are in place, but the account-side configuration is not finished:
 
-- **PyPI trusted publisher** — registered on 2026-08-17 naming owner/repo, workflow
-  `release.yml`, environment `pypi`, and never removed. This is why `release.yml`
-  must keep that exact filename: trusted publishing is keyed to it, so renaming it
-  breaks OIDC auth at the upload step of a real release.
+- **PyPI trusted publisher — currently MISMATCHED.** One was registered on
+  2026-08-17 naming owner/repo, workflow **`release.yml`**, environment `pypi`, and
+  never removed. That workflow was renamed to `publish.yml` on 2026-08-21, so the
+  registered publisher no longer matches anything in this repository. Trusted
+  publishing is keyed to the workflow *filename*, so **the PyPI entry must be
+  updated to `publish.yml`** before any real upload — otherwise OIDC auth fails at
+  the last step of a release, after the whole matrix has been built. Nothing has
+  been published through it, so nothing is broken yet; it is simply configuration
+  that has to be corrected before first use.
 - **The `pypi` environment** — created 2026-08-17. Required reviewers were never
   enabled on it and **cannot be** while the repo is private on the Free plan, where
   environment protection rules are unavailable. That is not blocking: the two-step
@@ -178,13 +192,61 @@ The workflows are in place, but the account-side configuration is not finished:
   so these could not be exercised until they landed on `main`. The first dispatch of
   `build.yml` is also the first test of the workflows themselves.
 
+## Why public would help
+
+Every remaining rough edge is softer, or gone, on a public repository:
+
+- **Runner minutes become free.** Standard runners are unmetered on public repos,
+  so the multipliers stop mattering and the full six-target matrix costs nothing.
+  Today a full matrix is billed against the 2,000-minute monthly Free allowance.
+- **The approval gate becomes available.** Environment protection rules — required
+  reviewers pausing the publish job — are public-repo-only on Free. That is the one
+  piece of the design that cannot be exercised at all while the repo is private.
+- **Artifact storage becomes free**, which removes the retention/quota tension and
+  the reason `retention-days` is capped at 30.
+- **Little is actually hidden today.** The published sdist on PyPI already contains
+  every `.rs` and `.py` source file, so the private repo protects the docs, tests,
+  tooling and commit history rather than the code.
+
+## Next steps
+
+Nothing here is scheduled; this is what the experiment would do next.
+
+1. **Measure the steady-state cost.** Dispatch `build.yml` a second time, unchanged,
+   on the same commit:
+
+   ```sh
+   gh workflow run build.yml -f scope=linux
+   ```
+
+   The first run reported `Cache hits: 0` but wrote 360 objects to the GitHub
+   Actions cache (`ghac`) with zero errors, so its ~14-minute jobs are a cold-start
+   cost. A second run is the first chance to see what a build normally costs. If the
+   wheel jobs drop to a few minutes, sccache works — and the `sdist` job, which has
+   no caching at all, becomes the sole long pole and would want the same treatment.
+   If they do not, the cache is being written but not restored, and the fix is an
+   explicit `actions/cache` or `Swatinem/rust-cache` step.
+
+2. **Correct the PyPI trusted publisher** to name `publish.yml` (see above).
+
+3. **Run `publish.yml` in dry-run mode** against a real `build.yml` run, to exercise
+   the resolution and every guard without uploading anything.
+
+4. **Refresh the action versions**, current as of 2026-08-17.
+
+5. **Decide whether the repo goes public**, which settles the approval gate, the
+   cost model and the retention window together.
+
+6. **Only then** decide whether CI owns publishing. It cannot share that job with
+   `just publish`.
+
 ## First run
 
 ```sh
 gh workflow run build.yml -f scope=linux      # cheapest end-to-end check
 gh run watch <run-id>
 gh run download <run-id> --dir /tmp/check
-gh workflow run release.yml                   # dry run: resolves, reports, publishes nothing
+gh workflow run publish.yml                   # dry run: resolves, reports, publishes nothing
 ```
 
 The dry run is safe to repeat. Only `-f dry_run=false` uploads.

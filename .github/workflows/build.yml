@@ -16,17 +16,17 @@
 #   gh run watch <run-id>
 #   gh run download <run-id> --dir /tmp/check    # inspect the real artifacts
 #
-# A release needs the complete set, so it wants `scope=full`. release.yml names
+# A release needs the complete set, so it wants `scope=full`. publish.yml names
 # the missing artifacts if you dispatched `linux` by mistake, rather than
 # publishing a partial release — PyPI never frees a filename, so a release short
 # a wheel cannot be completed later, only superseded.
 #
 # There is intentionally no `workflow_call` either. A reusable workflow uploads
 # its artifacts to the CALLER's run, which would put the wheels somewhere
-# release.yml never looks — it resolves a build by searching commit -> run ->
+# publish.yml never looks — it resolves a build by searching commit -> run ->
 # artifacts, and a called build has no run of its own to find. Re-adding a
 # `uses:` would produce a pipeline that looks right and skips every provenance
-# check. release.yml publishes what a dispatched run already built; it does not
+# check. publish.yml publishes what a dispatched run already built; it does not
 # build.
 #
 # There is intentionally NO push trigger. Pushing to main costs nothing; when you
@@ -62,7 +62,7 @@ jobs:
   # Selects the matrix so the expensive targets are opt-in. The single trigger
   # always supplies `scope` (dispatch defaults to linux), so the `|| 'linux'`
   # fallback is belt-and-braces rather than load-bearing. A release needs the
-  # complete set, so it wants `-f scope=full`; release.yml's guard says so by
+  # complete set, so it wants `-f scope=full`; publish.yml's guard says so by
   # name when the set is short.
   setup:
     name: Select targets
@@ -142,7 +142,7 @@ jobs:
           python -c "import bartons; from bartons.indicators import EMA; print('import ok')"
           python -m pytest -q
 
-      # Retention is a release deadline, not just a quota knob: release.yml
+      # Retention is a release deadline, not just a quota knob: publish.yml
       # publishes a PREVIOUS run's artifacts and refuses any that have expired,
       # so this is how long a build stays publishable. 30 days is a generous
       # window that still needs ~15 full matrices in a month to press the 500 MB

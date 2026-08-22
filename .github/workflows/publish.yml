@@ -8,8 +8,8 @@
 #
 # `dry_run` defaults to true, so the careless invocation is the harmless one:
 #
-#   gh workflow run release.yml                    # resolve and report only
-#   gh workflow run release.yml -f dry_run=false   # actually publish
+#   gh workflow run publish.yml                    # resolve and report only
+#   gh workflow run publish.yml -f dry_run=false   # actually publish
 #
 # No API token exists anywhere; the publish job mints a short-lived PyPI
 # credential from its GitHub identity, which is why it is the only job granted
@@ -21,11 +21,11 @@
 #   1. finalize the CHANGELOG heading for the version pyproject already carries
 #   2. gh workflow run build.yml -f scope=full        # builds and tests
 #   3. gh run download <id> --dir /tmp/check          # inspect the real artifacts
-#   4. gh workflow run release.yml                    # dry run: what would ship
-#   5. gh workflow run release.yml -f dry_run=false   # publish
+#   4. gh workflow run publish.yml                    # dry run: what would ship
+#   5. gh workflow run publish.yml -f dry_run=false   # publish
 #   6. git tag -a v0.2.0 -m "0.2.0" && git push --follow-tags
 #   7. `just bump`, then commit and push, so the repo names the release after this
-name: Release
+name: Publish
 
 on:
   workflow_dispatch:
