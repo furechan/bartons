@@ -147,7 +147,7 @@ test:
 # or `just bench vs-talib`. Baselines: vs-native (polars built-ins, no extra deps
 # — hence the default), vs-talib (needs polars_talib + libta-lib), vs-mintalib.
 bench baseline="vs-native": develop
-    python scripts/benchmark-{{baseline}}.py
+    python benchmarks/benchmark-{{baseline}}.py
 
 # Test the newest polars-py and, only if it passes, raise the ceiling in
 # pyproject.toml. The ceiling records what the compat matrix has verified, so this

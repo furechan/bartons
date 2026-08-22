@@ -171,21 +171,21 @@ up automatically. If it errors with *no type mapped for parameter*, add the name
 to `PARAM_TYPES` in [scripts/generate-stubs.py](../scripts/generate-stubs.py) —
 pyo3 exposes no type information, so that map is where it comes from.
 
-### 6. Benchmark (optional) — `scripts/benchmark-vs-<baseline>.py`
+### 6. Benchmark (optional) — `benchmarks/benchmark-vs-<baseline>.py`
 
 Benchmarks are organised per *baseline*, not per indicator: each script runs the
 whole indicator set against one comparison target. Add the new factory to the
 lists in whichever are relevant —
-[benchmark-vs-native.py](../scripts/benchmark-vs-native.py) (polars built-ins:
+[benchmark-vs-native.py](../benchmarks/benchmark-vs-native.py) (polars built-ins:
 `ewm_mean`, `rolling_mean`, …),
-[benchmark-vs-talib.py](../scripts/benchmark-vs-talib.py) (preloads libta-lib for
+[benchmark-vs-talib.py](../benchmarks/benchmark-vs-talib.py) (preloads libta-lib for
 `polars_talib`, skipped if absent), and
-[benchmark-vs-mintalib.py](../scripts/benchmark-vs-mintalib.py). They decompose
+[benchmark-vs-mintalib.py](../benchmarks/benchmark-vs-mintalib.py). They decompose
 cost into construction / execution / build+execute and also report how each
 backend parallelises across expressions in one `select()`.
 
 ```sh
-just bench vs-native    # builds release, then runs scripts/benchmark-vs-native.py
+just bench vs-native    # builds release, then runs benchmarks/benchmark-vs-native.py
 ```
 
 Benchmark only against a **release** build (`just bench` does this) — a debug

@@ -34,7 +34,7 @@
 //! ```sh
 //! cargo new /tmp/bvc && cd /tmp/bvc
 //! cargo add polars@0.55.1 --features dtype-struct
-//! cp <repo>/scripts/builder-vs-collect.rs src/main.rs
+//! cp <repo>/benchmarks/builder-vs-collect.rs src/main.rs
 //! cargo run --release            # release only; a debug build measures nothing
 //! cargo run --release -- collect filter builder   # or name them to reorder
 //! ```

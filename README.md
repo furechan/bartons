@@ -119,11 +119,8 @@ API alone works further back.
 
 ## Related Projects
 
-- [Polars](https://docs.pola.rs/) — the DataFrame library. Since every indicator
-  here is a plain `pl.Expr`, its expression docs cover most of what you can do
-  with them: windows, groups, lazy frames, and the rest.
-- [PyO3](https://pyo3.rs/) — Rust bindings for Python, and the polars plugin
-  interface these kernels are written against. Worth reading if you want to write
-  indicators of your own.
-- [Maturin](https://www.maturin.rs/) — builds and publishes Rust extensions as
-  Python wheels. The tool to reach for if you take that route.
+- [polars-talib](https://github.com/Yvictor/polars_ta_extension) — a Polars extension exposing TA-Lib indicators and candlestick-pattern functions as Polars expressions.
+- [polars-ta](https://github.com/wukan1986/polars_ta) — an expression-oriented collection of technical-analysis, WorldQuant, and Tongdaxin operators for Polars.
+- [Polars](https://docs.pola.rs/) — a fast DataFrame library with Rust and Python APIs, an expression engine, lazy query optimization, and Arrow-compatible memory.
+- [PyO3](https://pyo3.rs/) — Rust bindings for creating native Python modules and calling between Rust and Python.
+- [Maturin](https://www.maturin.rs/) — a build and publishing tool for Python packages implemented in Rust.

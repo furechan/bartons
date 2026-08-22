@@ -21,15 +21,15 @@ crate-type= ["cdylib", "rlib"]
 
 [[example]]
 name = "fast-iter"
-path = "../scripts/fast-iter.rs"
+path = "../benchmarks/fast-iter.rs"
 
 [[example]]
 name = "fast-path"
-path = "../scripts/fast-path.rs"
+path = "../benchmarks/fast-path.rs"
 
 [[example]]
 name = "izip-vs-index"
-path = "../scripts/izip-vs-index.rs"
+path = "../benchmarks/izip-vs-index.rs"
 
 [features]
 # Python wheels use the default: extension modules resolve Python symbols from

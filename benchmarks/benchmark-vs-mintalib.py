@@ -13,9 +13,9 @@ IMPORTANT: build the plugin in release mode first (`just develop` /
 `maturin develop --release`); a debug build is ~20x slower and misleading.
 
 Usage:
-    uv run python scripts/benchmark-vs-mintalib.py
-    uv run python scripts/benchmark-vs-mintalib.py --indicator RMA
-    uv run python scripts/benchmark-vs-mintalib.py --no-over
+    uv run python benchmarks/benchmark-vs-mintalib.py
+    uv run python benchmarks/benchmark-vs-mintalib.py --indicator RMA
+    uv run python benchmarks/benchmark-vs-mintalib.py --no-over
 """
 
 import argparse

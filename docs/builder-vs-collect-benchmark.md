@@ -88,7 +88,7 @@ CHANGELOG entry for 0.1.0.
 
 ## Reproduction
 
-The source is [../scripts/builder-vs-collect.rs](../scripts/builder-vs-collect.rs),
+The source is [../benchmarks/builder-vs-collect.rs](../benchmarks/builder-vs-collect.rs),
 with the recipe in its header comment: a `cargo new` throwaway crate, `cargo add
 polars`, copy the file to `src/main.rs`, `cargo run --release`. About a minute,
 almost all of it compiling polars.

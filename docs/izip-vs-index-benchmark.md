@@ -193,7 +193,7 @@ direct-index single-chunk dispatch remains unimplemented.
 
 ## Reproduction
 
-The source is [../scripts/izip-vs-index.rs](../scripts/izip-vs-index.rs),
+The source is [../benchmarks/izip-vs-index.rs](../benchmarks/izip-vs-index.rs),
 registered as a Cargo example so it can use bartons' shared `random_prices`
 fixture. Run it with `cargo run --release --manifest-path bartons/Cargo.toml
 --no-default-features --example izip-vs-index`.

@@ -16,9 +16,9 @@ IMPORTANT: build the plugin in release mode first (`just develop` /
 `maturin develop --release`); a debug build is ~20x slower and misleading.
 
 Usage:
-    uv run python scripts/benchmark-vs-native.py
-    uv run python scripts/benchmark-vs-native.py --indicator RSI
-    uv run python scripts/benchmark-vs-native.py --no-over
+    uv run python benchmarks/benchmark-vs-native.py
+    uv run python benchmarks/benchmark-vs-native.py --indicator RSI
+    uv run python benchmarks/benchmark-vs-native.py --no-over
 """
 
 import argparse

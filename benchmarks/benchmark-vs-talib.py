@@ -22,9 +22,9 @@ IMPORTANT: build the plugin in release mode first (`just develop` /
 `maturin develop --release`); a debug build is ~20x slower and misleading.
 
 Usage:
-    uv run python scripts/benchmark-vs-talib.py
-    uv run python scripts/benchmark-vs-talib.py --indicator RSI
-    uv run python scripts/benchmark-vs-talib.py --no-over
+    uv run python benchmarks/benchmark-vs-talib.py
+    uv run python benchmarks/benchmark-vs-talib.py --indicator RSI
+    uv run python benchmarks/benchmark-vs-talib.py --no-over
 """
 
 import argparse

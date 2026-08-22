@@ -124,7 +124,7 @@ its provenance — date, platform, resolved crate versions — because stored
 notebook outputs carry none of that and read as current long after they aren't.
 `evcxr/builder-vs-collect.ipynb` is the cautionary case: its recorded numbers
 were both stale and confounded, and the corrected experiment now lives in
-[scripts/builder-vs-collect.rs](scripts/builder-vs-collect.rs).
+[benchmarks/builder-vs-collect.rs](benchmarks/builder-vs-collect.rs).
 
 ## Type checking
 

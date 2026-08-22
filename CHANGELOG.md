@@ -2,6 +2,12 @@
 
 ## 0.1.2
 
+- **Separate performance work from operational automation.** Comparative Python
+  benchmarks and focused Rust microbenchmarks now live in `benchmarks/`, while
+  `scripts/` is reserved for commands that generate, install, or maintain
+  project state. Cargo example targets, Just recipes, notebook links, and
+  documentation now point at the new benchmark paths.
+
 - **Add the Boolean `STREAK` kernel.** `STREAK(condition)` returns the
   non-negative length of the current true run; false and null reset it to zero.
   Direction stays explicit expression composition — for example,
@@ -52,7 +58,7 @@
   ratio must be exactly 1.0, and mintalib returns 0.833 at `period = 3`, drifting
   further down as the period grows. This is the one place bartons knowingly
   departs from mintalib's numbers rather than its conventions; the two are still
-  paired in `scripts/benchmark-vs-mintalib.py`, which times them rather than
+  paired in `benchmarks/benchmark-vs-mintalib.py`, which times them rather than
   comparing them.
 
 - **`KER` resets on a null, diverging from both mintalib and bearta.** Both
@@ -248,7 +254,7 @@
   left for the checker to compare, and the raised launch timeout is no longer needed.
 - Record a ternary-driver micro-benchmark in
   [docs/izip-vs-index-benchmark.md](docs/izip-vs-index-benchmark.md), from
-  [scripts/izip-vs-index.rs](scripts/izip-vs-index.rs). `izip!` beats any index loop
+  [benchmarks/izip-vs-index.rs](benchmarks/izip-vs-index.rs). `izip!` beats any index loop
   and the margin grows with fragmentation — 8.4× at 64 chunks — so nothing argues
   for indexing. The finding is what beats `izip!`: both `ChunkedArray::get` and
   `get_unchecked` re-derive the array on every element (index `chunks[0]`, deref the
@@ -281,7 +287,7 @@
   hand-inlined loop) and the whole 1.6× it had been charged belongs to
   `append_option` — which `run_unary`/`run_ternary` already avoid, deliberately, and
   should keep avoiding. The corrected experiment is
-  [scripts/builder-vs-collect.rs](scripts/builder-vs-collect.rs) with results and
+  [benchmarks/builder-vs-collect.rs](benchmarks/builder-vs-collect.rs) with results and
   provenance in
   [docs/builder-vs-collect-benchmark.md](docs/builder-vs-collect-benchmark.md); the
   notebook keeps a pointer to both and no longer carries stored numbers. It cannot
