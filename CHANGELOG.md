@@ -101,6 +101,18 @@
   alongside the pipeline's status (experimental, inactive, private repo, releases
   still local), what public would buy, and the next steps.
 
+- **Stop publishing the cross-compiled Linux AMD64 wheel.** It was built here with
+  zig and could not be imported on this ARM64 host, so 0.1.0 and 0.1.1 both shipped
+  a binary nobody had ever run — the one caveat the release workflow carried as a
+  standing IOU. Releases now ship the native ARM64 wheel and the sdist. Every
+  machine in use here is ARM64, and this is reversible: the wheel returns when CI
+  can smoke-test it on a native AMD64 runner, which is the first thing that
+  pipeline would buy. The narrowing is real and deliberate — x86_64 users fall back
+  to the sdist, which needs a Rust toolchain `pyproject` cannot declare plus a full
+  polars build measured at ~12½ minutes. `just build` loses its `full` mode and the
+  `maturin[zig]` cross-compile, `just preflight` gets shorter, and `just publish`
+  now expects one wheel rather than two.
+
 ## 0.1.1
 
 - **Every indicator now names its output after itself.** Polars names a plugin

@@ -76,13 +76,16 @@ is not intended for the release.
    nothing changed.
 4. Run `just preflight`. It runs `just release-guard` — clean tree, synchronized
    with upstream, version not already on PyPI; clears `dist/`; builds the
-   native Linux ARM64 wheel, cross-compiled Linux AMD64 wheel and sdist once; runs
+   native Linux ARM64 wheel and sdist once; runs
    the full Nox matrix and wheel smoke test against that exact native artifact;
    validates metadata; prints SHA-256 hashes; and only then creates the local
    `dist/.preflight-ok` stamp.
-5. Inspect the prepared files and preflight output. The AMD64 wheel cannot be
-   imported on the ARM64 development host and must be
-   exercised on an AMD64 runner when one is available.
+5. Inspect the prepared files and preflight output. Releases ship a native ARM64
+   wheel and the sdist only — the cross-compiled AMD64 wheel was dropped on
+   2026-08-21 because it could not be imported here, so nothing untested goes out.
+   x86_64 users build from the sdist, which needs a Rust toolchain. Restore the
+   AMD64 wheel when CI can smoke-test it natively; see
+   [docs/github-workflow.md](docs/github-workflow.md).
 6. Run `just publish`. It never compiles: it requires exactly the two wheels and
    one sdist, refuses files newer than the preflight stamp or named for another
    version, reruns `just release-guard`, pauses for confirmation, uploads those

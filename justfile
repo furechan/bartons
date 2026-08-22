@@ -20,27 +20,19 @@ develop-debug:
 #
 # Build as often as you like; the version in pyproject.toml already names the next
 # release, so nothing needs editing first.
-# Pass `full` to include a cross-compiled Linux AMD64 wheel alongside the native
-# wheel and sdist: `just build full`.
-build mode="":
+#
+# Native wheel only. A cross-compiled Linux AMD64 wheel used to be built here with
+# zig and published alongside it, and was dropped on 2026-08-21: it could not be
+# imported on this ARM64 host, so two releases shipped a binary nobody had ever
+# run. Every machine here is ARM64, and x86_64 users fall back to the sdist —
+# which needs a Rust toolchain and a full polars build (~12 min), so this is a
+# real narrowing, taken deliberately. Restore it when CI can smoke-test the
+# artifact on a native AMD64 runner; see docs/github-workflow.md.
+build:
     #!/usr/bin/env bash
     set -euo pipefail
-    mode={{quote(mode)}}
-    case "$mode" in
-        ""|full) ;;
-        *)
-            echo "unknown build option: $mode (supported: full)" >&2
-            exit 2
-            ;;
-    esac
     rm -rf dist
     uv run maturin build --release --sdist --out dist
-    if [[ "$mode" == full ]]; then
-        rustup target add x86_64-unknown-linux-gnu
-        uv run --with 'maturin[zig]' maturin build --release \
-            --target x86_64-unknown-linux-gnu --zig \
-            --compatibility manylinux2014 --out dist
-    fi
     ls -l dist
 
 # Inspect what actually went into the sdist.
@@ -91,7 +83,7 @@ preflight:
     #!/usr/bin/env bash
     set -euo pipefail
     just release-guard
-    just build full
+    just build
     BARTONS_USE_DIST=1 uv run nox
     BARTONS_USE_DIST=1 uv run nox -s wheel_smoke
     uv run --with twine twine check dist/*
@@ -118,8 +110,8 @@ publish:
     [[ -f "$stamp" ]] || { echo "no valid preflight stamp; run: just preflight" >&2; exit 1; }
     wheels=(dist/*.whl)
     sdists=(dist/*.tar.gz)
-    [[ ${#wheels[@]} -eq 2 && ${#sdists[@]} -eq 1 ]] || {
-        echo "expected two wheels and one sdist from: just preflight" >&2
+    [[ ${#wheels[@]} -eq 1 && ${#sdists[@]} -eq 1 ]] || {
+        echo "expected one wheel and one sdist from: just preflight" >&2
         exit 1
     }
     artifacts=("${wheels[@]}" "${sdists[@]}")
