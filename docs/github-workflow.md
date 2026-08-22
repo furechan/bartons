@@ -16,6 +16,15 @@ Nothing should be published through these until that is a deliberate decision
 rather than a default. They are a *second* upload path for the same artifacts,
 and PyPI never frees a filename, so only one path may own a release.
 
+**Standing decision (2026-08-21): kept as a prototype, deferred until the
+repository goes public or the project becomes more prominent.** The local release
+cycle is sufficient at this scale — the author is effectively the only consumer,
+and `just preflight` already builds, tests and validates every artifact that
+ships. Everything CI would add is either free only on a public repo (unmetered
+runners, the approval gate, artifact storage) or matters only with users to
+protect. Revisit at that point, not before; the workflows stay installed and
+inert so the analysis and the working YAML are both to hand when it happens.
+
 Both are **dispatch-only** — nothing runs on a push, a pull request, a tag or a
 schedule — and `publish.yml` publishes nothing unless explicitly told to.
 
@@ -212,7 +221,9 @@ Every remaining rough edge is softer, or gone, on a public repository:
 
 ## Next steps
 
-Nothing here is scheduled; this is what the experiment would do next.
+**None of this is scheduled.** Per the standing decision above, the trigger for
+picking it up is the repository going public — everything below is deferred until
+then, recorded so the thread can be resumed without re-deriving it.
 
 1. **Measure the steady-state cost.** Dispatch `build.yml` a second time, unchanged,
    on the same commit:
@@ -237,10 +248,7 @@ Nothing here is scheduled; this is what the experiment would do next.
 
 4. **Refresh the action versions**, current as of 2026-08-17.
 
-5. **Decide whether the repo goes public**, which settles the approval gate, the
-   cost model and the retention window together.
-
-6. **Only then** decide whether CI owns publishing. It cannot share that job with
+5. **Only then** decide whether CI owns publishing. It cannot share that job with
    `just publish`.
 
 ## First run
