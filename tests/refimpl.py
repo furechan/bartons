@@ -61,6 +61,29 @@ def ref_tema(xs, period):
     ]
 
 
+def ref_zlema(xs, period):
+    """ZLEMA from an independently materialized de-lagged source and EMA."""
+    lag = (period - 1) // 2
+    window = []
+    adjusted = []
+    for value in xs:
+        if value is None:
+            window = []
+            adjusted.append(None)
+            continue
+        if lag == 0:
+            adjusted.append(value)
+            continue
+        if len(window) < lag:
+            window.append(value)
+            adjusted.append(None)
+            continue
+        delayed = window.pop(0)
+        window.append(value)
+        adjusted.append(2.0 * value - delayed)
+    return ref_ema(adjusted, period)
+
+
 def ref_macd(xs, fast=12, slow=26, signal=9):
     """MACD composed from the independent EMA oracle."""
     fast_values = ref_ema(xs, fast)

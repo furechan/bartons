@@ -16,7 +16,7 @@ from bartons.prelude import wrap_indicator, wrap_src_indicator
 
 # Leading positional args needed to build each factory, by name.
 ARGS = {
-    "EMA": (2,), "DEMA": (2,), "TEMA": (2,), "HMA": (2,),
+    "EMA": (2,), "DEMA": (2,), "TEMA": (2,), "HMA": (2,), "ZLEMA": (2,),
     "SMA": (2,), "RMA": (2,), "WMA": (2,), "RSI": (2,),
     "ATR": (2,), "MAD": (2,), "CCI": (2,), "KER": (2,), "KAMA": (2,),
     "MACD": (2, 3, 2),
@@ -136,7 +136,7 @@ def test_named_applies_through_the_src_wrapper():
 # Rust driver call, and the Python factory's `__name__` — so
 # nothing but this test keeps them from drifting apart.
 KERNEL_BACKED = [
-    "EMA", "DEMA", "TEMA", "HMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI", "KER", "KAMA", "SAR", "STREAK",
+    "EMA", "DEMA", "TEMA", "HMA", "ZLEMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI", "KER", "KAMA", "SAR", "STREAK",
     "LINREG", "LINREG_SLOPE", "LINREG_RVALUE", "LINREG_RMSE",
     "QUADREG", "QUADREG_CURVE", "QUADREG_SLOPE", "QUADREG_RVALUE", "QUADREG_RMSE",
     "MFI",

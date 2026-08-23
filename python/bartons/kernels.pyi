@@ -329,3 +329,14 @@ def wma(series: pl.Series, *, period: int = 20) -> pl.Series:
         A Float64 series; null during the warmup period.
     """
     ...
+
+
+def zlema(series: pl.Series, *, period: int = 20) -> pl.Series:
+    """
+    Zero-lag exponential moving average.
+
+    Args:
+        series: input values.
+        period: averaging period (default 20).
+    """
+    ...

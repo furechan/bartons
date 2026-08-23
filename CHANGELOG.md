@@ -2,12 +2,14 @@
 
 ## 0.1.2
 
-- **Add fused `DEMA`, `TEMA`, and `HMA` kernels.** These established moving
+- **Add fused `DEMA`, `TEMA`, `HMA`, and `ZLEMA` kernels.** These established moving
   averages are first-class expression and eager APIs rather than Python-only
   compositions. DEMA and TEMA cascade the existing EMA state machine; HMA
   cascades the existing WMA state machine using `period // 2` and
-  `floor(sqrt(period))`. This preserves the primitive kernels' warmup and null
-  semantics while avoiding intermediate Polars series and plugin boundaries.
+  `floor(sqrt(period))`; ZLEMA applies the conventional `(period - 1) // 2`
+  de-lagging transform before EMA. This preserves the primitive kernels'
+  warmup and null semantics while avoiding intermediate Polars series and
+  plugin boundaries.
 
 - **Add the fused `MFI` kernel.** Money Flow Index consumes a price source and
   volume through the unified driver's Float64 pair input, assigning source ×

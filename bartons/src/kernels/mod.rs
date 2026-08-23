@@ -17,6 +17,7 @@ pub mod ema;
 pub mod dema;
 pub mod tema;
 pub mod hma;
+pub mod zlema;
 pub mod mad;
 pub mod rma;
 pub mod sma;

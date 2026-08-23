@@ -17,6 +17,7 @@ fn python_kernels(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(kernels::dema::dema_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::tema::tema_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::hma::hma_py, m)?)?;
+    m.add_function(wrap_pyfunction!(kernels::zlema::zlema_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::sma::sma_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::rma::rma_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::wma::wma_py, m)?)?;

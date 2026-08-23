@@ -15,6 +15,7 @@ INDICATORS = {
     "DEMA": ("DEMA(period)", "Double exponential moving average"),
     "TEMA": ("TEMA(period=20)", "Triple exponential moving average"),
     "HMA": ("HMA(period)", "Hull moving average"),
+    "ZLEMA": ("ZLEMA(period)", "Zero-lag exponential moving average"),
     "SMA": ("SMA(period)", "Simple moving average"),
     "RMA": ("RMA(period)", "Wilder's running moving average"),
     "WMA": ("WMA(period)", "Weighted moving average"),

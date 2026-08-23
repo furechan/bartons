@@ -24,7 +24,7 @@ and the `price` transforms are the shipped cases. The directories are named for 
 reads as intended rather than as drift.
 
 Recognized standalone indicators may still warrant fused kernels even when
-their formulas can be expressed from existing primitives. DEMA, TEMA, and HMA
+their formulas can be expressed from existing primitives. DEMA, TEMA, HMA, and ZLEMA
 are the shipped examples: they are part of the conventional moving-average
 vocabulary, and fusion avoids intermediate series and repeated plugin
 boundaries. Incidental combinations such as MACD remain expression graphs.

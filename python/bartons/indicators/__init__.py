@@ -20,6 +20,7 @@ from .ema import EMA
 from .dema import DEMA
 from .tema import TEMA
 from .hma import HMA
+from .zlema import ZLEMA
 from .sma import SMA
 from .rma import RMA
 from .wma import WMA
@@ -43,6 +44,7 @@ __all__ = [
     "DEMA",
     "TEMA",
     "HMA",
+    "ZLEMA",
     "SMA",
     "RMA",
     "WMA",

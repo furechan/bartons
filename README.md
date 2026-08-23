@@ -77,6 +77,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `DEMA(period)` | Double exponential moving average |
 | `TEMA(period=20)` | Triple exponential moving average |
 | `HMA(period)` | Hull moving average |
+| `ZLEMA(period)` | Zero-lag exponential moving average |
 | `SMA(period)` | Simple moving average |
 | `RMA(period)` | Wilder's running moving average |
 | `WMA(period)` | Weighted moving average |
