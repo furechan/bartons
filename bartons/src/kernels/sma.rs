@@ -5,6 +5,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 
+use crate::ring_buffer::RingBuffer;
 use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
@@ -17,10 +18,7 @@ pub struct SmaKwargs {
 /// A `None` input breaks the current run (gap reset); output is `None` during
 /// the warmup period, then the rolling mean over the last `period` values.
 pub struct SmaFilter {
-    period: i64,
-    buffer: Vec<f64>, // ring buffer of the current run's window
-    idx: usize,    // next write slot == oldest element once full
-    count: i64,
+    buffer: RingBuffer<f64>,
     sum: f64,
 }
 
@@ -30,10 +28,7 @@ impl SmaFilter {
             return Err("SMA period must be > 0".to_string());
         }
         Ok(Self {
-            period,
-            buffer: vec![0.0; period as usize],
-            idx: 0,
-            count: 0,
+            buffer: RingBuffer::new(period as usize),
             sum: 0.0,
         })
     }
@@ -46,26 +41,20 @@ impl Filter for SmaFilter {
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
         // A null breaks the current run: reset and emit null.
         let Some(val) = input else {
-            self.count = 0;
+            self.buffer.clear();
             self.sum = 0.0;
-            self.idx = 0;
             return None;
         };
 
-        if self.count >= self.period {
-            self.sum -= self.buffer[self.idx]; // evict the oldest value
-        } else {
-            self.count += 1;
+        if let Some(evicted) = self.buffer.push(val) {
+            self.sum -= evicted;
         }
         self.sum += val;
-        self.buffer[self.idx] = val;
-        self.idx += 1;
-        if self.idx == self.buffer.len() {
-            self.idx = 0;
-        }
 
         // Warmup period emits null; otherwise the rolling mean.
-        (self.count >= self.period).then_some(self.sum / self.period as f64)
+        self.buffer
+            .is_full()
+            .then_some(self.sum / self.buffer.capacity() as f64)
     }
 }
 

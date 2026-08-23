@@ -1,4 +1,8 @@
 mod kernels;
+// Filters will adopt this incrementally; keep the standalone implementation
+// warning-free while its API is reviewed against each caller.
+#[allow(dead_code)]
+mod ring_buffer;
 pub mod samples;
 mod utils;
 

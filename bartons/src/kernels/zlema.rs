@@ -6,6 +6,7 @@ use pyo3_polars::PySeries;
 use serde::Deserialize;
 
 use crate::kernels::ema::EmaFilter;
+use crate::ring_buffer::RingBuffer;
 use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
@@ -16,9 +17,7 @@ pub struct ZlemaKwargs {
 /// Fused zero-lag EMA: EMA of `src + (src - src[lag])`.
 pub struct ZlemaFilter {
     lag: usize,
-    buffer: Vec<f64>,
-    idx: usize,
-    count: usize,
+    buffer: RingBuffer<f64>,
     ema: EmaFilter,
 }
 
@@ -30,16 +29,10 @@ impl ZlemaFilter {
         let lag = ((period - 1) / 2) as usize;
         Ok(Self {
             lag,
-            buffer: vec![0.0; lag],
-            idx: 0,
-            count: 0,
+            // Periods 1 and 2 have zero lag and bypass this storage.
+            buffer: RingBuffer::new(lag.max(1)),
             ema: EmaFilter::new(period)?,
         })
-    }
-
-    fn reset_lag(&mut self) {
-        self.idx = 0;
-        self.count = 0;
     }
 }
 
@@ -48,32 +41,18 @@ impl Filter for ZlemaFilter {
     type Output = f64;
 
     fn next(&mut self, input: Option<f64>) -> Option<f64> {
-        let Some(value) = input else {
-            self.reset_lag();
-            return self.ema.next(None);
-        };
-
-        if self.lag == 0 {
-            return self.ema.next(Some(value));
-        }
-
-        if self.count < self.lag {
-            self.buffer[self.idx] = value;
-            self.idx += 1;
-            self.count += 1;
-            if self.idx == self.buffer.len() {
-                self.idx = 0;
+        let adjusted = match input {
+            None => {
+                self.buffer.clear();
+                None
             }
-            return self.ema.next(None);
-        }
-
-        let delayed = self.buffer[self.idx];
-        self.buffer[self.idx] = value;
-        self.idx += 1;
-        if self.idx == self.buffer.len() {
-            self.idx = 0;
-        }
-        self.ema.next(Some(2.0 * value - delayed))
+            Some(value) if self.lag == 0 => Some(value),
+            Some(value) => self
+                .buffer
+                .push(value)
+                .map(|delayed| 2.0 * value - delayed),
+        };
+        self.ema.next(adjusted)
     }
 }
 
