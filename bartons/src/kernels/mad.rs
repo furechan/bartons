@@ -18,7 +18,7 @@ pub struct MadKwargs {
 /// of `abs(value - window_mean)` over all values in that window.
 pub struct MadFilter {
     period: i64,
-    buf: Vec<f64>,
+    buffer: Vec<f64>,
     idx: usize,
     count: i64,
     sum: f64,
@@ -31,7 +31,7 @@ impl MadFilter {
         }
         Ok(Self {
             period,
-            buf: vec![0.0; period as usize],
+            buffer: vec![0.0; period as usize],
             idx: 0,
             count: 0,
             sum: 0.0,
@@ -56,12 +56,12 @@ impl MadFilter {
         if self.count < self.period {
             self.count += 1;
         } else {
-            self.sum -= self.buf[self.idx];
+            self.sum -= self.buffer[self.idx];
         }
         self.sum += value;
-        self.buf[self.idx] = value;
+        self.buffer[self.idx] = value;
         self.idx += 1;
-        if self.idx == self.buf.len() {
+        if self.idx == self.buffer.len() {
             self.idx = 0;
         }
 
@@ -71,7 +71,7 @@ impl MadFilter {
 
         let mean = self.sum / self.period as f64;
         let deviation = self
-            .buf
+            .buffer
             .iter()
             .map(|value| (value - mean).abs())
             .sum::<f64>();

@@ -2,6 +2,14 @@
 
 ## 0.1.2
 
+- **Add the selector-based `QUADREG` kernel.** One centered-grid quadratic
+  regression filter serves `QUADREG`, `QUADREG_CURVE`, `QUADREG_SLOPE`,
+  `QUADREG_RVALUE`, and `QUADREG_RMSE`. The curve output is the quadratic
+  coefficient; slope is the parabola's derivative at the current bar and, like
+  forecast, accepts a forward offset. R-value is the partial correlation of the
+  quadratic term after removing the linear term. The filter shares LINREG's
+  ring-buffer rebasing policy and requires at least three points.
+
 - **Add the selector-based `LINREG` kernel.** One rolling filter and one Polars
   plugin entry point serve `LINREG`, `LINREG_SLOPE`, `LINREG_RVALUE`, and
   `LINREG_RMSE`; the Python factories select a scalar output through stable

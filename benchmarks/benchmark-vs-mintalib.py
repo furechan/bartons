@@ -33,6 +33,8 @@ from bartons.indicators import (
     LINREG,
     LINREG_RVALUE,
     LINREG_SLOPE,
+    QUADREG,
+    QUADREG_CURVE,
     RMA,
     RSI,
     SAR,
@@ -44,7 +46,7 @@ from mintalib.expressions import (
     SMA as M_SMA, EMA as M_EMA, WMA as M_WMA, RMA as M_RMA,
     RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, CCI as M_CCI,
     KER as M_KER, KAMA as M_KAMA, SAR as M_SAR, TSF as M_TSF,
-    SLOPE as M_SLOPE, RVALUE as M_RVALUE,
+    SLOPE as M_SLOPE, RVALUE as M_RVALUE, QSF as M_QSF, CURVE as M_CURVE,
 )
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
@@ -67,7 +69,10 @@ PAIRS = [
     ("LINREG(20)", LINREG(20), M_TSF(20)),
     ("LINREG_SLOPE(20)", LINREG_SLOPE(20), M_SLOPE(20)),
     ("LINREG_RVALUE(20)", LINREG_RVALUE(20), M_RVALUE(20)),
-    # mintalib has no rolling linear-regression RMSE expression.
+    # The released mintalib baseline lacks LINREG_RMSE and the newer QUADREG
+    # diagnostics; QSF and CURVE are its pre-rename quadratic equivalents.
+    ("QUADREG(20)", QUADREG(20), M_QSF(20)),
+    ("QUADREG_CURVE(20)", QUADREG_CURVE(20), M_CURVE(20)),
 ]
 
 SINGLE_ROWS = 11_006

@@ -314,6 +314,64 @@ def ref_linreg(xs, period=20, output="forecast", offset=0):
     return out
 
 
+def ref_quadreg(xs, period=20, output="forecast", offset=0):
+    """Rolling quadratic regression recomputed directly on a centered grid.
+
+    Nulls reset the window. ``curve`` is the quadratic coefficient, ``slope``
+    is the derivative at the projected endpoint, and ``rvalue`` is the partial
+    correlation of the quadratic term after removing the linear term.
+    """
+    window = []
+    out = []
+    half = (period - 1.0) / 2.0
+    us = [x - half for x in range(period)]
+    su2 = sum(u * u for u in us)
+    su4 = sum(u**4 for u in us)
+    vxx = su2 / period
+    vuu = su4 / period - (su2 / period) ** 2
+
+    for value in xs:
+        if value is None:
+            window = []
+            out.append(None)
+            continue
+        window.append(float(value))
+        if len(window) > period:
+            window.pop(0)
+        if len(window) < period:
+            out.append(None)
+            continue
+
+        sz = sum(window)
+        szz = sum(z * z for z in window)
+        suz = sum(u * z for u, z in zip(us, window))
+        su2z = sum(u * u * z for u, z in zip(us, window))
+        slope = suz / period / vxx
+        szz_r = szz - 2.0 * slope * suz + slope * slope * su2
+        vuz = su2z / period - su2 * sz / period / period
+        vzz = szz_r / period - sz * sz / period / period
+        curve = vuz / vuu
+        rvalue = vuz / math.sqrt(vuu * vzz) if vuu * vzz > 0 else math.nan
+
+        if output == "forecast":
+            alpha = sz / period - curve * su2 / period
+            x_end = half + offset
+            result = alpha + slope * x_end + curve * x_end * x_end
+        elif output == "curve":
+            result = curve
+        elif output == "slope":
+            result = slope + 2.0 * curve * (half + offset)
+        elif output == "rvalue":
+            result = rvalue
+        elif output == "rmse":
+            result = math.sqrt(vzz * max(0.0, 1.0 - rvalue * rvalue))
+        else:
+            raise ValueError(output)
+        out.append(result)
+
+    return out
+
+
 def ref_sar(highs, lows, afs=0.02, maxaf=0.2):
     """Parabolic SAR, independently spelling the shared mintalib/bearta state
     machine. Invalid bars emit null and leave all state untouched."""

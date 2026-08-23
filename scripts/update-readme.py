@@ -45,6 +45,11 @@ INDICATORS = {
     "LINREG_SLOPE": ("LINREG_SLOPE(period=20)", "Rolling linear-regression slope"),
     "LINREG_RVALUE": ("LINREG_RVALUE(period=20)", "Rolling linear-regression r-value"),
     "LINREG_RMSE": ("LINREG_RMSE(period=20)", "Rolling linear-regression RMSE"),
+    "QUADREG": ("QUADREG(period=20, offset=0)", "Rolling quadratic-regression curve"),
+    "QUADREG_CURVE": ("QUADREG_CURVE(period=20)", "Rolling quadratic coefficient"),
+    "QUADREG_SLOPE": ("QUADREG_SLOPE(period=20, offset=0)", "Rolling quadratic-regression slope"),
+    "QUADREG_RVALUE": ("QUADREG_RVALUE(period=20)", "Rolling quadratic partial r-value"),
+    "QUADREG_RMSE": ("QUADREG_RMSE(period=20)", "Rolling quadratic-regression RMSE"),
 }
 
 

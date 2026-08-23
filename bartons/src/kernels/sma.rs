@@ -18,7 +18,7 @@ pub struct SmaKwargs {
 /// the warmup period, then the rolling mean over the last `period` values.
 pub struct SmaFilter {
     period: i64,
-    buf: Vec<f64>, // ring buffer of the current run's window
+    buffer: Vec<f64>, // ring buffer of the current run's window
     idx: usize,    // next write slot == oldest element once full
     count: i64,
     sum: f64,
@@ -31,7 +31,7 @@ impl SmaFilter {
         }
         Ok(Self {
             period,
-            buf: vec![0.0; period as usize],
+            buffer: vec![0.0; period as usize],
             idx: 0,
             count: 0,
             sum: 0.0,
@@ -53,14 +53,14 @@ impl Filter for SmaFilter {
         };
 
         if self.count >= self.period {
-            self.sum -= self.buf[self.idx]; // evict the oldest value
+            self.sum -= self.buffer[self.idx]; // evict the oldest value
         } else {
             self.count += 1;
         }
         self.sum += val;
-        self.buf[self.idx] = val;
+        self.buffer[self.idx] = val;
         self.idx += 1;
-        if self.idx == self.buf.len() {
+        if self.idx == self.buffer.len() {
             self.idx = 0;
         }
 

@@ -27,3 +27,4 @@ pub mod kama;
 pub mod sar;
 pub mod streak;
 pub mod linreg;
+pub mod quadreg;

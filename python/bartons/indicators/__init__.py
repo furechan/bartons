@@ -32,6 +32,7 @@ from .kama import KAMA
 from .sar import SAR
 from .streak import STREAK
 from .linreg import LINREG, LINREG_RMSE, LINREG_RVALUE, LINREG_SLOPE
+from .quadreg import QUADREG, QUADREG_CURVE, QUADREG_RMSE, QUADREG_RVALUE, QUADREG_SLOPE
 
 __all__ = [
     "EMA",
@@ -56,4 +57,9 @@ __all__ = [
     "LINREG_SLOPE",
     "LINREG_RVALUE",
     "LINREG_RMSE",
+    "QUADREG",
+    "QUADREG_CURVE",
+    "QUADREG_SLOPE",
+    "QUADREG_RVALUE",
+    "QUADREG_RMSE",
 ]

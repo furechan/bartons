@@ -129,6 +129,26 @@ def mad(series: pl.Series, *, period: int = 20) -> pl.Series:
     ...
 
 
+def quadreg(series: pl.Series, period: int = 20, offset: int = 0, rebase_interval: int | None = None, *, output: Literal["forecast", "curve", "slope", "rvalue", "rmse"] = 'forecast') -> pl.Series:
+    """
+    Rolling quadratic regression statistic.
+
+    Args:
+        series: input values.
+        period: regression-window length (default 20; minimum 3).
+        offset: projection offset (default 0); nonzero values require output="forecast"
+            or output="slope".
+        rebase_interval: maximum bar span for incrementally maintained sums before
+            rebasing from the current window. None selects max(1000, 2 * period);
+            0 disables rebasing.
+        output: statistic to return: "forecast", "curve", "slope", "rvalue", or "rmse".
+
+    Returns:
+        A Float64 series; null during warmup and after a null resets the window.
+    """
+    ...
+
+
 def random_prices(n_rows: int = 10000, *, n_chunks: int = 1, n_tickers: int = 1, seed: int = 0, null_first: bool = False) -> pl.DataFrame:
     """
     Generate deterministic OHLCV prices with controlled chunking.

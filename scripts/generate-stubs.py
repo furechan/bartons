@@ -33,7 +33,6 @@ PARAM_TYPES = {
     "low": "pl.Series",
     "close": "pl.Series",
     "period": "int",
-    "output": 'Literal["forecast", "slope", "rvalue", "rmse"]',
     "offset": "int",
     "rebase_interval": "int | None",
     "fastn": "int",
@@ -46,6 +45,10 @@ PARAM_TYPES = {
     "seed": "int",
     "null_first": "bool",
     "frame": "pl.DataFrame",
+}
+OUTPUT_TYPES = {
+    "linreg": 'Literal["forecast", "slope", "rvalue", "rmse"]',
+    "quadreg": 'Literal["forecast", "curve", "slope", "rvalue", "rmse"]',
 }
 RETURN_TYPES = {
     "random_prices": "pl.DataFrame",
@@ -68,14 +71,15 @@ __all__: list[str]
 '''
 
 
-def annotate(param: inspect.Parameter) -> str:
-    try:
-        type_ = PARAM_TYPES[param.name]
-    except KeyError:
+def annotate(function_name: str, param: inspect.Parameter) -> str:
+    type_ = OUTPUT_TYPES.get(function_name) if param.name == "output" else None
+    if type_ is None:
+        type_ = PARAM_TYPES.get(param.name)
+    if type_ is None:
         raise SystemExit(
             f"generate-stubs: no type mapped for parameter {param.name!r}. "
             f"Add it to PARAM_TYPES in {Path(__file__).name}."
-        ) from None
+        )
     rendered = f"{param.name}: {type_}"
     if param.default is not inspect.Parameter.empty:
         rendered += f" = {param.default!r}"
@@ -88,7 +92,7 @@ def render(name: str, func) -> str:
         if param.kind is inspect.Parameter.KEYWORD_ONLY and not seen_kwonly:
             params.append("*")
             seen_kwonly = True
-        params.append(annotate(param))
+        params.append(annotate(name, param))
 
     return_type = RETURN_TYPES.get(name, "pl.Series")
     lines = [f"def {name}({', '.join(params)}) -> {return_type}:"]

@@ -20,7 +20,7 @@ pub struct WmaKwargs {
 pub struct WmaFilter {
     period: i64,
     denom: f64,    // sum of weights 1..period
-    buf: Vec<f64>, // ring buffer of the current run's window
+    buffer: Vec<f64>, // ring buffer of the current run's window
     idx: usize,    // next write slot == oldest element once full
     count: i64,
     rsum: f64, // running simple sum of the window
@@ -35,7 +35,7 @@ impl WmaFilter {
         Ok(Self {
             period,
             denom: period as f64 * (period as f64 + 1.0) / 2.0,
-            buf: vec![0.0; period as usize],
+            buffer: vec![0.0; period as usize],
             idx: 0,
             count: 0,
             rsum: 0.0,
@@ -65,13 +65,13 @@ impl Filter for WmaFilter {
         } else {
             // Slide the full window: drop one from every existing weight,
             // evict the oldest, and add the new value with weight `period`.
-            let oldest = self.buf[self.idx]; // read before overwriting
+            let oldest = self.buffer[self.idx]; // read before overwriting
             self.wsum += self.period as f64 * val - self.rsum;
             self.rsum += val - oldest;
         }
-        self.buf[self.idx] = val;
+        self.buffer[self.idx] = val;
         self.idx += 1;
-        if self.idx == self.buf.len() {
+        if self.idx == self.buffer.len() {
             self.idx = 0;
         }
 

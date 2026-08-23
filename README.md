@@ -95,6 +95,11 @@ CCI(20, src=TYPPRICE())          # same thing
 | `LINREG_SLOPE(period=20)` | Rolling linear-regression slope |
 | `LINREG_RVALUE(period=20)` | Rolling linear-regression r-value |
 | `LINREG_RMSE(period=20)` | Rolling linear-regression RMSE |
+| `QUADREG(period=20, offset=0)` | Rolling quadratic-regression curve |
+| `QUADREG_CURVE(period=20)` | Rolling quadratic coefficient |
+| `QUADREG_SLOPE(period=20, offset=0)` | Rolling quadratic-regression slope |
+| `QUADREG_RVALUE(period=20)` | Rolling quadratic partial r-value |
+| `QUADREG_RMSE(period=20)` | Rolling quadratic-regression RMSE |
 <!-- indicators:end -->
 
 

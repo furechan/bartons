@@ -21,6 +21,8 @@ ARGS = {
     "MACD": (2, 3, 2),
     "LINREG": (2,), "LINREG_SLOPE": (2,), "LINREG_RVALUE": (2,),
     "LINREG_RMSE": (2,),
+    "QUADREG": (3,), "QUADREG_CURVE": (3,), "QUADREG_SLOPE": (3,),
+    "QUADREG_RVALUE": (3,), "QUADREG_RMSE": (3,),
 }
 SINGLE = [name for name in indicators.__all__ if name != "MACD"]
 
@@ -132,6 +134,8 @@ def test_named_applies_through_the_src_wrapper():
 # nothing but this test keeps them from drifting apart.
 KERNEL_BACKED = [
     "EMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI", "KER", "KAMA", "SAR", "STREAK",
+    "LINREG", "LINREG_SLOPE", "LINREG_RVALUE", "LINREG_RMSE",
+    "QUADREG", "QUADREG_CURVE", "QUADREG_SLOPE", "QUADREG_RVALUE", "QUADREG_RMSE",
 ]
 
 
@@ -157,6 +161,12 @@ def test_kernel_and_expression_names_agree(name):
     elif name == "CCI":
         typical = (series["high"] + series["low"] + series["close"]) / 3.0
         eager = kernels.cci(typical, period=period[0])
+    elif name.startswith("LINREG"):
+        output = name.removeprefix("LINREG_").lower() if name != "LINREG" else "forecast"
+        eager = kernels.linreg(series["close"], period=period[0], output=output)
+    elif name.startswith("QUADREG"):
+        output = name.removeprefix("QUADREG_").lower() if name != "QUADREG" else "forecast"
+        eager = kernels.quadreg(series["close"], period=period[0], output=output)
     else:
         eager = getattr(kernels, name.lower())(series["close"], period=period[0])
 

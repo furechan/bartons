@@ -56,7 +56,7 @@ pub struct KerKwargs {
 ///
 /// [`KamaFilter`]: crate::kernels::kama::KamaFilter
 pub struct KerFilter {
-    buf: Vec<f64>,
+    buffer: Vec<f64>,
     idx: usize,
     count: i64,
     volatility: f64,
@@ -69,7 +69,7 @@ impl KerFilter {
         }
         Ok(Self {
             // `period` changes span `period + 1` values.
-            buf: vec![0.0; period as usize + 1],
+            buffer: vec![0.0; period as usize + 1],
             idx: 0,
             count: 0,
             volatility: 0.0,
@@ -93,24 +93,24 @@ impl Filter for KerFilter {
             return None;
         };
 
-        let cap = self.buf.len();
+        let cap = self.buffer.len();
         let full = self.count >= cap as i64;
 
         // Both reads have to happen before the write, which overwrites the
         // oldest slot.
         if self.count > 0 {
-            let prev = self.buf[(self.idx + cap - 1) % cap];
+            let prev = self.buffer[(self.idx + cap - 1) % cap];
             self.volatility += (value - prev).abs();
         }
         if full {
             // The oldest value is leaving, and with it the change from it to
             // its successor.
-            let oldest = self.buf[self.idx];
-            let successor = self.buf[(self.idx + 1) % cap];
+            let oldest = self.buffer[self.idx];
+            let successor = self.buffer[(self.idx + 1) % cap];
             self.volatility -= (successor - oldest).abs();
         }
 
-        self.buf[self.idx] = value;
+        self.buffer[self.idx] = value;
         self.idx = (self.idx + 1) % cap;
         if !full {
             self.count += 1;
@@ -122,7 +122,7 @@ impl Filter for KerFilter {
 
         // The ring is full, so the write above advanced `idx` onto the oldest
         // value still in the window.
-        let direction = (value - self.buf[self.idx]).abs();
+        let direction = (value - self.buffer[self.idx]).abs();
         // A window that never moved has no path length either. Both references
         // call that perfectly efficient rather than undefined.
         Some(if self.volatility == 0.0 {
