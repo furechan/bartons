@@ -26,6 +26,7 @@ ARGS = {
     "QUADREG_RVALUE": (3,), "QUADREG_RMSE": (3,),
     "MFI": (2,),
     "DMI": (2,),
+    "ALMA": (2,),
 }
 SINGLE = list(indicators.__all__)
 
@@ -135,7 +136,7 @@ KERNEL_BACKED = [
     "EMA", "DEMA", "TEMA", "HMA", "ZLEMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI", "KER", "KAMA", "SAR", "STREAK",
     "LINREG", "LINREG_SLOPE", "LINREG_RVALUE", "LINREG_RMSE",
     "QUADREG", "QUADREG_CURVE", "QUADREG_SLOPE", "QUADREG_RVALUE", "QUADREG_RMSE",
-    "MFI",
+    "MFI", "ALMA",
     "DMI",
 ]
 

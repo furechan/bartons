@@ -52,7 +52,10 @@ kernel then combines that reduced source with volume over time.
 These factories are grouped in one `price.py` rather than a file each — the
 one-file-per-indicator rule tracks kernels, and they have none. They stay
 re-exported flat from `indicators/__init__.py`, so there is still exactly one
-import path.
+import path. Each implementation module declares its factories in `__all__`;
+the package initializer star-imports only those declared names and dynamically
+collects its uppercase runtime exports. A generated `indicators/__init__.pyi`
+provides the corresponding explicit re-exports to static analyzers.
 
 ## Output names
 

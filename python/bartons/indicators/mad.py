@@ -5,6 +5,8 @@ from polars.plugins import register_plugin_function
 from ..prelude import PLUGIN_PATH, wrap_src_indicator
 from ..typing import IntoExprColumn
 
+__all__ = ("MAD",)
+
 
 @wrap_src_indicator
 def MAD(period: int = 20, *, src: IntoExprColumn | None = None) -> pl.Expr:

@@ -201,6 +201,35 @@ def ref_wma(xs, period):
     return out
 
 
+def ref_alma(xs, period=9, offset=0.85, sigma=6.0):
+    """ALMA recomputed directly from one pre-normalized Gaussian window."""
+    center = offset * (period - 1)
+    width = period / sigma
+    weights = [
+        math.exp(-((index - center) ** 2) / (2.0 * width * width))
+        for index in range(period)
+    ]
+    total = sum(weights)
+    weights = [weight / total for weight in weights]
+
+    out = []
+    window = []
+    for value in xs:
+        if value is None:
+            window = []
+            out.append(None)
+            continue
+        window.append(value)
+        if len(window) > period:
+            window.pop(0)
+        out.append(
+            sum(value * weight for value, weight in zip(window, weights))
+            if len(window) == period
+            else None
+        )
+    return out
+
+
 def ref_hma(xs, period):
     """HMA composed independently from its three WMA passes."""
     half = ref_wma(xs, period // 2)

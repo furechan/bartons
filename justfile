@@ -1,17 +1,18 @@
 
-# The two recipes below mirror maturin's own verbs, so `just <verb>` and
-# `maturin <verb>` mean the same thing: `develop` installs into the active .venv,
-# `build` produces artifacts on disk and installs nothing.
-
-# Install (optimized) into the active .venv. Matches what uv/pip produce, so the
-# installed plugin is never accidentally a slow debug build. This is the one you
-# want for day-to-day work — tests, benchmarks and stubs all depend on it.
-develop:
+# Internal optimized install used by source preparation, benchmarks and stubs.
+# It is plumbing rather than a public workflow; run `just make` to prepare and
+# validate the complete source tree.
+_develop:
     maturin develop --release
 
-# Fast unoptimized install for quick iteration — NOT for benchmarking (~20x slower).
-develop-debug:
-    maturin develop
+# Make the source tree ready before artifact construction: install the current
+# native extension, regenerate every checked-in derived file, and validate it.
+make: _develop
+    python scripts/generate-kernel-stubs.py
+    python scripts/generate-indicator-stubs.py
+    uv run python scripts/update-readme.py
+    just test
+    uv run ty check
 
 # Build the distributable artifacts — wheel + sdist — into dist/. Installs
 # nothing: this is what you hand to another machine. dist/ is wiped first, since a
@@ -28,7 +29,7 @@ develop-debug:
 # which needs a Rust toolchain and a full polars build (~12 min), so this is a
 # real narrowing, taken deliberately. Restore it when CI can smoke-test the
 # artifact on a native AMD64 runner; see docs/github-workflow.md.
-build: readme
+build:
     #!/usr/bin/env bash
     set -euo pipefail
     rm -rf dist
@@ -83,6 +84,8 @@ preflight:
     #!/usr/bin/env bash
     set -euo pipefail
     just release-guard
+    just make
+    git diff --exit-code
     just build
     BARTONS_USE_DIST=1 uv run nox
     BARTONS_USE_DIST=1 uv run nox -s wheel_smoke
@@ -140,13 +143,18 @@ bump:
     uv version --bump patch --no-sync
 
 test:
-    cargo test --manifest-path bartons/Cargo.toml --no-default-features
-    pytest
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python_libdir=$(python -c 'import sysconfig; print(sysconfig.get_config_var("LIBDIR"))')
+    PYO3_PYTHON="$PWD/.venv/bin/python" \
+    LD_LIBRARY_PATH="$python_libdir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+        cargo test --manifest-path bartons/Cargo.toml --no-default-features
+    uv run pytest
 
 # Build optimized, then run a benchmark against one baseline, e.g. `just bench`
 # or `just bench vs-talib`. Baselines: vs-native (polars built-ins, no extra deps
 # — hence the default), vs-talib (needs polars_talib + libta-lib), vs-mintalib.
-bench baseline="vs-native": develop
+bench baseline="vs-native": _develop
     python benchmarks/benchmark-{{baseline}}.py
 
 # Test the newest polars-py and, only if it passes, raise the ceiling in
@@ -159,10 +167,11 @@ raise-ceiling:
 readme:
     uv run python scripts/update-readme.py
 
-# Regenerate python/bartons/kernels.pyi by introspecting the built extension.
-# Depends on `develop` so the module being introspected is current.
-stubs: develop
-    python scripts/generate-stubs.py
+# Regenerate the compiled-kernel stub and typed indicator re-exports.
+# Depends on the internal release install so native introspection is current.
+stubs: _develop
+    python scripts/generate-kernel-stubs.py
+    python scripts/generate-indicator-stubs.py
 
 clean:
     find bartons -type d -name target -print -exec rm -rf {} +

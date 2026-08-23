@@ -121,6 +121,8 @@ from polars.plugins import register_plugin_function
 from ..prelude import PLUGIN_PATH, wrap_src_indicator
 from ..typing import IntoExprColumn
 
+__all__ = ("<NAME>",)
+
 
 @wrap_src_indicator
 def <NAME>(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
@@ -133,10 +135,13 @@ def <NAME>(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
     )
 ```
 
-Then re-export it from
-[python/bartons/indicators/__init__.py](../python/bartons/indicators/__init__.py)
-(`from .<name> import <NAME>` plus the `__all__` entry) so it is importable as
-`from bartons.indicators import <NAME>`.
+The implementation module owns its public surface through `__all__`. In
+[python/bartons/indicators/__init__.py](../python/bartons/indicators/__init__.py),
+add only `from .<name> import *`. The star import is constrained by the
+implementation's `__all__`; the initializer derives its runtime `__all__`
+dynamically from uppercase imported names. `just stubs` generates explicit
+typed re-exports for static analyzers. Adding another factory to an existing
+module therefore changes only that module's `__all__`.
 
 ### 4. Tests — `tests/test_<name>.py`
 
@@ -161,15 +166,15 @@ Use `assert_series_equal(..., check_exact=False, rel_tol=1e-12)` imported from
 ### 5. Build & verify
 
 ```sh
-just develop     # release; debug builds are ~20x slower
-just test
-just stubs     # regenerate python/bartons/kernels.pyi, then commit it
+just make        # install release extension, regenerate, test and type-check
 ```
 
-`just stubs` introspects the built module, so a new eager pyfunction is picked
-up automatically. If it errors with *no type mapped for parameter*, add the name
-to `PARAM_TYPES` in [scripts/generate-stubs.py](../scripts/generate-stubs.py) —
-pyo3 exposes no type information, so that map is where it comes from.
+As part of `just make`, `just stubs` introspects the built module, so a new eager pyfunction is picked
+up automatically, and reads the implementation modules' `__all__` declarations
+to generate `indicators/__init__.pyi`. If the kernel generator errors with *no
+type mapped for parameter*, add the name to `PARAM_TYPES` in
+[scripts/generate-kernel-stubs.py](../scripts/generate-kernel-stubs.py) — pyo3
+exposes no type information, so that map is where it comes from.
 
 ### 6. Benchmark (optional) — `benchmarks/benchmark-vs-<baseline>.py`
 
@@ -217,8 +222,9 @@ build is ~20x slower and misleading.
   a null input (nulls come through the `Option` from `ca.iter()`).
 - **Single polars-py range**: the `polars >=x,<y` range lives only in
   `[project].dependencies` — see [cargo-version-pins.md](cargo-version-pins.md).
-- **Release builds**: `just develop` is release; only `just develop-debug` is the slow
-  debug build. Benchmark with `just bench`.
+- **Release builds**: `just make` and `just bench` install an optimized extension.
+  Use `maturin develop` directly only when a fast debug install is useful during
+  local iteration; never benchmark that debug build.
 - Many indicators have a native polars equivalent (`ewm_mean`, `rolling_mean`).
   Adding a plugin version is a deliberate choice (consistency / a specific
   variant), not a perf necessity — a release-built plugin is competitive.

@@ -1,12 +1,9 @@
 """Regenerate the indicator catalog in README.md."""
 
-import ast
-from pathlib import Path
+from indicator_exports import ROOT, indicator_exports
 
 
-ROOT = Path(__file__).resolve().parent.parent
 README = ROOT / "README.md"
-INDICATORS_INIT = ROOT / "python" / "bartons" / "indicators" / "__init__.py"
 START = "<!-- indicators:start -->"
 END = "<!-- indicators:end -->"
 
@@ -16,6 +13,10 @@ INDICATORS = {
     "TEMA": ("TEMA(period=20)", "Triple exponential moving average"),
     "HMA": ("HMA(period)", "Hull moving average"),
     "ZLEMA": ("ZLEMA(period)", "Zero-lag exponential moving average"),
+    "ALMA": (
+        "ALMA(period=9, offset=0.85, sigma=6.0)",
+        "Arnaud Legoux moving average",
+    ),
     "SMA": ("SMA(period)", "Simple moving average"),
     "RMA": ("RMA(period)", "Wilder's running moving average"),
     "WMA": ("WMA(period)", "Weighted moving average"),
@@ -55,23 +56,12 @@ INDICATORS = {
     "QUADREG_RVALUE": ("QUADREG_RVALUE(period=20)", "Rolling quadratic partial r-value"),
     "QUADREG_RMSE": ("QUADREG_RMSE(period=20)", "Rolling quadratic-regression RMSE"),
     "MFI": ("MFI(period=14)", "Money Flow Index"),
+    "DMI": ("DMI(period=14)", "ADX, plus DI and minus DI expressions"),
 }
 
 
 def exported_indicators() -> list[str]:
-    module = ast.parse(INDICATORS_INIT.read_text())
-    for node in module.body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == "__all__"
-            for target in node.targets
-        ):
-            value = ast.literal_eval(node.value)
-            if not isinstance(value, list) or not all(
-                isinstance(name, str) for name in value
-            ):
-                break
-            return value
-    raise RuntimeError(f"could not read __all__ from {INDICATORS_INIT}")
+    return sorted(name for _, names in indicator_exports() for name in names)
 
 
 def render(names: list[str]) -> str:

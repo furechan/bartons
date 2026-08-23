@@ -35,6 +35,7 @@ fn python_kernels(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(kernels::quadreg::quadreg_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::mfi::mfi_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::dmi::dmi_py, m)?)?;
+    m.add_function(wrap_pyfunction!(kernels::alma::alma_py, m)?)?;
     m.add_function(wrap_pyfunction!(samples::random_prices_py, m)?)?;
     m.add_function(wrap_pyfunction!(samples::with_n_chunks_py, m)?)?;
     Ok(())

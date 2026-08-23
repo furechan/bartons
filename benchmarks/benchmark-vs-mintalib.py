@@ -9,8 +9,8 @@ parallelises / CSEs across expressions vs the one-by-one sum. The first OHLC row
 each input series is null, so the benchmark does not give either backend a
 clean-input-only fast path.
 
-IMPORTANT: build the plugin in release mode first (`just develop` /
-`maturin develop --release`); a debug build is ~20x slower and misleading.
+IMPORTANT: use `just bench vs-mintalib`, which installs the plugin in release
+mode first; a debug build is ~20x slower and misleading.
 
 Usage:
     uv run python benchmarks/benchmark-vs-mintalib.py
@@ -25,6 +25,7 @@ import polars as pl
 
 from bartons.samples import random_prices
 from bartons.indicators import (
+    ALMA,
     ATR,
     CCI,
     DEMA,
@@ -47,6 +48,7 @@ from bartons.indicators import (
     WMA,
 )
 from mintalib.expressions import (
+    ALMA as M_ALMA,
     SMA as M_SMA, EMA as M_EMA, DEMA as M_DEMA, TEMA as M_TEMA,
     HMA as M_HMA, WMA as M_WMA, RMA as M_RMA,
     RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, CCI as M_CCI, MFI as M_MFI,
@@ -62,6 +64,7 @@ PAIRS = [
     ("DEMA(20)", DEMA(20), M_DEMA(20)),
     ("TEMA(20)", TEMA(20), M_TEMA(20)),
     ("HMA(20)", HMA(20), M_HMA(20)),
+    ("ALMA(9)", ALMA(9), M_ALMA(9)),
     ("WMA(20)", WMA(20),  M_WMA(20)),
     ("RMA(20)", RMA(20),  M_RMA(20)),
     ("RSI(14)", RSI(14),  M_RSI(14)),

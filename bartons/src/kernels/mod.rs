@@ -28,3 +28,4 @@ pub mod linreg;
 pub mod quadreg;
 pub mod mfi;
 pub mod dmi;
+pub mod alma;

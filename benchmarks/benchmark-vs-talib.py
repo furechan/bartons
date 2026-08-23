@@ -18,8 +18,8 @@ input null; talib still can't handle *interior* nulls equivalently even with
 RMA has no TA-Lib equivalent (Wilder smoothing isn't exposed standalone), so it is
 covered only in benchmark-vs-mintalib.py.
 
-IMPORTANT: build the plugin in release mode first (`just develop` /
-`maturin develop --release`); a debug build is ~20x slower and misleading.
+IMPORTANT: use `just bench vs-talib`, which installs the plugin in release mode
+first; a debug build is ~20x slower and misleading.
 
 Usage:
     uv run python benchmarks/benchmark-vs-talib.py

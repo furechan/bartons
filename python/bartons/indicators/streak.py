@@ -4,6 +4,8 @@ from polars.plugins import register_plugin_function
 from ..prelude import PLUGIN_PATH, wrap_indicator
 from ..typing import IntoExprColumn
 
+__all__ = ("STREAK",)
+
 
 @wrap_indicator
 def STREAK(src: IntoExprColumn) -> pl.Expr:

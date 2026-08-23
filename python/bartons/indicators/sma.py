@@ -5,6 +5,8 @@ from polars.plugins import register_plugin_function
 from ..prelude import PLUGIN_PATH, wrap_src_indicator
 from ..typing import IntoExprColumn
 
+__all__ = ("SMA",)
+
 
 @wrap_src_indicator
 def SMA(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:

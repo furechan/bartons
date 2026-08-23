@@ -12,8 +12,8 @@ Seeding/warmup differs between bartons and the native baselines (e.g. bartons em
 null until `period` values; ewm_mean outputs from row 0), so early rows differ — this
 measures speed, not equality. See benchmark-rsi.py for the value cross-check.
 
-IMPORTANT: build the plugin in release mode first (`just develop` /
-`maturin develop --release`); a debug build is ~20x slower and misleading.
+IMPORTANT: use `just bench vs-native`, which installs the plugin in release
+mode first; a debug build is ~20x slower and misleading.
 
 Usage:
     uv run python benchmarks/benchmark-vs-native.py
@@ -22,15 +22,27 @@ Usage:
 """
 
 import argparse
+import math
 import timeit
 
 import polars as pl
 
 from bartons.samples import sample_prices, sample_dataset
-from bartons.indicators import EMA, SMA, RMA, WMA, RSI, TRANGE, ATR, KER, STREAK
+from bartons.indicators import ALMA, EMA, SMA, RMA, WMA, RSI, TRANGE, ATR, KER, STREAK
 
 
 # ── Native polars equivalents ───────────────────────────────────────────────────
+
+def alma_weights(period: int, offset: float = 0.85, sigma: float = 6.0) -> list[float]:
+    """The same normalized Gaussian weights constructed by the ALMA kernel."""
+    center = offset * (period - 1)
+    width = period / sigma
+    weights = [
+        math.exp(-((index - center) ** 2) / (2.0 * width * width))
+        for index in range(period)
+    ]
+    total = sum(weights)
+    return [weight / total for weight in weights]
 
 def native_rsi(period: int) -> pl.Expr:
     """Wilder RSI composed from ewm_mean (alpha = 1/period)."""
@@ -82,6 +94,7 @@ PAIRS = [
     ("EMA(20)", EMA(20),  pl.col("close").ewm_mean(span=20, adjust=False)),
     ("RMA(20)", RMA(20),  pl.col("close").ewm_mean(alpha=1.0 / 20, adjust=False)),
     ("WMA(20)", WMA(20),  pl.col("close").rolling_mean(20, weights=list(range(1, 21)))),
+    ("ALMA(9)", ALMA(9), pl.col("close").rolling_mean(9, weights=alma_weights(9))),
     ("RSI(14)", RSI(14),  native_rsi(14)),
     ("TRANGE",  TRANGE(), native_trange()),
     ("ATR(14)", ATR(14),  native_atr(14)),

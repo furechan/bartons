@@ -73,39 +73,40 @@ CCI(20, src=TYPPRICE())          # same thing
 <!-- indicators:start -->
 | | |
 |---|---|
-| `EMA(period)` | Exponential moving average |
-| `DEMA(period)` | Double exponential moving average |
-| `TEMA(period=20)` | Triple exponential moving average |
-| `HMA(period)` | Hull moving average |
-| `ZLEMA(period)` | Zero-lag exponential moving average |
-| `SMA(period)` | Simple moving average |
-| `RMA(period)` | Wilder's running moving average |
-| `WMA(period)` | Weighted moving average |
-| `RSI(period)` | Wilder's relative strength index |
-| `TRANGE()` | True range |
+| `ALMA(period=9, offset=0.85, sigma=6.0)` | Arnaud Legoux moving average |
 | `ATR(period)` | Average true range |
+| `AVGPRICE()` | Average price, `(open + high + low + close) / 4` |
+| `CCI(period=20)` | Commodity Channel Index |
+| `DEMA(period)` | Double exponential moving average |
+| `DMI(period=14)` | ADX, plus DI and minus DI expressions |
+| `EMA(period)` | Exponential moving average |
+| `HMA(period)` | Hull moving average |
+| `KAMA(period=10, fastn=2, slown=30)` | Kaufman adaptive moving average |
+| `KER(period=10)` | Kaufman efficiency ratio |
+| `LINREG(period=20, offset=0)` | Rolling linear-regression line |
+| `LINREG_RMSE(period=20)` | Rolling linear-regression RMSE |
+| `LINREG_RVALUE(period=20)` | Rolling linear-regression r-value |
+| `LINREG_SLOPE(period=20)` | Rolling linear-regression slope |
 | `MACD(fast=12, slow=26, signal=9)` | MACD, signal and histogram expressions |
 | `MAD(period=20)` | Rolling mean absolute deviation |
-| `AVGPRICE()` | Average price, `(open + high + low + close) / 4` |
 | `MEDPRICE()` | Median price, `(high + low) / 2` |
-| `TYPPRICE()` | Typical price, `(high + low + close) / 3` |
-| `WCLPRICE()` | Weighted close price, `(high + low + 2 * close) / 4` |
-| `CCI(period=20)` | Commodity Channel Index |
-| `KER(period=10)` | Kaufman efficiency ratio |
-| `KAMA(period=10, fastn=2, slown=30)` | Kaufman adaptive moving average |
-| `SAR(afs=0.02, maxaf=0.2)` | Parabolic Stop and Reverse |
-| `STREAK(src)` | Consecutive true count |
-| `LINREG(period=20, offset=0)` | Rolling linear-regression line |
-| `LINREG_SLOPE(period=20)` | Rolling linear-regression slope |
-| `LINREG_RVALUE(period=20)` | Rolling linear-regression r-value |
-| `LINREG_RMSE(period=20)` | Rolling linear-regression RMSE |
+| `MFI(period=14)` | Money Flow Index |
 | `QUADREG(period=20, offset=0)` | Rolling quadratic-regression curve |
 | `QUADREG_CURVE(period=20)` | Rolling quadratic coefficient |
-| `QUADREG_SLOPE(period=20, offset=0)` | Rolling quadratic-regression slope |
-| `QUADREG_RVALUE(period=20)` | Rolling quadratic partial r-value |
 | `QUADREG_RMSE(period=20)` | Rolling quadratic-regression RMSE |
-| `MFI(period=14)` | Money Flow Index |
-| `DMI(period=14)` | ADX, plus DI and minus DI expressions |
+| `QUADREG_RVALUE(period=20)` | Rolling quadratic partial r-value |
+| `QUADREG_SLOPE(period=20, offset=0)` | Rolling quadratic-regression slope |
+| `RMA(period)` | Wilder's running moving average |
+| `RSI(period)` | Wilder's relative strength index |
+| `SAR(afs=0.02, maxaf=0.2)` | Parabolic Stop and Reverse |
+| `SMA(period)` | Simple moving average |
+| `STREAK(src)` | Consecutive true count |
+| `TEMA(period=20)` | Triple exponential moving average |
+| `TRANGE()` | True range |
+| `TYPPRICE()` | Typical price, `(high + low + close) / 3` |
+| `WCLPRICE()` | Weighted close price, `(high + low + 2 * close) / 4` |
+| `WMA(period)` | Weighted moving average |
+| `ZLEMA(period)` | Zero-lag exponential moving average |
 <!-- indicators:end -->
 
 

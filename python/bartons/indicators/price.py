@@ -24,7 +24,7 @@ import polars as pl
 from ..prelude import wrap_indicator
 from ..typing import IntoExprColumn
 
-__all__ = ["AVGPRICE", "MEDPRICE", "TYPPRICE", "WCLPRICE"]
+__all__ = ("AVGPRICE", "MEDPRICE", "TYPPRICE", "WCLPRICE")
 
 
 @wrap_indicator

@@ -4,6 +4,8 @@ from ..prelude import wrap_src_indicator
 from ..typing import IntoExprColumn
 from .ema import EMA
 
+__all__ = ("MACD",)
+
 
 @wrap_src_indicator
 def MACD(

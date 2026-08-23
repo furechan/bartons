@@ -16,62 +16,31 @@ column as the leading positional argument, which makes them compose with
     pl.col("close").pipe(EMA, 5).pipe(RSI, 14)
 """
 
-from .ema import EMA
-from .dema import DEMA
-from .tema import TEMA
-from .hma import HMA
-from .zlema import ZLEMA
-from .sma import SMA
-from .rma import RMA
-from .wma import WMA
-from .rsi import RSI
-from .trange import TRANGE
-from .atr import ATR
-from .macd import MACD
-from .mad import MAD
-from .price import AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE
-from .cci import CCI
-from .ker import KER
-from .kama import KAMA
-from .sar import SAR
-from .streak import STREAK
-from .linreg import LINREG, LINREG_RMSE, LINREG_RVALUE, LINREG_SLOPE
-from .quadreg import QUADREG, QUADREG_CURVE, QUADREG_RMSE, QUADREG_RVALUE, QUADREG_SLOPE
-from .mfi import MFI
-from .dmi import DMI
+from .alma import *
+from .atr import *
+from .cci import *
+from .dema import *
+from .dmi import *
+from .ema import *
+from .hma import *
+from .kama import *
+from .ker import *
+from .linreg import *
+from .macd import *
+from .mad import *
+from .mfi import *
+from .price import *
+from .quadreg import *
+from .rma import *
+from .rsi import *
+from .sar import *
+from .sma import *
+from .streak import *
+from .tema import *
+from .trange import *
+from .wma import *
+from .zlema import *
 
-__all__ = [
-    "EMA",
-    "DEMA",
-    "TEMA",
-    "HMA",
-    "ZLEMA",
-    "SMA",
-    "RMA",
-    "WMA",
-    "RSI",
-    "TRANGE",
-    "ATR",
-    "MACD",
-    "MAD",
-    "AVGPRICE",
-    "MEDPRICE",
-    "TYPPRICE",
-    "WCLPRICE",
-    "CCI",
-    "KER",
-    "KAMA",
-    "SAR",
-    "STREAK",
-    "LINREG",
-    "LINREG_SLOPE",
-    "LINREG_RVALUE",
-    "LINREG_RMSE",
-    "QUADREG",
-    "QUADREG_CURVE",
-    "QUADREG_SLOPE",
-    "QUADREG_RVALUE",
-    "QUADREG_RMSE",
-    "MFI",
-    "DMI",
+__all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
+    name for name in dir() if name.isupper()
 ]

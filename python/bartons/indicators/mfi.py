@@ -6,6 +6,8 @@ from ..prelude import PLUGIN_PATH, wrap_src_indicator
 from ..typing import IntoExprColumn
 from .price import TYPPRICE
 
+__all__ = ("MFI",)
+
 
 @wrap_src_indicator
 def MFI(
