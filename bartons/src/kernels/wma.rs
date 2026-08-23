@@ -5,6 +5,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 
+use crate::ring_buffer::RingBuffer;
 use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
@@ -18,11 +19,8 @@ pub struct WmaKwargs {
 /// the warmup period, then the linearly-weighted mean (oldest weight 1 ..
 /// newest weight `period`).
 pub struct WmaFilter {
-    period: i64,
     denom: f64,    // sum of weights 1..period
-    buffer: Vec<f64>, // ring buffer of the current run's window
-    idx: usize,    // next write slot == oldest element once full
-    count: i64,
+    buffer: RingBuffer<f64>,
     rsum: f64, // running simple sum of the window
     wsum: f64, // running weighted sum (oldest weight 1 .. newest weight period)
 }
@@ -33,11 +31,8 @@ impl WmaFilter {
             return Err("WMA period must be > 0".to_string());
         }
         Ok(Self {
-            period,
             denom: period as f64 * (period as f64 + 1.0) / 2.0,
-            buffer: vec![0.0; period as usize],
-            idx: 0,
-            count: 0,
+            buffer: RingBuffer::new(period as usize),
             rsum: 0.0,
             wsum: 0.0,
         })
@@ -53,30 +48,26 @@ impl Filter for WmaFilter {
         let Some(val) = input else {
             self.rsum = 0.0;
             self.wsum = 0.0;
-            self.count = 0;
-            self.idx = 0;
+            self.buffer.clear();
             return None;
         };
 
-        if self.count < self.period {
-            self.count += 1;
-            self.rsum += val;
-            self.wsum += self.count as f64 * val;
-        } else {
-            // Slide the full window: drop one from every existing weight,
-            // evict the oldest, and add the new value with weight `period`.
-            let oldest = self.buffer[self.idx]; // read before overwriting
-            self.wsum += self.period as f64 * val - self.rsum;
-            self.rsum += val - oldest;
-        }
-        self.buffer[self.idx] = val;
-        self.idx += 1;
-        if self.idx == self.buffer.len() {
-            self.idx = 0;
+        match self.buffer.push(val) {
+            None => {
+                let weight = self.buffer.count() as f64;
+                self.rsum += val;
+                self.wsum += weight * val;
+            }
+            Some(evicted) => {
+                // Slide the full window: drop one from every existing weight,
+                // evict the oldest, and add the new value with the full weight.
+                self.wsum += self.buffer.capacity() as f64 * val - self.rsum;
+                self.rsum += val - evicted;
+            }
         }
 
         // Warmup period emits null; otherwise the weighted mean.
-        (self.count >= self.period).then_some(self.wsum / self.denom)
+        self.buffer.is_full().then_some(self.wsum / self.denom)
     }
 }
 

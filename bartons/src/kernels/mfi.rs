@@ -6,6 +6,7 @@ use pyo3_polars::PySeries;
 use serde::Deserialize;
 
 use super::SourceVolumeInput;
+use crate::ring_buffer::RingBuffer;
 use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
@@ -21,9 +22,7 @@ pub struct MfiKwargs {
 /// retains the source value, which is still available to determine the
 /// direction of the next complete bar.
 pub struct MfiFilter {
-    buffer: Vec<f64>,
-    idx: usize,
-    count: usize,
+    buffer: RingBuffer<f64>,
     positive: f64,
     negative: f64,
     previous: Option<f64>,
@@ -36,49 +35,41 @@ impl MfiFilter {
         }
 
         Ok(Self {
-            buffer: vec![0.0; period as usize],
-            idx: 0,
-            count: 0,
+            buffer: RingBuffer::new(period as usize),
             positive: 0.0,
             negative: 0.0,
             previous: None,
         })
     }
 
-    fn reset_window(&mut self) {
-        self.idx = 0;
-        self.count = 0;
+    fn clear_window(&mut self) {
+        self.buffer.clear();
         self.positive = 0.0;
         self.negative = 0.0;
     }
 
     fn reset(&mut self) {
-        self.reset_window();
+        self.clear_window();
         self.previous = None;
     }
 
-    fn push(&mut self, flow: f64) {
-        if self.count == self.buffer.len() {
-            let oldest = self.buffer[self.idx];
-            if oldest > 0.0 {
-                self.positive -= oldest;
-            } else if oldest < 0.0 {
-                self.negative += oldest;
+    fn update_previous(&mut self, current: Option<f64>) -> Option<f64> {
+        current.and_then(|current| self.previous.replace(current))
+    }
+
+    fn update_flow_window(&mut self, flow: f64) {
+        if let Some(evicted) = self.buffer.push(flow) {
+            if evicted > 0.0 {
+                self.positive -= evicted;
+            } else if evicted < 0.0 {
+                self.negative += evicted;
             }
-        } else {
-            self.count += 1;
         }
 
         if flow > 0.0 {
             self.positive += flow;
         } else if flow < 0.0 {
             self.negative -= flow;
-        }
-
-        self.buffer[self.idx] = flow;
-        self.idx += 1;
-        if self.idx == self.buffer.len() {
-            self.idx = 0;
         }
     }
 }
@@ -88,19 +79,18 @@ impl Filter for MfiFilter {
     type Output = f64;
 
     fn next(&mut self, (src, volume): SourceVolumeInput) -> Option<f64> {
+        let previous = self.update_previous(src);
+
         let Some(src) = src else {
             self.reset();
             return None;
         };
 
-        let previous = self.previous.replace(src);
         let Some(volume) = volume else {
-            self.reset_window();
+            self.clear_window();
             return None;
         };
-        let Some(previous) = previous else {
-            return None;
-        };
+        let previous = previous?;
 
         let raw_flow = src * volume;
         let flow = if src > previous {
@@ -110,9 +100,9 @@ impl Filter for MfiFilter {
         } else {
             0.0
         };
-        self.push(flow);
+        self.update_flow_window(flow);
 
-        if self.count < self.buffer.len() {
+        if !self.buffer.is_full() {
             return None;
         }
 
