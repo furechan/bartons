@@ -14,7 +14,7 @@ On failure nothing is left changed — the noxfile edit is rolled back — so a
 polars release that genuinely breaks the plugin leaves the declared range honest
 rather than silently widened. Nothing is committed either way.
 
-Run via `just raise-ceiling`.
+Run via `uv run inv raise-ceiling`.
 """
 
 import json
@@ -90,7 +90,7 @@ def main() -> int:
     print(f"\npassed — ceiling raised <{ceiling} -> <{new_ceiling}>")
 
     # 4. bring the dev env along. Without this the newly-admitted version is
-    #    tested once in a throwaway nox venv and never again: `just test` would
+    #    tested once in a throwaway nox venv and never again: `inv test` would
     #    keep running the older engine. Targeted (-P polars) so nothing else in
     #    the lockfile churns.
     #    `uv sync -P polars` re-locks and installs in one step: -P allows that one

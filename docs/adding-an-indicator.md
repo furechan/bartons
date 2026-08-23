@@ -139,7 +139,7 @@ The implementation module owns its public surface through `__all__`. In
 [python/bartons/indicators/__init__.py](../python/bartons/indicators/__init__.py),
 add only `from .<name> import *`. The star import is constrained by the
 implementation's `__all__`; the initializer derives its runtime `__all__`
-dynamically from uppercase imported names. `just stubs` generates explicit
+dynamically from uppercase imported names. `uv run inv stubs` generates explicit
 typed re-exports for static analyzers. Adding another factory to an existing
 module therefore changes only that module's `__all__`.
 
@@ -166,10 +166,10 @@ Use `assert_series_equal(..., check_exact=False, rel_tol=1e-12)` imported from
 ### 5. Build & verify
 
 ```sh
-just make        # install release extension, regenerate, test and type-check
+uv run inv make  # install release extension, regenerate, test and type-check
 ```
 
-As part of `just make`, `just stubs` introspects the built module, so a new eager pyfunction is picked
+As part of `inv make`, stub generation introspects the built module, so a new eager pyfunction is picked
 up automatically, and reads the implementation modules' `__all__` declarations
 to generate `indicators/__init__.pyi`. If the kernel generator errors with *no
 type mapped for parameter*, add the name to `PARAM_TYPES` in
@@ -190,10 +190,10 @@ cost into construction / execution / build+execute and also report how each
 backend parallelises across expressions in one `select()`.
 
 ```sh
-just bench vs-native    # builds release, then runs benchmarks/benchmark-vs-native.py
+uv run inv bench --baseline=vs-native  # release build, then native benchmark
 ```
 
-Benchmark only against a **release** build (`just bench` does this) — a debug
+Benchmark only against a **release** build (`inv bench` does this) — a debug
 build is ~20x slower and misleading.
 
 ## Conventions & gotchas
@@ -222,7 +222,7 @@ build is ~20x slower and misleading.
   a null input (nulls come through the `Option` from `ca.iter()`).
 - **Single polars-py range**: the `polars >=x,<y` range lives only in
   `[project].dependencies` — see [cargo-version-pins.md](cargo-version-pins.md).
-- **Release builds**: `just make` and `just bench` install an optimized extension.
+- **Release builds**: `inv make` and `inv bench` install an optimized extension.
   Use `maturin develop` directly only when a fast debug install is useful during
   local iteration; never benchmark that debug build.
 - Many indicators have a native polars equivalent (`ewm_mean`, `rolling_mean`).

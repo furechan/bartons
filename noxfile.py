@@ -7,11 +7,11 @@ one `maturin build --release` wheel runs in both, differing only in which engine
 is installed and forced via POLARS_FORCE_PKG. See docs/polars-runtime-libraries.md.
 
 The extension is identical for every engine and every polars version under test
-(same polars-rs 0.55.2; the FFI boundary carries no IdxSize), so we compile ONE abi3
-wheel and install that same artifact into every session. uv caches and unpacks
-the wheel near-instantly, so the 15 compat + rt32 + rt64 sessions share a single
-cargo build instead of recompiling (`maturin develop`) in 17 isolated venvs. Only
-the installed *polars* wheel differs between sessions.
+(same polars-rs 0.55.2; the FFI boundary carries no IdxSize), so we compile ONE
+abi3 wheel and install that same artifact into every session. uv caches and
+unpacks the wheel near-instantly, so the compatibility and runtime sessions
+share a single cargo build instead of recompiling (`maturin develop`) in every
+isolated venv. Only the installed *polars* wheel differs between sessions.
 """
 
 import glob
@@ -85,19 +85,6 @@ def _wheel(session: nox.Session) -> str:
     return _WHEEL
 
 
-def _latest_wheel(session: nox.Session) -> str:
-    """Return the newest locally installable wheel in ``dist/`` without building it."""
-    supported = set(sys_tags())
-    wheels = [
-        wheel
-        for wheel in glob.glob(os.path.abspath("dist/bartons-*.whl"))
-        if not parse_wheel_filename(os.path.basename(wheel))[3].isdisjoint(supported)
-    ]
-    if not wheels:
-        session.error("no locally installable wheel found in dist/; run `just build` first")
-    return max(wheels, key=os.path.getmtime)
-
-
 # --- what the matrix runs -------------------------------------------------------
 #
 # Two independent things, deliberately kept apart:
@@ -112,7 +99,7 @@ def _latest_wheel(session: nox.Session) -> str:
 #
 # LATEST_CONFIRMED is the *ceiling representative*: the newest polars-py verified
 # against the current build. The `pyproject.toml` ceiling is derived from it
-# (`< next minor`). `just raise-ceiling` probes a newer release and, if it passes,
+# (`< next minor`). `inv raise-ceiling` probes a newer release and, if it passes,
 # moves this and the ceiling together. It is a single value, not an accumulating
 # list — a newer confirmation replaces the older one rather than adding to the
 # matrix, because it adds no engine coverage.
@@ -177,7 +164,7 @@ def probe(session: nox.Session) -> None:
 
     Note `uv pip install polars==<plv>` does not enforce the installed wheel's
     `Requires-Dist`, so a version above the current ceiling can be probed. That is
-    deliberate: it is what lets `just raise-ceiling` verify *before* declaring.
+    deliberate: it is what lets `inv raise-ceiling` verify *before* declaring.
     """
     if len(session.posargs) != 1:
         session.error("usage: nox -s probe -- <polars-py version>, e.g. 1.44.0")
@@ -189,34 +176,34 @@ def locked(session: nox.Session) -> None:
     """Run the suite against the polars-py pinned in `uv.lock`.
 
     This is the version daily development actually uses — but exercised against
-    the **built wheel in a clean env**, rather than the editable install `just
+    the **built wheel in a clean env**, rather than the editable install `inv
     test` uses. Catches packaging problems the dev env cannot see, and confirms
     the shipped artifact works on the engine the lockfile claims.
 
     Unlike `compat`/`probe` the version is not chosen: it follows `uv.lock`, so it
-    moves whenever `just raise-ceiling` (or a manual `uv lock`) moves it.
+    moves whenever `inv raise-ceiling` (or a manual `uv lock`) moves it.
     """
     plv = _locked_polars()
     session.log(f"uv.lock pins polars-py {plv}")
     _run_against(session, plv)
 
 
-@nox.session(python=PY, default=False)
-def wheel_smoke(session: nox.Session) -> None:
-    """Install the newest existing dist wheel and run one test outside the checkout.
-
-    This deliberately does not build: it checks the artifact currently waiting in
-    ``dist/``. Running pytest from Nox's temporary directory prevents ``bartons``
-    from being imported from the source tree by accident.
-
-        uv run nox -s wheel_smoke
-    """
-    wheel = _latest_wheel(session)
-    session.log(f"testing {wheel}")
-    session.install(wheel, "pytest")
-    test = os.path.abspath("tests/test_bartons.py")
+def _test_artifacts(session: nox.Session, artifacts: list[str]) -> None:
+    """Install and test each artifact in one isolated Nox environment."""
+    if not artifacts:
+        session.error("no matching artifacts found in dist/")
+    tests = os.path.abspath("tests")
     session.chdir(session.create_tmp())
-    session.run("pytest", test)
+    for artifact in artifacts:
+        session.log(f"testing {artifact}")
+        session.install("--reinstall", artifact, "pytest")
+        session.run("pytest", tests)
+
+
+@nox.session(python=PY, default=False)
+def dist_wheel(session: nox.Session) -> None:
+    """Install and test the wheel currently in ``dist/``."""
+    _test_artifacts(session, glob.glob(os.path.abspath("dist/bartons-*.whl")))
 
 
 @nox.session(python=PY)

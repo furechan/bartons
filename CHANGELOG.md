@@ -2,6 +2,13 @@
 
 ## 0.1.2
 
+- **Replace the Just workflow with Invoke.** `tasks.py` is now the single readable
+  task graph. `uv run inv build` creates an sdist, builds its wheel with a
+  persistent Cargo target, and tests that wheel in one phase; `publish` only
+  guards and uploads the prepared artifacts. The obsolete `justfile`, separate
+  preflight phase, duplicate sdist compilation, and artifact-stamp machinery are
+  removed.
+
 - **Add the fused `ALMA` kernel.** Gaussian weights are derived and normalized
   once from `period`, `offset`, and `sigma`; each completed ring-buffer window
   performs only the weighted dot product. Nulls reset the fixed window. Both

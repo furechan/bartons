@@ -42,7 +42,7 @@ the same kind of limit:
   genuinely break — `PySeries._export` does not exist. A functional requirement.
 - The **ceiling is tested, not hard**. Nothing is known to fail above it; it marks
   how far the matrix has run. **The matrix sets the ceiling** — to raise one, run
-  the other. `just raise-ceiling` does both in one step.
+  the other. `uv run inv raise-ceiling` does both in one step.
 
 Avoid **cap** (it names only an upper limit, so it misdescribes the two-sided
 range) and **constraint** (pip and uv use it for *constraints files*, `-c`, a
@@ -150,8 +150,8 @@ the tree.
 1. Choose the `pyo3-polars` version (e.g. latest, or whichever you target).
 2. `GET https://crates.io/api/v1/crates/pyo3-polars/<ver>/dependencies` → note the `polars`, `polars-arrow`, and `pyo3` reqs.
 3. Set `polars` and `polars-arrow` to the **exact** version the `polars` caret targets; set `pyo3` within the `pyo3` caret.
-4. `cargo build` (or `just make`). Confirm the resolved versions in `bartons/Cargo.lock` match step 2 — that is the source of truth for what got compiled in.
-5. `just test` — **against the polars-py already installed**. Do not touch the
+4. `cargo build` (or `uv run inv make`). Confirm the resolved versions in `bartons/Cargo.lock` match step 2 — that is the source of truth for what got compiled in.
+5. `uv run inv test` — **against the polars-py already installed**. Do not touch the
    `pyproject.toml` range yet: changing the pins moves the binary and changing the
    range moves the engine, so doing both at once means a failure cannot tell you
    which side caused it. Hold the engine fixed until the new binary is known good.
@@ -167,7 +167,7 @@ The [`check-bindings`](../.claude/commands/check-bindings.md) skill audits these
 
 ## Scope: this is the Cargo side only
 
-This doc covers the compile-time crate pins. The **polars-py range** in [`pyproject.toml`](../pyproject.toml) is a *separate* setting — it governs which polars-py the built `.so` runs against at the FFI guard, not what compiles. The polars-rs ↔ polars-py correspondence is tabulated in [`polars-ffi-version-table.md`](polars-ffi-version-table.md). The current range is `polars>=1.28,<1.44`: the floor is a hard requirement for the eager `bartons.kernels.<name>` pyfunctions (they need `PySeries._export`, first exposed in polars-py 1.28 — see [`test-compat-helpers.md`](test-compat-helpers.md)), and the ceiling is the current test boundary, **not** a hard ABI limit — raise it with `just raise-ceiling`, which tests the newest polars-py and only moves the number if it passes. The expression path alone works down to polars-py 1.0, but the package floors at 1.28 so its whole public API is usable.
+This doc covers the compile-time crate pins. The **polars-py range** in [`pyproject.toml`](../pyproject.toml) is a *separate* setting — it governs which polars-py the built `.so` runs against at the FFI guard, not what compiles. The polars-rs ↔ polars-py correspondence is tabulated in [`polars-ffi-version-table.md`](polars-ffi-version-table.md). The current range is `polars>=1.28,<1.44`: the floor is a hard requirement for the eager `bartons.kernels.<name>` pyfunctions (they need `PySeries._export`, first exposed in polars-py 1.28 — see [`test-compat-helpers.md`](test-compat-helpers.md)), and the ceiling is the current test boundary, **not** a hard ABI limit — raise it with `uv run inv raise-ceiling`, which tests the newest polars-py and only moves the number if it passes. The expression path alone works down to polars-py 1.0, but the package floors at 1.28 so its whole public API is usable.
 
 ## Related
 

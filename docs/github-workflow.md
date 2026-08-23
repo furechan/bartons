@@ -6,7 +6,7 @@
 
 | | |
 |---|---|
-| Releases today | cut locally with `just preflight` and `just publish` — see [CLAUDE.md](../CLAUDE.md) |
+| Releases today | cut locally with `uv run inv build` and `uv run inv publish` — see [CLAUDE.md](../CLAUDE.md) |
 | These workflows | installed, dispatch-only, **never used to publish anything** |
 | Repository | private, GitHub Free |
 | Server-side config | **absent** — no PyPI trusted publisher, no GitHub environment |
@@ -19,11 +19,12 @@ and PyPI never frees a filename, so only one path may own a release.
 **Standing decision (2026-08-21): kept as a prototype, deferred until the
 repository goes public or the project becomes more prominent.** The local release
 cycle is sufficient at this scale — the author is effectively the only consumer,
-and `just preflight` already builds, tests and validates every artifact that
-ships. Everything CI would add is either free only on a public repo (unmetered
-runners, the approval gate, artifact storage) or matters only with users to
-protect. Revisit at that point, not before; the workflows stay installed and
-inert so the analysis and the working YAML are both to hand when it happens.
+and the local `uv run inv build` task already builds and validates the complete
+sdist-to-wheel artifact chain. Everything CI would add is either free only
+on a public repo (unmetered runners, the approval gate, artifact storage) or
+matters only with users to protect. Revisit at that point, not before; the
+workflows stay installed and inert so the analysis and the working YAML are both
+to hand when it happens.
 
 Both are **dispatch-only** — nothing runs on a push, a pull request, a tag or a
 schedule — and `publish.yml` publishes nothing unless explicitly told to.
@@ -154,7 +155,7 @@ an API token again.
 These are properties of the project, not of CI:
 
 - **The polars-py range freezes at upload.** `polars>=1.28,<1.44` becomes immutable
-  `Requires-Dist` metadata on a published wheel. `just raise-ceiling` only affects
+  `Requires-Dist` metadata on a published wheel. `uv run inv raise-ceiling` only affects
   future releases, so raising the ceiling means cutting one.
 - **`runtime-64` users are unserved.** `IdxSize` is compile-time, one `.so` cannot
   serve both polars engines, and no wheel tag can express the difference. The
@@ -170,8 +171,8 @@ These are properties of the project, not of CI:
   single authoritative version and the crate's stays at `0.0.0`. The in-repo
   version names the *next* release, **plain — no `.devN` suffix**, so the tree is
   publishable at any moment and nothing needs editing before a build. Releasing
-  uploads what the version already says; `just bump` afterwards names the one
-  after. A `.devN` scheme was tried first and dropped before 0.1.0. This README
+  uploads what the version already says; the publish task's patch bump afterwards
+  names the one after. A `.devN` scheme was tried first and dropped before 0.1.0. This README
   and `publish.yml` both described that retired scheme until 2026-08-21; the
   decision to keep stable-only rather than restore it is recorded in
   `BACKLOG.md`, and rests on the PyPI-availability check in `guard` making a
@@ -249,7 +250,7 @@ then, recorded so the thread can be resumed without re-deriving it.
 4. **Refresh the action versions**, current as of 2026-08-17.
 
 5. **Only then** decide whether CI owns publishing. It cannot share that job with
-   `just publish`.
+   `uv run inv publish`.
 
 ## First run
 

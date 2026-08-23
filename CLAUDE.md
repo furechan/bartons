@@ -12,17 +12,16 @@ and deliberate design choices.
 ## Build & test
 
 ```sh
-just make          # install release extension, regenerate sources, test and type-check
-just build         # maturin build — wheel + sdist into dist/, installs nothing
-just dump          # list what went into the sdist
-just preflight     # build and validate the exact release artifacts, then stamp them
-just publish       # upload only artifacts carrying a current preflight stamp
-just test          # native Rust tests, then pytest
-just bench         # install release extension, then benchmark vs a baseline
-                   # (default vs-native; also vs-talib, vs-mintalib)
-just stubs         # regenerate kernel and indicator package stubs
-just raise-ceiling # test the newest polars-py; raise the pyproject ceiling if it passes
-just clean         # remove Rust target/ and compiled .so files
+uv run inv make          # install release extension, regenerate, test, type-check
+uv run inv build         # build sdist -> wheel in dist/, then test the wheel
+uv run inv dump          # list what went into the sdist
+uv run inv publish       # upload the tested artifacts in dist/
+uv run inv test          # native Rust tests, then pytest
+uv run inv bench         # release build, then benchmark (default: vs-native)
+                         # also: --baseline=vs-talib or --baseline=vs-mintalib
+uv run inv stubs         # regenerate kernel and indicator package stubs
+uv run inv raise-ceiling # test newest polars-py and raise the ceiling if it passes
+uv run inv clean         # remove Rust targets and compiled .so files
 
 # Native Rust bench/example targets must link libpython. The default
 # extension-module feature deliberately does not. `.envrc` configures PyO3 and
@@ -30,10 +29,12 @@ just clean         # remove Rust target/ and compiled .so files
 cargo bench --manifest-path bartons/Cargo.toml --no-default-features
 ```
 
-`make` prepares the source tree: it installs an optimized extension into the
+`inv make` prepares the source tree: it installs an optimized extension into the
 `.venv`, regenerates checked-in stubs and README content, then runs tests and
-type checking. `build` is the separate artifact phase: it packages the already
-prepared source into `dist/` and installs or regenerates nothing.
+type checking. `inv build` is the complete artifact phase: it clears `dist/`,
+creates the sdist, builds the wheel from that sdist, then installs and tests the
+wheel in an isolated Nox environment. The persistent Cargo target under `.venv`
+keeps subsequent source builds fast.
 
 `extension-module` is a default Cargo feature because wheel builds are the
 normal path. Cargo features are additive, so native Rust executables use
@@ -74,23 +75,19 @@ is not intended for the release.
 3. Review the complete diff and commit and push all intended release changes,
    including any README update. Do not create an empty checkpoint commit when
    nothing changed.
-4. Run `just preflight`. It runs `just release-guard` — clean tree, synchronized
-   with upstream, version not already on PyPI — then runs `just make` and refuses
-   generated drift; clears `dist/`; builds the native Linux ARM64 wheel and sdist
-   once; runs the full Nox matrix and wheel smoke test against that exact native
-   artifact; validates metadata; prints SHA-256 hashes; and only then creates the local
-   `dist/.preflight-ok` stamp.
-5. Inspect the prepared files and preflight output. Releases ship a native ARM64
+4. Run `uv run inv build`. It clears `dist/`, creates the sdist, builds the
+   native Linux ARM64 wheel from that sdist, and tests the wheel outside the
+   checkout. This is the only build-and-validation phase.
+5. Inspect the prepared files and build output. Releases ship a native ARM64
    wheel and the sdist only — the cross-compiled AMD64 wheel was dropped on
    2026-08-21 because it could not be imported here, so nothing untested goes out.
    x86_64 users build from the sdist, which needs a Rust toolchain. Restore the
    AMD64 wheel when CI can smoke-test it natively; see
    [docs/github-workflow.md](docs/github-workflow.md).
-6. Run `just publish`. It never compiles: it requires exactly the two wheels and
-   one sdist, refuses files newer than the preflight stamp or named for another
-   version, reruns `just release-guard`, pauses for confirmation, uploads those
-   exact files, and bumps the patch version.
-7. After `just publish` succeeds, review the version bump, commit it, and push.
+6. Run `uv run inv publish`. It never compiles: it verifies the clean,
+   synchronized branch and unused PyPI version, pauses for confirmation, uploads
+   the wheel and sdist currently in `dist/`, and bumps the patch version.
+7. After publishing succeeds, review the version bump, commit it, and push.
 
 Never continue past a failed build, test, synchronization check, version guard,
 artifact validation, upload, or PyPI verification. Retain and review the publish
@@ -142,7 +139,7 @@ extension, which a checker cannot otherwise see into; and `evcxr/` is excluded i
 runtime-registered `.bt` namespace was retired partly because it could not be
 typed at all.
 
-`just stubs` runs two focused generators. `scripts/generate-kernel-stubs.py`
+`uv run inv stubs` runs two focused generators. `scripts/generate-kernel-stubs.py`
 introspects the built extension for `python/bartons/kernels.pyi`; pyo3 exposes
 parameter names, defaults and docstrings but **no types**, so those come from a
 small `PARAM_TYPES` map and an unmapped name is a hard error. The indicator

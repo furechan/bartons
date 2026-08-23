@@ -13,7 +13,7 @@ The ceiling is a **record of what the matrix has verified**, not a prediction â€
 it goes stale as polars releases. Keep it current with:
 
 ```sh
-just raise-ceiling
+uv run inv raise-ceiling
 ```
 
 That looks up the newest polars-py, adds it to `COMPAT_VERSIONS`, runs the
@@ -36,8 +36,8 @@ API, so the surface that matters here has already moved inside `1.x` once.
 ## The everyday dev env runs the newest engine
 
 The dev lockfile resolves polars-py to the **newest supported** release, so
-`just test` exercises the full suite with **zero skips** against the same engine
-the ceiling admits. `just raise-ceiling` keeps it that way: after the compat run
+`uv run inv test` exercises the full suite with **zero skips** against the same engine
+the ceiling admits. `uv run inv raise-ceiling` keeps it that way: after the compat run
 passes and the ceiling moves, it runs `uv lock --upgrade-package polars` and
 `uv sync`, then re-runs the suite. Without that the newly-admitted version would
 be tested once in a throwaway nox venv and never again. The shim below only

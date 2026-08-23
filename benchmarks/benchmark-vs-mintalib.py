@@ -9,7 +9,7 @@ parallelises / CSEs across expressions vs the one-by-one sum. The first OHLC row
 each input series is null, so the benchmark does not give either backend a
 clean-input-only fast path.
 
-IMPORTANT: use `just bench vs-mintalib`, which installs the plugin in release
+IMPORTANT: use `uv run inv bench --baseline=vs-mintalib`, which installs the plugin in release
 mode first; a debug build is ~20x slower and misleading.
 
 Usage:
