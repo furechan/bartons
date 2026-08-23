@@ -5,6 +5,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use serde::Deserialize;
 
+use crate::ring_buffer::RingBuffer;
 use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
@@ -17,10 +18,7 @@ pub struct MadKwargs {
 /// A null resets the window. Once the window is full, the result is the mean
 /// of `abs(value - window_mean)` over all values in that window.
 pub struct MadFilter {
-    period: i64,
-    buffer: Vec<f64>,
-    idx: usize,
-    count: i64,
+    buffer: RingBuffer<f64>,
     sum: f64,
 }
 
@@ -30,10 +28,7 @@ impl MadFilter {
             return Err("MAD period must be > 0".to_string());
         }
         Ok(Self {
-            period,
-            buffer: vec![0.0; period as usize],
-            idx: 0,
-            count: 0,
+            buffer: RingBuffer::new(period as usize),
             sum: 0.0,
         })
     }
@@ -47,35 +42,27 @@ impl MadFilter {
     /// [`CciFilter`]: crate::kernels::cci::CciFilter
     pub fn next_stats(&mut self, input: Option<f64>) -> Option<(f64, f64)> {
         let Some(value) = input else {
-            self.idx = 0;
-            self.count = 0;
+            self.buffer.clear();
             self.sum = 0.0;
             return None;
         };
 
-        if self.count < self.period {
-            self.count += 1;
-        } else {
-            self.sum -= self.buffer[self.idx];
+        if let Some(evicted) = self.buffer.push(value) {
+            self.sum -= evicted;
         }
         self.sum += value;
-        self.buffer[self.idx] = value;
-        self.idx += 1;
-        if self.idx == self.buffer.len() {
-            self.idx = 0;
-        }
 
-        if self.count < self.period {
+        if !self.buffer.is_full() {
             return None;
         }
 
-        let mean = self.sum / self.period as f64;
+        let mean = self.sum / self.buffer.capacity() as f64;
         let deviation = self
             .buffer
             .iter()
             .map(|value| (value - mean).abs())
             .sum::<f64>();
-        Some((mean, deviation / self.period as f64))
+        Some((mean, deviation / self.buffer.capacity() as f64))
     }
 }
 

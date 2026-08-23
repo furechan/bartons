@@ -5,6 +5,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use serde::Deserialize;
 
+use crate::ring_buffer::RingBuffer;
 use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
@@ -56,9 +57,7 @@ pub struct KerKwargs {
 ///
 /// [`KamaFilter`]: crate::kernels::kama::KamaFilter
 pub struct KerFilter {
-    buffer: Vec<f64>,
-    idx: usize,
-    count: i64,
+    buffer: RingBuffer<f64>,
     volatility: f64,
 }
 
@@ -69,16 +68,13 @@ impl KerFilter {
         }
         Ok(Self {
             // `period` changes span `period + 1` values.
-            buffer: vec![0.0; period as usize + 1],
-            idx: 0,
-            count: 0,
+            buffer: RingBuffer::new(period as usize + 1),
             volatility: 0.0,
         })
     }
 
     fn reset(&mut self) {
-        self.idx = 0;
-        self.count = 0;
+        self.buffer.clear();
         self.volatility = 0.0;
     }
 }
@@ -93,36 +89,23 @@ impl Filter for KerFilter {
             return None;
         };
 
-        let cap = self.buffer.len();
-        let full = self.count >= cap as i64;
+        let previous = self.buffer.newest().copied();
+        let evicted = self.buffer.push(value);
 
-        // Both reads have to happen before the write, which overwrites the
-        // oldest slot.
-        if self.count > 0 {
-            let prev = self.buffer[(self.idx + cap - 1) % cap];
-            self.volatility += (value - prev).abs();
+        if let Some(previous) = previous {
+            self.volatility += (value - previous).abs();
         }
-        if full {
-            // The oldest value is leaving, and with it the change from it to
-            // its successor.
-            let oldest = self.buffer[self.idx];
-            let successor = self.buffer[(self.idx + 1) % cap];
-            self.volatility -= (successor - oldest).abs();
+        if let Some(evicted) = evicted {
+            let oldest = *self.buffer.oldest().expect("full buffer has an oldest");
+            self.volatility -= (oldest - evicted).abs();
         }
 
-        self.buffer[self.idx] = value;
-        self.idx = (self.idx + 1) % cap;
-        if !full {
-            self.count += 1;
-        }
-
-        if self.count < cap as i64 {
+        if !self.buffer.is_full() {
             return None;
         }
 
-        // The ring is full, so the write above advanced `idx` onto the oldest
-        // value still in the window.
-        let direction = (value - self.buffer[self.idx]).abs();
+        let oldest = *self.buffer.oldest().expect("full buffer has an oldest");
+        let direction = (value - oldest).abs();
         // A window that never moved has no path length either. Both references
         // call that perfectly efficient rather than undefined.
         Some(if self.volatility == 0.0 {
