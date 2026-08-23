@@ -7,6 +7,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use serde::Deserialize;
 
+use crate::ring_buffer::RingBuffer;
 use crate::utils::{run_filter, Filter};
 
 const MIN_REBASE_INTERVAL: i64 = 1000;
@@ -63,9 +64,9 @@ pub struct LinRegKwargs {
 /// One-pass rolling linear-regression filter. The output selector changes only
 /// the statistic emitted; every variant shares this window state and math.
 pub struct LinRegFilter {
-    buffer: Vec<(usize, f64)>,
-    idx: usize,
-    count: usize,
+    // Nulls clear the window, so retained values always have consecutive row
+    // indices. For a full window at row `i`, the evicted row is `i - capacity`.
+    buffer: RingBuffer<f64>,
     rebase_interval: usize,
     next_i: usize,
     anchor: usize,
@@ -97,9 +98,7 @@ impl LinRegFilter {
         }
 
         Ok(Self {
-            buffer: vec![(0, 0.0); period as usize],
-            idx: 0,
-            count: 0,
+            buffer: RingBuffer::new(period as usize),
             rebase_interval: rebase_interval
                 .unwrap_or_else(|| MIN_REBASE_INTERVAL.max(period.saturating_mul(2)))
                 as usize,
@@ -117,8 +116,7 @@ impl LinRegFilter {
     }
 
     fn reset(&mut self) {
-        self.idx = 0;
-        self.count = 0;
+        self.buffer.clear();
         self.clear_sums();
     }
 
@@ -129,28 +127,6 @@ impl LinRegFilter {
         self.sy = 0.0;
         self.sxy = 0.0;
         self.syy = 0.0;
-    }
-
-    fn slide(&mut self, i: usize, value: f64) {
-        let (tail_i, tail_value) = self.buffer[self.idx];
-        self.sub(tail_i, tail_value);
-        self.push(i, value);
-        self.add(i, value);
-    }
-
-    fn push(&mut self, i: usize, value: f64) {
-        if self.count == 0 {
-            self.anchor = i;
-        }
-        if self.count < self.buffer.len() {
-            self.count += 1;
-        }
-
-        self.buffer[self.idx] = (i, value);
-        self.idx += 1;
-        if self.idx == self.buffer.len() {
-            self.idx = 0;
-        }
     }
 
     fn add(&mut self, i: usize, y: f64) {
@@ -173,21 +149,34 @@ impl LinRegFilter {
         self.syy -= y * y;
     }
 
-    fn rebase_interval_reached(&self, i: usize) -> bool {
+    fn rebase_needed(&self, i: usize) -> bool {
         self.rebase_interval > 0 && i - self.anchor >= self.rebase_interval
     }
 
-    fn rebase_sums(&mut self) {
-        // A full ring's `idx` points at its oldest pair. Make that row the new
-        // origin, then rebuild from every retained `(i, value)` pair.
-        if self.count == self.buffer.len() {
-            self.clear_sums();
-            self.anchor = self.buffer[self.idx].0;
-            for idx in 0..self.buffer.len() {
-                let (i, value) = self.buffer[idx];
-                self.add(i, value);
-            }
+    fn rebase_sums(&mut self, i: usize) {
+        if !self.buffer.is_full() {
+            return;
         }
+
+        let anchor = i + 1 - self.buffer.capacity();
+        let mut sy = 0.0;
+        let mut sxy = 0.0;
+        let mut syy = 0.0;
+        for (x, &value) in self.buffer.iter().enumerate() {
+            let x = x as f64;
+            sy += value;
+            sxy += x * value;
+            syy += value * value;
+        }
+
+        let s = self.buffer.capacity() as f64;
+        self.anchor = anchor;
+        self.s = s;
+        self.sx = s * (s - 1.0) / 2.0;
+        self.sxx = s * (s - 1.0) * (2.0 * s - 1.0) / 6.0;
+        self.sy = sy;
+        self.sxy = sxy;
+        self.syy = syy;
     }
 }
 
@@ -204,17 +193,19 @@ impl Filter for LinRegFilter {
             return None;
         };
 
-        if self.count < self.buffer.len() {
-            self.push(i, value);
-            self.add(i, value);
-        } else if self.rebase_interval_reached(i) {
-            self.push(i, value);
-            self.rebase_sums();
-        } else {
-            self.slide(i, value);
+        if self.buffer.is_empty() {
+            self.anchor = i;
+        }
+        match self.buffer.push(value) {
+            None => self.add(i, value),
+            Some(_) if self.rebase_needed(i) => self.rebase_sums(i),
+            Some(evicted) => {
+                self.sub(i - self.buffer.capacity(), evicted);
+                self.add(i, value);
+            }
         }
 
-        if self.count < self.buffer.len() {
+        if !self.buffer.is_full() {
             return None;
         }
 
@@ -320,8 +311,10 @@ mod tests {
         filter.next(Some(5.0));
         assert_eq!(filter.next_i - filter.anchor, 3);
         assert_eq!(filter.sx, 3.0); // re-anchored to 0, 1, 2
-        assert_eq!(filter.buffer, vec![(3, 4.0), (4, 5.0), (2, 3.0)]);
-        assert_eq!(filter.idx, 2);
+        assert_eq!(
+            filter.buffer.iter().copied().collect::<Vec<_>>(),
+            [3.0, 4.0, 5.0]
+        );
     }
 
     #[test]
