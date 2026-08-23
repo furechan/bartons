@@ -91,18 +91,36 @@ and query planning; eager and expression kernels also expose the same logical
 type.
 
 Unpacking is deliberately explicit. Expression-level `.struct.unnest()` expands
-the fields inside the query plan and may duplicate a windowed projection when
-grouped CSE is unavailable. A controlled query can instead compute the struct
-once and cross the materialization boundary before unpacking:
+the fields independently inside the query plan. A controlled query can instead
+select the shared struct column first and unpack it in the following frame
+operation:
 
 ```python
-frame.select("ticker", DMI().over("ticker")).unnest("dmi")
+frame.select("ticker", DMI().over("ticker")).unnest()
 ```
 
-Frame-level `unnest` rejects collisions with existing field names. That is an
-accepted Polars quirk: preserving the native struct gives callers control over
-whether unpacking happens before or after computation. `ExprBundle` remains in
-the package as an experiment, but is not the multi-output indicator interface.
+Bare frame-level `unnest()` expands every struct column; callers can name one or
+more columns when only selected structs should be expanded. It rejects
+collisions with existing field names. That is an accepted Polars quirk:
+preserving the native struct gives callers control over whether unpacking
+happens before or after computation. `ExprBundle` remains in the package as an
+experiment, but is not the multi-output indicator interface.
+
+This distinction was measured on 2026-08-23 with polars-py 1.43.2 by temporarily
+incrementing an atomic counter at the `dmi_expr` plugin boundary. With eight
+groups, five repetitions produced the same invocation counts each time:
+
+| Query shape | Calls |
+|---|---:|
+| `select(DMI().over("ticker"))` | 8 |
+| `select(DMI().over("ticker").struct.unnest())` | 24 |
+| `select(DMI().over("ticker")).unnest()` | 8 |
+
+The lazy forms produced the same 8/24/8 counts. Thus the important boundary is
+the named struct output of `select`, not eager materialization: downstream
+frame-level `unnest` preserves shared execution even within a lazy plan, while
+expression-level field expansion executes this three-field kernel three times
+per group.
 
 The two names are therefore independent strings — a literal in the Rust driver
 call, and the Python factory's `__name__` — for the kernel-backed indicators,
