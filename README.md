@@ -110,25 +110,23 @@ CCI(20, src=TYPPRICE())          # same thing
 <!-- indicators:end -->
 
 
-Multi-output indicators return one native Polars struct expression. Keep it
-intact through grouped evaluation, select it as a named struct column, then
-unnest that column when top-level fields are needed:
+Multi-output indicators return a Polars struct expression. You can unpack its
+fields directly in the query:
 
 ```python
-prices.select("date", MACD()).unnest()
-
-prices.select(
-    "ticker",
-    DMI().over("ticker"),
-).unnest()
+prices.select("date", MACD().struct.unnest())
 ```
 
-Expression-level `DMI().over("ticker").struct.unnest()` is convenient, but it
-projects the fields independently and currently repeats the windowed kernel
-once per field. Selecting the struct first and applying frame-level `unnest`
-keeps one kernel execution per group in both eager and lazy queries. Bare
-`.unnest()` expands every struct column; pass column names when only selected
-structs should be expanded. Field names must not collide with existing columns.
+Or keep the struct column in the query result and unnest it afterward:
+
+```python
+result = prices.select("date", MACD())  # contains "macd" struct column
+result.unnest()
+```
+
+Bare `.unnest()` expands every struct column; pass a column name such as
+`.unnest("macd")` to expand only that struct. The resulting field names must not
+collide with existing columns.
 
 ## Eager API
 
