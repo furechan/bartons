@@ -31,6 +31,7 @@ from .ker import KER
 from .kama import KAMA
 from .sar import SAR
 from .streak import STREAK
+from .linreg import LINREG, LINREG_RMSE, LINREG_RVALUE, LINREG_SLOPE
 
 __all__ = [
     "EMA",
@@ -51,4 +52,8 @@ __all__ = [
     "KAMA",
     "SAR",
     "STREAK",
+    "LINREG",
+    "LINREG_SLOPE",
+    "LINREG_RVALUE",
+    "LINREG_RMSE",
 ]

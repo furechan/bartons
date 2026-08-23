@@ -16,6 +16,8 @@ while its running average carries.
 
 from __future__ import annotations
 
+import math
+
 
 def ref_ema(xs, period):
     """EMA: seed on the first valid value, then alpha = 2/(period+1) smoothing;
@@ -261,6 +263,54 @@ def ref_kama(xs, period=10, fastn=2, slown=30):
         alpha = (slow + ratio * (fast - slow)) ** 2.0
         kama = x if kama is None else kama + alpha * (x - kama)
         out.append(kama)
+    return out
+
+
+def ref_linreg(xs, period=20, output="forecast", offset=0):
+    """Rolling least-squares regression on the integer grid 1..period.
+
+    Nulls reset the window. ``forecast`` evaluates the fitted line at
+    ``period + offset``; the diagnostics describe the fitted window itself.
+    """
+    window = []
+    out = []
+    xbar = (period + 1.0) / 2.0
+    vxx = sum((x - xbar) ** 2 for x in range(1, period + 1)) / period
+
+    for value in xs:
+        if value is None:
+            window = []
+            out.append(None)
+            continue
+        window.append(float(value))
+        if len(window) > period:
+            window.pop(0)
+        if len(window) < period:
+            out.append(None)
+            continue
+
+        ybar = sum(window) / period
+        vxy = sum((x - xbar) * (y - ybar) for x, y in enumerate(window, 1)) / period
+        vyy = sum((y - ybar) ** 2 for y in window) / period
+        slope = vxy / vxx
+
+        if output == "forecast":
+            intercept = ybar - slope * xbar
+            result = intercept + slope * (period + offset)
+        elif output == "slope":
+            result = slope
+        elif output == "rvalue":
+            result = vxy / math.sqrt(vxx * vyy) if vyy > 0 else math.nan
+        elif output == "rmse":
+            if vyy > 0:
+                corr = vxy / math.sqrt(vxx * vyy)
+                result = math.sqrt(max(0.0, vyy * (1.0 - corr * corr)))
+            else:
+                result = math.nan
+        else:
+            raise ValueError(output)
+        out.append(result)
+
     return out
 
 

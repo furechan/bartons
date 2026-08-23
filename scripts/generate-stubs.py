@@ -33,6 +33,9 @@ PARAM_TYPES = {
     "low": "pl.Series",
     "close": "pl.Series",
     "period": "int",
+    "output": 'Literal["forecast", "slope", "rvalue", "rmse"]',
+    "offset": "int",
+    "rebase_interval": "int | None",
     "fastn": "int",
     "slown": "int",
     "afs": "float",
@@ -58,6 +61,7 @@ Regenerate with `just stubs` after adding or changing any `#[pyfunction]`.
 """
 
 import polars as pl
+from typing import Literal
 
 __version__: str
 __all__: list[str]

@@ -26,6 +26,7 @@ fn python_kernels(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(kernels::kama::kama_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::sar::sar_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::streak::streak_py, m)?)?;
+    m.add_function(wrap_pyfunction!(kernels::linreg::linreg_py, m)?)?;
     m.add_function(wrap_pyfunction!(samples::random_prices_py, m)?)?;
     m.add_function(wrap_pyfunction!(samples::with_n_chunks_py, m)?)?;
     Ok(())

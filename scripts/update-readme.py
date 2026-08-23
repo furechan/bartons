@@ -41,6 +41,10 @@ INDICATORS = {
     ),
     "SAR": ("SAR(afs=0.02, maxaf=0.2)", "Parabolic Stop and Reverse"),
     "STREAK": ("STREAK(src)", "Consecutive true count"),
+    "LINREG": ("LINREG(period=20, offset=0)", "Rolling linear-regression line"),
+    "LINREG_SLOPE": ("LINREG_SLOPE(period=20)", "Rolling linear-regression slope"),
+    "LINREG_RVALUE": ("LINREG_RVALUE(period=20)", "Rolling linear-regression r-value"),
+    "LINREG_RMSE": ("LINREG_RMSE(period=20)", "Rolling linear-regression RMSE"),
 }
 
 

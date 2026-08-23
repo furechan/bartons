@@ -44,12 +44,13 @@ prices.with_columns(EMA(20), SMA(20))                     # -> "ema", "sma"
 prices.with_columns(EMA(20).alias("fast"), EMA(50).alias("slow"))
 ```
 
-Most single-source indicators default to `pl.col("close")` as source, but they also accept an explicit source, which makes them chainable with `pipe`:
+Single-source indicators typically default to `pl.col("close")` as source, but they also accept an explicit source, either as the first positional argument or via the `src` keyword, which makes them chainable with `pipe`:
 
 ```python
 EMA(20)                                     # default source
-EMA(pl.col("open"), 20)                     # explicit source
-pl.col("close").pipe(EMA, 5).pipe(RSI, 14)  # chaining with pipe
+EMA(pl.col("close"), 20)                    # explicit source (positional)
+EMA(20, src=pl.col("close"))                # explicit source (src keyword)
+pl.col("close").pipe(EMA, 20)               # chaining with pipe
 ```
 
 `TRANGE`, `ATR` and the price transforms like `TYPPRICE` accept multiple inputs like `high`, `low` and `close`, each overridable via keyword arguments:
@@ -59,7 +60,7 @@ TYPPRICE()                              # high, low and close
 TYPPRICE(high="h", low="l", close="c")  # other column names
 ```
 
-`CCI` is single-source like the rest, but defaults its source to `TYPPRICE()`
+`CCI` is single-source indicator, but defaults its source to `TYPPRICE()`
 rather than `pl.col("close")`:
 
 ```python
@@ -90,6 +91,10 @@ CCI(20, src=TYPPRICE())          # same thing
 | `KAMA(period=10, fastn=2, slown=30)` | Kaufman adaptive moving average |
 | `SAR(afs=0.02, maxaf=0.2)` | Parabolic Stop and Reverse |
 | `STREAK(src)` | Consecutive true count |
+| `LINREG(period=20, offset=0)` | Rolling linear-regression line |
+| `LINREG_SLOPE(period=20)` | Rolling linear-regression slope |
+| `LINREG_RVALUE(period=20)` | Rolling linear-regression r-value |
+| `LINREG_RMSE(period=20)` | Rolling linear-regression RMSE |
 <!-- indicators:end -->
 
 

@@ -58,7 +58,19 @@ def _import_polars_talib():
 pta = _import_polars_talib()
 
 from bartons.samples import sample_prices, sample_dataset
-from bartons.indicators import ATR, CCI, EMA, KAMA, RSI, SAR, SMA, TRANGE, WMA
+from bartons.indicators import (
+    ATR,
+    CCI,
+    EMA,
+    KAMA,
+    LINREG,
+    LINREG_SLOPE,
+    RSI,
+    SAR,
+    SMA,
+    TRANGE,
+    WMA,
+)
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
 
@@ -76,6 +88,9 @@ PAIRS = [
     # Timing only: bartons follows the mintalib/bearta SAR state machine, which
     # differs from TA-Lib's initialization and reversal details.
     ("SAR",     SAR(),     pta.sar(acceleration=0.02, maximum=0.2)),
+    ("LINREG(20)", LINREG(20), pta.linearreg(timeperiod=20)),
+    ("LINREG_SLOPE(20)", LINREG_SLOPE(20), pta.linearreg_slope(timeperiod=20)),
+    # TA-Lib has no rolling linear-regression r-value or RMSE function.
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -118,7 +133,7 @@ def bench_combined(
 
 
 def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, number: int) -> None:
-    hdr = f"  {'indicator':<12}  {'bartons':>10}  {'talib':>10}  {'talib+fill_nan':>14}  {'r(raw)':>7}  {'r(fair)':>7}"
+    hdr = f"  {'indicator':<22}  {'bartons':>10}  {'talib':>10}  {'talib+fill_nan':>14}  {'r(raw)':>7}  {'r(fair)':>7}"
     print(hdr)
     print("  " + "-" * (len(hdr) - 2))
     bs, ts, ns, r_raw, r_fair = [], [], [], [], []
@@ -128,19 +143,19 @@ def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, numbe
             t_t = runner(df, t_expr, repeat=repeat, number=number)
             t_n = runner(df, t_expr.fill_nan(None), repeat=repeat, number=number)
         except Exception as e:
-            print(f"  {name:<12}  skipped ({e})")
+            print(f"  {name:<22}  skipped ({e})")
             continue
         bs.append(t_b); ts.append(t_t); ns.append(t_n)
         r_raw.append(t_b / t_t)
         r_fair.append(t_b / t_n)
-        print(f"  {name:<12}  {fmt_ms(t_b):>10}  {fmt_ms(t_t):>10}  {fmt_ms(t_n):>14}  {t_b / t_t:>7.2f}  {t_b / t_n:>7.2f}")
+        print(f"  {name:<22}  {fmt_ms(t_b):>10}  {fmt_ms(t_t):>10}  {fmt_ms(t_n):>14}  {t_b / t_t:>7.2f}  {t_b / t_n:>7.2f}")
     if len(r_raw) > 1:
         def mean(xs):
             return sum(xs) / len(xs)
 
         # Average and combined: two summary rows, column-aligned with the rows above.
         print("  " + "-" * (len(hdr) - 2))
-        print(f"  {'Average':<12}  {fmt_ms(mean(bs)):>10}  {fmt_ms(mean(ts)):>10}  {fmt_ms(mean(ns)):>14}  {mean(r_raw):>7.2f}  {mean(r_fair):>7.2f}")
+        print(f"  {'Average':<22}  {fmt_ms(mean(bs)):>10}  {fmt_ms(mean(ts)):>10}  {fmt_ms(mean(ns)):>14}  {mean(r_raw):>7.2f}  {mean(r_fair):>7.2f}")
 
         # Combined: all indicators in one select (alias so names stay unique).
         # Shows whether each backend parallelises / CSEs across expressions vs
@@ -152,9 +167,9 @@ def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, numbe
             t_b = bench_combined(df, b_exprs, over=over, repeat=repeat, number=number)
             t_t = bench_combined(df, t_exprs, over=over, repeat=repeat, number=number)
             t_n = bench_combined(df, n_exprs, over=over, repeat=repeat, number=number)
-            print(f"  {'ALL combined':<12}  {fmt_ms(t_b):>10}  {fmt_ms(t_t):>10}  {fmt_ms(t_n):>14}  {t_b / t_t:>7.2f}  {t_b / t_n:>7.2f}")
+            print(f"  {'ALL combined':<22}  {fmt_ms(t_b):>10}  {fmt_ms(t_t):>10}  {fmt_ms(t_n):>14}  {t_b / t_t:>7.2f}  {t_b / t_n:>7.2f}")
         except Exception as e:
-            print(f"  {'ALL combined':<12}  skipped ({e})")
+            print(f"  {'ALL combined':<22}  skipped ({e})")
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
@@ -169,7 +184,7 @@ def main() -> None:
     pairs = PAIRS
     if args.indicator:
         key = args.indicator.upper()
-        pairs = [(n, b, t) for n, b, t in PAIRS if n.upper().split("(")[0] == key]
+        pairs = [(n, b, t) for n, b, t in PAIRS if n.upper().startswith(key)]
         if not pairs:
             raise SystemExit(f"No benchmark found for {args.indicator!r}")
 

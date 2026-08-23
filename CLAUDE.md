@@ -1,6 +1,6 @@
 # bartons
 
-Polars plugin providing financial/technical analysis expressions, implemented in Rust via PyO3 + Maturin. Currently exposes EMA (Exponential Moving Average), SMA (Simple Moving Average), RMA (Wilder's / running moving average), WMA (Weighted Moving Average), RSI (Wilder's Relative Strength Index), TRANGE (True Range), ATR (Average True Range), MAD (rolling Mean Absolute Deviation), CCI (Commodity Channel Index), KER (Kaufman Efficiency Ratio), KAMA (Kaufman Adaptive Moving Average), SAR (Parabolic Stop and Reverse), STREAK (consecutive true count), and the kernel-free MACD and price transforms (AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE).
+Polars plugin providing financial/technical analysis expressions, implemented in Rust via PyO3 + Maturin. Currently exposes EMA (Exponential Moving Average), SMA (Simple Moving Average), RMA (Wilder's / running moving average), WMA (Weighted Moving Average), RSI (Wilder's Relative Strength Index), TRANGE (True Range), ATR (Average True Range), MAD (rolling Mean Absolute Deviation), CCI (Commodity Channel Index), KER (Kaufman Efficiency Ratio), KAMA (Kaufman Adaptive Moving Average), SAR (Parabolic Stop and Reverse), STREAK (consecutive true count), the LINREG family (forecast, slope, r-value, RMSE), and the kernel-free MACD and price transforms (AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE).
 
 ## Architecture
 

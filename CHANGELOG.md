@@ -2,6 +2,21 @@
 
 ## 0.1.2
 
+- **Add the selector-based `LINREG` kernel.** One rolling filter and one Polars
+  plugin entry point serve `LINREG`, `LINREG_SLOPE`, `LINREG_RVALUE`, and
+  `LINREG_RMSE`; the Python factories select a scalar output through stable
+  string kwargs. The eager `kernels.linreg` surface exposes the same selector.
+  A nonzero `offset` is accepted only for the forecast output, where it has a
+  mathematical effect, and rejected for diagnostics rather than silently
+  ignored. Nulls reset the regression window. The mintalib comparison benchmark
+  covers forecast, slope, and r-value; the TA-Lib comparison covers forecast
+  and slope, reflecting the regression statistics each baseline exposes.
+  The eager kernel also exposes `rebase_interval=None`, which rebases after
+  `max(1000, 2 * period)` bars have contributed to its incrementally maintained
+  sums. Rebasing from the current ring buffer bounds floating-point drift. Zero
+  disables rebasing; an interval at or below `period` rebases every full-window
+  slide.
+
 - **Separate performance work from operational automation.** Comparative Python
   benchmarks and focused Rust microbenchmarks now live in `benchmarks/`, while
   `scripts/` is reserved for commands that generate, install, or maintain

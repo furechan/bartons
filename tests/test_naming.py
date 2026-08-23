@@ -19,6 +19,8 @@ ARGS = {
     "EMA": (2,), "SMA": (2,), "RMA": (2,), "WMA": (2,), "RSI": (2,),
     "ATR": (2,), "MAD": (2,), "CCI": (2,), "KER": (2,), "KAMA": (2,),
     "MACD": (2, 3, 2),
+    "LINREG": (2,), "LINREG_SLOPE": (2,), "LINREG_RVALUE": (2,),
+    "LINREG_RMSE": (2,),
 }
 SINGLE = [name for name in indicators.__all__ if name != "MACD"]
 

@@ -24,11 +24,27 @@ import timeit
 import polars as pl
 
 from bartons.samples import random_prices
-from bartons.indicators import ATR, CCI, EMA, KAMA, KER, RMA, RSI, SAR, SMA, TRANGE, WMA
+from bartons.indicators import (
+    ATR,
+    CCI,
+    EMA,
+    KAMA,
+    KER,
+    LINREG,
+    LINREG_RVALUE,
+    LINREG_SLOPE,
+    RMA,
+    RSI,
+    SAR,
+    SMA,
+    TRANGE,
+    WMA,
+)
 from mintalib.expressions import (
     SMA as M_SMA, EMA as M_EMA, WMA as M_WMA, RMA as M_RMA,
     RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, CCI as M_CCI,
-    KER as M_KER, KAMA as M_KAMA, SAR as M_SAR,
+    KER as M_KER, KAMA as M_KAMA, SAR as M_SAR, TSF as M_TSF,
+    SLOPE as M_SLOPE, RVALUE as M_RVALUE,
 )
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
@@ -48,6 +64,10 @@ PAIRS = [
     ("KER(10)", KER(10),  M_KER(10)),
     ("KAMA(10)", KAMA(10), M_KAMA(10)),
     ("SAR", SAR(), M_SAR()),
+    ("LINREG(20)", LINREG(20), M_TSF(20)),
+    ("LINREG_SLOPE(20)", LINREG_SLOPE(20), M_SLOPE(20)),
+    ("LINREG_RVALUE(20)", LINREG_RVALUE(20), M_RVALUE(20)),
+    # mintalib has no rolling linear-regression RMSE expression.
 ]
 
 SINGLE_ROWS = 11_006
@@ -81,7 +101,7 @@ def bench_combined(
 
 
 def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, number: int) -> None:
-    hdr = f"  {'indicator':<12}  {'bartons':>10}  {'mintalib':>10}  {'ratio':>7}"
+    hdr = f"  {'indicator':<22}  {'bartons':>10}  {'mintalib':>10}  {'ratio':>7}"
     print(hdr)
     print("  " + "-" * (len(hdr) - 2))
     bs, ms, ratios = [], [], []
@@ -90,17 +110,17 @@ def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, numbe
             t_b = runner(df, b_expr, repeat=repeat, number=number)
             t_m = runner(df, m_expr, repeat=repeat, number=number)
         except Exception as e:
-            print(f"  {name:<12}  skipped ({e})")
+            print(f"  {name:<22}  skipped ({e})")
             continue
         bs.append(t_b); ms.append(t_m); ratios.append(t_b / t_m)
-        print(f"  {name:<12}  {fmt_ms(t_b):>10}  {fmt_ms(t_m):>10}  {t_b / t_m:>7.2f}")
+        print(f"  {name:<22}  {fmt_ms(t_b):>10}  {fmt_ms(t_m):>10}  {t_b / t_m:>7.2f}")
     if len(ratios) > 1:
         def mean(xs):
             return sum(xs) / len(xs)
 
         # Average and combined: two summary rows, column-aligned with the rows above.
         print("  " + "-" * (len(hdr) - 2))
-        print(f"  {'Average':<12}  {fmt_ms(mean(bs)):>10}  {fmt_ms(mean(ms)):>10}  {mean(ratios):>7.2f}")
+        print(f"  {'Average':<22}  {fmt_ms(mean(bs)):>10}  {fmt_ms(mean(ms)):>10}  {mean(ratios):>7.2f}")
 
         # Combined: all indicators in one select (alias so names stay unique).
         # Shows whether each backend parallelises / CSEs across expressions vs
@@ -110,9 +130,9 @@ def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, numbe
         try:
             t_b = bench_combined(df, b_exprs, over=over, repeat=repeat, number=number)
             t_m = bench_combined(df, m_exprs, over=over, repeat=repeat, number=number)
-            print(f"  {'ALL combined':<12}  {fmt_ms(t_b):>10}  {fmt_ms(t_m):>10}  {t_b / t_m:>7.2f}")
+            print(f"  {'ALL combined':<22}  {fmt_ms(t_b):>10}  {fmt_ms(t_m):>10}  {t_b / t_m:>7.2f}")
         except Exception as e:
-            print(f"  {'ALL combined':<12}  skipped ({e})")
+            print(f"  {'ALL combined':<22}  skipped ({e})")
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
@@ -127,7 +147,7 @@ def main() -> None:
     pairs = PAIRS
     if args.indicator:
         key = args.indicator.upper()
-        pairs = [(n, b, m) for n, b, m in PAIRS if n.upper().split("(")[0] == key]
+        pairs = [(n, b, m) for n, b, m in PAIRS if n.upper().startswith(key)]
         if not pairs:
             raise SystemExit(f"No benchmark found for {args.indicator!r}")
 

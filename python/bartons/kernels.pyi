@@ -5,6 +5,7 @@ Regenerate with `just stubs` after adding or changing any `#[pyfunction]`.
 """
 
 import polars as pl
+from typing import Literal
 
 __version__: str
 __all__: list[str]
@@ -91,6 +92,25 @@ def ker(series: pl.Series, *, period: int = 10) -> pl.Series:
 
     Returns:
         A Float64 series; null during the warmup period.
+    """
+    ...
+
+
+def linreg(series: pl.Series, period: int = 20, offset: int = 0, rebase_interval: int | None = None, *, output: Literal["forecast", "slope", "rvalue", "rmse"] = 'forecast') -> pl.Series:
+    """
+    Rolling linear regression statistic.
+
+    Args:
+        series: input values.
+        period: regression-window length (default 20; minimum 2).
+        offset: forecast offset (default 0); nonzero values require output="forecast".
+        rebase_interval: maximum bar span for incrementally maintained sums before
+            rebasing from the current window. None selects max(1000, 2 * period);
+            0 disables rebasing.
+        output: statistic to return: "forecast", "slope", "rvalue", or "rmse".
+
+    Returns:
+        A Float64 series; null during warmup and after a null resets the window.
     """
     ...
 
