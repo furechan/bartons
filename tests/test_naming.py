@@ -16,13 +16,15 @@ from bartons.prelude import wrap_indicator, wrap_src_indicator
 
 # Leading positional args needed to build each factory, by name.
 ARGS = {
-    "EMA": (2,), "SMA": (2,), "RMA": (2,), "WMA": (2,), "RSI": (2,),
+    "EMA": (2,), "DEMA": (2,), "TEMA": (2,), "HMA": (2,),
+    "SMA": (2,), "RMA": (2,), "WMA": (2,), "RSI": (2,),
     "ATR": (2,), "MAD": (2,), "CCI": (2,), "KER": (2,), "KAMA": (2,),
     "MACD": (2, 3, 2),
     "LINREG": (2,), "LINREG_SLOPE": (2,), "LINREG_RVALUE": (2,),
     "LINREG_RMSE": (2,),
     "QUADREG": (3,), "QUADREG_CURVE": (3,), "QUADREG_SLOPE": (3,),
     "QUADREG_RVALUE": (3,), "QUADREG_RMSE": (3,),
+    "MFI": (2,),
 }
 SINGLE = [name for name in indicators.__all__ if name != "MACD"]
 
@@ -31,6 +33,7 @@ OHLC = {
     "high": [3.0, 4.0, 5.0, 6.0],
     "low": [1.0, 1.0, 2.0, 3.0],
     "close": [2.0, 3.0, 4.0, 5.0],
+    "volume": [100, 110, 120, 130],
 }
 
 
@@ -133,9 +136,10 @@ def test_named_applies_through_the_src_wrapper():
 # Rust driver call, and the Python factory's `__name__` — so
 # nothing but this test keeps them from drifting apart.
 KERNEL_BACKED = [
-    "EMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI", "KER", "KAMA", "SAR", "STREAK",
+    "EMA", "DEMA", "TEMA", "HMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI", "KER", "KAMA", "SAR", "STREAK",
     "LINREG", "LINREG_SLOPE", "LINREG_RVALUE", "LINREG_RMSE",
     "QUADREG", "QUADREG_CURVE", "QUADREG_SLOPE", "QUADREG_RVALUE", "QUADREG_RMSE",
+    "MFI",
 ]
 
 
@@ -146,7 +150,7 @@ def test_kernel_and_expression_names_agree(name):
     from bartons import kernels
 
     df = _df()
-    series = {k: df[k] for k in ("high", "low", "close")}
+    series = {k: df[k] for k in ("high", "low", "close", "volume")}
     period = ARGS.get(name, ())
 
     if name in ("TRANGE", "ATR"):
@@ -161,6 +165,9 @@ def test_kernel_and_expression_names_agree(name):
     elif name == "CCI":
         typical = (series["high"] + series["low"] + series["close"]) / 3.0
         eager = kernels.cci(typical, period=period[0])
+    elif name == "MFI":
+        typical = (series["high"] + series["low"] + series["close"]) / 3.0
+        eager = kernels.mfi(typical, series["volume"], period=period[0])
     elif name.startswith("LINREG"):
         output = name.removeprefix("LINREG_").lower() if name != "LINREG" else "forecast"
         eager = kernels.linreg(series["close"], period=period[0], output=output)

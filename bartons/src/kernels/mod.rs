@@ -14,6 +14,9 @@ pub(crate) type Hl = Pair;
 pub(crate) type Hlc = Triple;
 
 pub mod ema;
+pub mod dema;
+pub mod tema;
+pub mod hma;
 pub mod mad;
 pub mod rma;
 pub mod sma;
@@ -28,3 +31,4 @@ pub mod sar;
 pub mod streak;
 pub mod linreg;
 pub mod quadreg;
+pub mod mfi;

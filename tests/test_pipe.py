@@ -5,10 +5,10 @@ import polars as pl
 import pytest
 from helpers import assert_series_equal
 
-from bartons.indicators import EMA, SMA, RMA, WMA, RSI
+from bartons.indicators import DEMA, EMA, HMA, RMA, RSI, SMA, TEMA, WMA
 from bartons.prelude import wrap_src_indicator
 
-UNARY = [EMA, SMA, RMA, WMA, RSI]
+UNARY = [EMA, DEMA, TEMA, HMA, SMA, RMA, WMA, RSI]
 
 
 def test_wrap_src_indicator_requires_src_param():

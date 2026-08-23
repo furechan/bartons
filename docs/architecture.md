@@ -23,6 +23,12 @@ and the `price` transforms are the shipped cases. The directories are named for 
 (`bartons/src/kernels/` and `python/bartons/indicators/`) so their divergence
 reads as intended rather than as drift.
 
+Recognized standalone indicators may still warrant fused kernels even when
+their formulas can be expressed from existing primitives. DEMA, TEMA, and HMA
+are the shipped examples: they are part of the conventional moving-average
+vocabulary, and fusion avoids intermediate series and repeated plugin
+boundaries. Incidental combinations such as MACD remain expression graphs.
+
 ### Elementwise reductions stay out of Rust
 
 An indicator that reduces several columns elementwise — the price transforms in
@@ -39,8 +45,9 @@ merely together. ATR's true range does — it reaches back to the previous close
 so `TrangeFilter` takes three columns and its `Hlc` row type selects the typed
 three-source `run_filter` path. Typical price does not.
 
-Keeping the reduction in one place also keeps it defined once. `CCI` supplies
-`TYPPRICE()` as its default `src`; nothing restates the formula.
+Keeping the reduction in one place also keeps it defined once. `CCI` and `MFI`
+supply `TYPPRICE()` as their default `src`; nothing restates the formula. MFI's
+kernel then combines that reduced source with volume over time.
 
 These factories are grouped in one `price.py` rather than a file each — the
 one-file-per-indicator rule tracks kernels, and they have none. They stay
@@ -82,12 +89,14 @@ length guard live in `bartons/src/utils.rs`.
 pyfunction flat as `bartons.kernels.<name>`.
 
 `Filter` carries associated `Input` and `Output` types. The input is
-`Option<f64>` for single-series kernels, a pair for SAR, and a triple for
-TRANGE/ATR. The arity-generic pair and triple are re-aliased as `kernels::Hl`
-and `kernels::Hlc` so the kernels name their domain inputs. `FilterInput` maps
+`Option<f64>` for single-series kernels, a pair for SAR and MFI, and a triple for
+TRANGE/ATR. The arity-generic tuples are re-aliased as `kernels::Hl` and
+`kernels::Hlc` so the kernels name their domain inputs. `FilterInput` maps
 each row type to its exact Polars source signature, casted storage and traversal.
 STREAK exercises the non-float path: `Option<bool>` from a Boolean series and
-`i64` into an Int64 output builder.
+`i64` into an Int64 output builder. A filter needing another source shape adds
+only that concrete row type and `FilterInput` implementation; `run_filter`
+itself is already independent of source arity and dtype.
 
 The flat native-module layout is deliberate. A `kernels.indicators` submodule
 was built and rejected because `import bartons.kernels.indicators` requires a

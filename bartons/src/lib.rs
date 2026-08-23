@@ -14,6 +14,9 @@ static ALLOC: PolarsAllocator = PolarsAllocator::new();
 fn python_kernels(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_function(wrap_pyfunction!(kernels::ema::ema_py, m)?)?;
+    m.add_function(wrap_pyfunction!(kernels::dema::dema_py, m)?)?;
+    m.add_function(wrap_pyfunction!(kernels::tema::tema_py, m)?)?;
+    m.add_function(wrap_pyfunction!(kernels::hma::hma_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::sma::sma_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::rma::rma_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::wma::wma_py, m)?)?;
@@ -28,6 +31,7 @@ fn python_kernels(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(kernels::streak::streak_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::linreg::linreg_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::quadreg::quadreg_py, m)?)?;
+    m.add_function(wrap_pyfunction!(kernels::mfi::mfi_py, m)?)?;
     m.add_function(wrap_pyfunction!(samples::random_prices_py, m)?)?;
     m.add_function(wrap_pyfunction!(samples::with_n_chunks_py, m)?)?;
     Ok(())

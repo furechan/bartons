@@ -1,6 +1,6 @@
 # bartons
 
-Polars plugin providing financial/technical analysis expressions, implemented in Rust via PyO3 + Maturin. Currently exposes EMA (Exponential Moving Average), SMA (Simple Moving Average), RMA (Wilder's / running moving average), WMA (Weighted Moving Average), RSI (Wilder's Relative Strength Index), TRANGE (True Range), ATR (Average True Range), MAD (rolling Mean Absolute Deviation), CCI (Commodity Channel Index), KER (Kaufman Efficiency Ratio), KAMA (Kaufman Adaptive Moving Average), SAR (Parabolic Stop and Reverse), STREAK (consecutive true count), the LINREG and QUADREG families, and the kernel-free MACD and price transforms (AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE).
+Polars plugin providing financial/technical analysis expressions, implemented in Rust via PyO3 + Maturin. Currently exposes EMA, DEMA, TEMA, HMA, SMA, RMA, WMA, RSI, TRANGE, ATR, MAD, CCI, MFI, KER, KAMA, SAR, STREAK, the LINREG and QUADREG families, and the kernel-free MACD and price transforms (AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE).
 
 ## Architecture
 
@@ -180,9 +180,9 @@ Open work is tracked in [BACKLOG.md](BACKLOG.md).
   behind their shape and the PyPI facts (immutable `Requires-Dist`, filenames never
   reusable, yank-not-delete)
 - [docs/adding-an-indicator.md](docs/adding-an-indicator.md) — the end-to-end checklist
-- [docs/unified-run-driver.md](docs/unified-run-driver.md) — deferred proposal to collapse the two drivers into one; revisit when a fourth input arity appears
+- [docs/unified-run-driver.md](docs/unified-run-driver.md) — implemented typed `run_filter` design; new dtypes or source arities add only the concrete `FilterInput` signature they require
 - [docs/builder-vs-collect-benchmark.md](docs/builder-vs-collect-benchmark.md) — recorded kernel micro-benchmark (2026-08-17): the `Filter` abstraction is free, `append_option` costs ~1.6× — read before touching the builder append in `run_filter`
-- [docs/izip-vs-index-benchmark.md](docs/izip-vs-index-benchmark.md) — recorded driver micro-benchmark (2026-08-18): hoisting the per-element downcast beats `ChunkedArray::iter()`; both drivers use `FastIter`, which ties the native Arrow iterator in the unary single-chunk case
+- [docs/izip-vs-index-benchmark.md](docs/izip-vs-index-benchmark.md) — recorded driver micro-benchmark (2026-08-18): hoisting the per-element downcast beats `ChunkedArray::iter()`; the unified driver's numeric `FilterInput` paths use `FastIter`, which ties the native Arrow iterator in the unary single-chunk case
 
 **Two artifacts are both called "polars"**, on unrelated version schemes, so a
 bare "polars 0.54" is ambiguous. These docs say **polars-rs** for the Rust crate

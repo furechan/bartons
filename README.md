@@ -74,6 +74,9 @@ CCI(20, src=TYPPRICE())          # same thing
 | | |
 |---|---|
 | `EMA(period)` | Exponential moving average |
+| `DEMA(period)` | Double exponential moving average |
+| `TEMA(period=20)` | Triple exponential moving average |
+| `HMA(period)` | Hull moving average |
 | `SMA(period)` | Simple moving average |
 | `RMA(period)` | Wilder's running moving average |
 | `WMA(period)` | Weighted moving average |
@@ -100,6 +103,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `QUADREG_SLOPE(period=20, offset=0)` | Rolling quadratic-regression slope |
 | `QUADREG_RVALUE(period=20)` | Rolling quadratic partial r-value |
 | `QUADREG_RMSE(period=20)` | Rolling quadratic-regression RMSE |
+| `MFI(period=14)` | Money Flow Index |
 <!-- indicators:end -->
 
 

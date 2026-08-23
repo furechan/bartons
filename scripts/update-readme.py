@@ -12,6 +12,9 @@ END = "<!-- indicators:end -->"
 
 INDICATORS = {
     "EMA": ("EMA(period)", "Exponential moving average"),
+    "DEMA": ("DEMA(period)", "Double exponential moving average"),
+    "TEMA": ("TEMA(period=20)", "Triple exponential moving average"),
+    "HMA": ("HMA(period)", "Hull moving average"),
     "SMA": ("SMA(period)", "Simple moving average"),
     "RMA": ("RMA(period)", "Wilder's running moving average"),
     "WMA": ("WMA(period)", "Weighted moving average"),
@@ -50,6 +53,7 @@ INDICATORS = {
     "QUADREG_SLOPE": ("QUADREG_SLOPE(period=20, offset=0)", "Rolling quadratic-regression slope"),
     "QUADREG_RVALUE": ("QUADREG_RVALUE(period=20)", "Rolling quadratic partial r-value"),
     "QUADREG_RMSE": ("QUADREG_RMSE(period=20)", "Rolling quadratic-regression RMSE"),
+    "MFI": ("MFI(period=14)", "Money Flow Index"),
 }
 
 

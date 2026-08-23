@@ -40,6 +40,27 @@ def ref_ema(xs, period):
     return out
 
 
+def ref_dema(xs, period):
+    """DEMA composed independently from two EMA passes."""
+    first = ref_ema(xs, period)
+    second = ref_ema(first, period)
+    return [
+        None if a is None or b is None else 2.0 * a - b
+        for a, b in zip(first, second)
+    ]
+
+
+def ref_tema(xs, period):
+    """TEMA composed independently from three EMA passes."""
+    first = ref_ema(xs, period)
+    second = ref_ema(first, period)
+    third = ref_ema(second, period)
+    return [
+        None if a is None or b is None or c is None else 3.0 * a - 3.0 * b + c
+        for a, b, c in zip(first, second, third)
+    ]
+
+
 def ref_macd(xs, fast=12, slow=26, signal=9):
     """MACD composed from the independent EMA oracle."""
     fast_values = ref_ema(xs, fast)
@@ -155,6 +176,17 @@ def ref_wma(xs, period):
         else:
             out.append(None)
     return out
+
+
+def ref_hma(xs, period):
+    """HMA composed independently from its three WMA passes."""
+    half = ref_wma(xs, period // 2)
+    full = ref_wma(xs, period)
+    combined = [
+        None if a is None or b is None else 2.0 * a - b
+        for a, b in zip(half, full)
+    ]
+    return ref_wma(combined, math.isqrt(period))
 
 
 def ref_trange(highs, lows, closes):
@@ -368,6 +400,45 @@ def ref_quadreg(xs, period=20, output="forecast", offset=0):
         else:
             raise ValueError(output)
         out.append(result)
+
+    return out
+
+
+def ref_mfi(srcs, volumes, period=14):
+    """Money Flow Index from directly maintained signed-flow windows."""
+    out = []
+    window = []
+    previous = None
+
+    for src, volume in zip(srcs, volumes):
+        if src is None:
+            window = []
+            previous = None
+            out.append(None)
+            continue
+
+        prior, previous = previous, src
+        if volume is None:
+            window = []
+            out.append(None)
+            continue
+        if prior is None:
+            out.append(None)
+            continue
+
+        raw_flow = src * volume
+        flow = raw_flow if src > prior else -raw_flow if src < prior else 0.0
+        window.append(flow)
+        if len(window) > period:
+            window.pop(0)
+        if len(window) < period:
+            out.append(None)
+            continue
+
+        positive = sum(value for value in window if value > 0.0)
+        negative = -sum(value for value in window if value < 0.0)
+        total = positive + negative
+        out.append(100.0 * positive / total if total > 0.0 else math.nan)
 
     return out
 

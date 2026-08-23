@@ -29,9 +29,11 @@ from bartons import kernels
 # surface is uniform — every price series is a Series, every period an int.
 PARAM_TYPES = {
     "series": "pl.Series",
+    "src": "pl.Series",
     "high": "pl.Series",
     "low": "pl.Series",
     "close": "pl.Series",
+    "volume": "pl.Series",
     "period": "int",
     "offset": "int",
     "rebase_interval": "int | None",

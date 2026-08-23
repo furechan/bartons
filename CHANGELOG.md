@@ -2,6 +2,21 @@
 
 ## 0.1.2
 
+- **Add fused `DEMA`, `TEMA`, and `HMA` kernels.** These established moving
+  averages are first-class expression and eager APIs rather than Python-only
+  compositions. DEMA and TEMA cascade the existing EMA state machine; HMA
+  cascades the existing WMA state machine using `period // 2` and
+  `floor(sqrt(period))`. This preserves the primitive kernels' warmup and null
+  semantics while avoiding intermediate Polars series and plugin boundaries.
+
+- **Add the fused `MFI` kernel.** Money Flow Index consumes a price source and
+  volume through the unified driver's Float64 pair input, assigning source ×
+  volume to rolling positive and negative flow sums. The expression factory
+  defaults the source to `TYPPRICE()` while permitting arbitrary composition.
+  Integer volume is cast to Float64. Missing source resets both direction and
+  the window; missing volume resets the window while retaining the source for
+  the next direction comparison.
+
 - **Add the selector-based `QUADREG` kernel.** One centered-grid quadratic
   regression filter serves `QUADREG`, `QUADREG_CURVE`, `QUADREG_SLOPE`,
   `QUADREG_RVALUE`, and `QUADREG_RMSE`. The curve output is the quadratic

@@ -45,6 +45,17 @@ def cci(series: pl.Series, *, period: int = 20) -> pl.Series:
     ...
 
 
+def dema(series: pl.Series, *, period: int = 20) -> pl.Series:
+    """
+    Double exponential moving average.
+
+    Args:
+        series: input values.
+        period: averaging period (default 20).
+    """
+    ...
+
+
 def ema(series: pl.Series, *, period: int = 20) -> pl.Series:
     """
     Exponential moving average.
@@ -55,6 +66,19 @@ def ema(series: pl.Series, *, period: int = 20) -> pl.Series:
 
     Returns:
         A Float64 series; null during the warmup period.
+    """
+    ...
+
+
+def hma(series: pl.Series, *, period: int = 20) -> pl.Series:
+    """
+    Hull moving average.
+
+    Uses periods `period / 2` and `floor(sqrt(period))`.
+
+    Args:
+        series: input values.
+        period: averaging period (default 20; must be greater than 1).
     """
     ...
 
@@ -125,6 +149,21 @@ def mad(series: pl.Series, *, period: int = 20) -> pl.Series:
 
     Returns:
         A Float64 series; null during the warmup period.
+    """
+    ...
+
+
+def mfi(src: pl.Series, volume: pl.Series, *, period: int = 14) -> pl.Series:
+    """
+    Money Flow Index.
+
+    Args:
+        src: source prices, conventionally typical price.
+        volume: traded volume, cast to Float64.
+        period: rolling money-flow period (default 14).
+
+    Returns:
+        A Float64 series in 0..=100; null during warmup and after incomplete bars.
     """
     ...
 
@@ -234,6 +273,17 @@ def streak(series: pl.Series) -> pl.Series:
     Returns:
         A non-null Int64 series starting at one within each true run and zero
         otherwise.
+    """
+    ...
+
+
+def tema(series: pl.Series, *, period: int = 20) -> pl.Series:
+    """
+    Triple exponential moving average.
+
+    Args:
+        series: input values.
+        period: averaging period (default 20).
     """
     ...
 

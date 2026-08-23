@@ -27,12 +27,16 @@ from bartons.samples import random_prices
 from bartons.indicators import (
     ATR,
     CCI,
+    DEMA,
     EMA,
     KAMA,
     KER,
+    HMA,
     LINREG,
     LINREG_RVALUE,
     LINREG_SLOPE,
+    MFI,
+    TEMA,
     QUADREG,
     QUADREG_CURVE,
     RMA,
@@ -43,8 +47,9 @@ from bartons.indicators import (
     WMA,
 )
 from mintalib.expressions import (
-    SMA as M_SMA, EMA as M_EMA, WMA as M_WMA, RMA as M_RMA,
-    RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, CCI as M_CCI,
+    SMA as M_SMA, EMA as M_EMA, DEMA as M_DEMA, TEMA as M_TEMA,
+    HMA as M_HMA, WMA as M_WMA, RMA as M_RMA,
+    RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, CCI as M_CCI, MFI as M_MFI,
     KER as M_KER, KAMA as M_KAMA, SAR as M_SAR, TSF as M_TSF,
     SLOPE as M_SLOPE, RVALUE as M_RVALUE, QSF as M_QSF, CURVE as M_CURVE,
 )
@@ -54,12 +59,16 @@ from mintalib.expressions import (
 PAIRS = [
     ("SMA(20)", SMA(20),  M_SMA(20)),
     ("EMA(20)", EMA(20),  M_EMA(20)),
+    ("DEMA(20)", DEMA(20), M_DEMA(20)),
+    ("TEMA(20)", TEMA(20), M_TEMA(20)),
+    ("HMA(20)", HMA(20), M_HMA(20)),
     ("WMA(20)", WMA(20),  M_WMA(20)),
     ("RMA(20)", RMA(20),  M_RMA(20)),
     ("RSI(14)", RSI(14),  M_RSI(14)),
     ("TRANGE",  TRANGE(), M_TRANGE()),
     ("ATR(14)", ATR(14),  M_ATR(14)),
     ("CCI(20)", CCI(20),  M_CCI(20)),
+    ("MFI(14)", MFI(14), M_MFI(14)),
     # KER/KAMA are timing pairs only: mintalib's calc_ker spans period-1 changes
     # in the numerator against period in the denominator, so its numbers differ
     # from these. See CHANGELOG 0.1.2.

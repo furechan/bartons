@@ -17,6 +17,9 @@ column as the leading positional argument, which makes them compose with
 """
 
 from .ema import EMA
+from .dema import DEMA
+from .tema import TEMA
+from .hma import HMA
 from .sma import SMA
 from .rma import RMA
 from .wma import WMA
@@ -33,9 +36,13 @@ from .sar import SAR
 from .streak import STREAK
 from .linreg import LINREG, LINREG_RMSE, LINREG_RVALUE, LINREG_SLOPE
 from .quadreg import QUADREG, QUADREG_CURVE, QUADREG_RMSE, QUADREG_RVALUE, QUADREG_SLOPE
+from .mfi import MFI
 
 __all__ = [
     "EMA",
+    "DEMA",
+    "TEMA",
+    "HMA",
     "SMA",
     "RMA",
     "WMA",
@@ -62,4 +69,5 @@ __all__ = [
     "QUADREG_SLOPE",
     "QUADREG_RVALUE",
     "QUADREG_RMSE",
+    "MFI",
 ]
