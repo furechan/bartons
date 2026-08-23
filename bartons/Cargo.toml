@@ -7,6 +7,9 @@ name = "bartons"
 # is ever published independently, this becomes real — revisit then.
 version = "0.0.0"
 edition = "2021"
+description = "Financial and technical-analysis expressions for Polars, implemented in Rust"
+license = "MIT"
+repository = "https://github.com/furechan/bartons"
 
 [lib]
 # The name of the native library. This is the name which will be used in Python to import the
