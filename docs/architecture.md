@@ -42,7 +42,7 @@ group — a ternary CCI measured 0.51x there.
 
 The test is whether the step needs the bar's values *together over time*, not
 merely together. ATR's true range does — it reaches back to the previous close —
-so `TrangeFilter` takes three columns and its `Hlc` row type selects the typed
+so `TrangeFilter` takes three columns and its `HighLowCloseInput` row type selects the typed
 three-source `run_filter` path. Typical price does not.
 
 Keeping the reduction in one place also keeps it defined once. `CCI` and `MFI`
@@ -90,8 +90,11 @@ pyfunction flat as `bartons.kernels.<name>`.
 
 `Filter` carries associated `Input` and `Output` types. The input is
 `Option<f64>` for single-series kernels, a pair for SAR and MFI, and a triple for
-TRANGE/ATR. The arity-generic tuples are re-aliased as `kernels::Hl` and
-`kernels::Hlc` so the kernels name their domain inputs. `FilterInput` maps
+TRANGE/ATR. The kernel layer spells its domain aliases explicitly as
+`kernels::HighLowInput = (Option<f64>, Option<f64>)` and the corresponding
+three-value `kernels::HighLowCloseInput`; MFI similarly uses
+`kernels::SourceVolumeInput`. No arity-only alias leaks into the kernel
+vocabulary. `FilterInput` maps
 each row type to its exact Polars source signature, casted storage and traversal.
 STREAK exercises the non-float path: `Option<bool>` from a Boolean series and
 `i64` into an Int64 output builder. A filter needing another source shape adds

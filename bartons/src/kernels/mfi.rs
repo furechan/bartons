@@ -5,7 +5,8 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use serde::Deserialize;
 
-use crate::utils::{run_filter, Filter, Pair};
+use super::SourceVolumeInput;
+use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
 pub struct MfiKwargs {
@@ -83,10 +84,10 @@ impl MfiFilter {
 }
 
 impl Filter for MfiFilter {
-    type Input = Pair;
+    type Input = SourceVolumeInput;
     type Output = f64;
 
-    fn next(&mut self, (src, volume): Pair) -> Option<f64> {
+    fn next(&mut self, (src, volume): SourceVolumeInput) -> Option<f64> {
         let Some(src) = src else {
             self.reset();
             return None;

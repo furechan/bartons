@@ -7,7 +7,7 @@ use pyo3_polars::derive::polars_expr;
 
 use super::rma::RmaFilter;
 use super::trange::TrangeFilter;
-use super::Hlc;
+use super::HighLowCloseInput;
 use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
@@ -37,10 +37,10 @@ impl AtrFilter {
 }
 
 impl Filter for AtrFilter {
-    type Input = Hlc;
+    type Input = HighLowCloseInput;
     type Output = f64;
 
-    fn next(&mut self, hlc: Hlc) -> Option<f64> {
+    fn next(&mut self, hlc: HighLowCloseInput) -> Option<f64> {
         let tr = self.trange.next(hlc);
         self.rma.next(tr)
     }

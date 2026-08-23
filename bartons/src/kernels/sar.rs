@@ -5,7 +5,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use serde::Deserialize;
 
-use super::Hl;
+use super::HighLowInput;
 use crate::utils::{run_filter, Filter};
 
 #[derive(Deserialize)]
@@ -48,10 +48,10 @@ impl SarFilter {
 }
 
 impl Filter for SarFilter {
-    type Input = Hl;
+    type Input = HighLowInput;
     type Output = f64;
 
-    fn next(&mut self, (high, low): Hl) -> Option<f64> {
+    fn next(&mut self, (high, low): HighLowInput) -> Option<f64> {
         let (Some(high), Some(low)) = (high, low) else {
             return None;
         };

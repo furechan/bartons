@@ -4,7 +4,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use pyo3_polars::derive::polars_expr;
 
-use super::Hlc;
+use super::HighLowCloseInput;
 use crate::utils::{run_filter, Filter};
 
 /// Streaming True Range filter: feed one bar's `(high, low, close)` at a time
@@ -26,10 +26,10 @@ impl TrangeFilter {
 }
 
 impl Filter for TrangeFilter {
-    type Input = Hlc;
+    type Input = HighLowCloseInput;
     type Output = f64;
 
-    fn next(&mut self, (high, low, close): Hlc) -> Option<f64> {
+    fn next(&mut self, (high, low, close): HighLowCloseInput) -> Option<f64> {
         let tr = high.zip(low).map(|(hi, lo)| match self.prev_close {
             // For a valid OHLC bar (`hi >= lo`), true range is the width of
             // the envelope containing the bar and prev close.

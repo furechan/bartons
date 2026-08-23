@@ -43,22 +43,9 @@ pub(crate) fn check_lengths(inputs: &[&Series]) -> PolarsResult<usize> {
     Ok(len)
 }
 
-/// Three values from one row — the [`Filter::Input`] of the three-series
-/// indicators, fed as a single value so they share the single-series filters'
-/// contract.
-///
-/// Named by arity because the drivers here are: nothing in this module assumes
-/// what the three series mean. The indicator layer aliases it to
-/// `kernels::Hlc`, which is what the kernels that consume it actually say.
-pub(crate) type Triple = (Option<f64>, Option<f64>, Option<f64>);
-
-/// Two values from one row, used by binary filters such as SAR.
-pub(crate) type Pair = (Option<f64>, Option<f64>);
-
 /// A streaming filter: fed one [`Self::Input`] at a time, emitting one optional
 /// [`Self::Output`] per input. Today the row is a plain `Option<f64>` for the
-/// single-series indicators, a [`Pair`] for SAR, or a [`Triple`] for the
-/// three-series indicators.
+/// single-series indicators, or an explicit tuple for multi-series indicators.
 ///
 /// Implementors own their warmup and null semantics. A `None` output is emitted
 /// while warming up; on a `None` input the recursive filters (EMA, RMA) skip —
@@ -139,7 +126,7 @@ impl FilterInput for Option<bool> {
     }
 }
 
-impl FilterInput for Pair {
+impl FilterInput for (Option<f64>, Option<f64>) {
     type Sources<'a> = (&'a Series, &'a Series);
     type Casted = (Float64Chunked, Float64Chunked);
 
@@ -162,7 +149,7 @@ impl FilterInput for Pair {
     }
 }
 
-impl FilterInput for Triple {
+impl FilterInput for (Option<f64>, Option<f64>, Option<f64>) {
     type Sources<'a> = (&'a Series, &'a Series, &'a Series);
     type Casted = (Float64Chunked, Float64Chunked, Float64Chunked);
 
