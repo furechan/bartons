@@ -7,6 +7,7 @@ use pyo3_polars::error::PyPolarsErr;
 use pyo3_polars::PySeries;
 use serde::Deserialize;
 
+use crate::ring_buffer::RingBuffer;
 use crate::utils::{run_filter, Filter};
 
 const MIN_REBASE_INTERVAL: i64 = 1000;
@@ -67,9 +68,9 @@ pub struct QuadRegKwargs {
 /// window grid; data-dependent moments use an anchored grid that is periodically
 /// rebased to bound floating-point drift.
 pub struct QuadRegFilter {
-    buffer: Vec<(usize, f64)>,
-    idx: usize,
-    count: usize,
+    // Nulls clear the window, so retained values always have consecutive row
+    // indices. For a full window at row `i`, the evicted row is `i - capacity`.
+    buffer: RingBuffer<f64>,
     rebase_interval: usize,
     next_i: usize,
     anchor: usize,
@@ -118,9 +119,7 @@ impl QuadRegFilter {
         let vuu = su4 / s - (su2 / s) * (su2 / s);
 
         Ok(Self {
-            buffer: vec![(0, 0.0); period as usize],
-            idx: 0,
-            count: 0,
+            buffer: RingBuffer::new(period as usize),
             rebase_interval: rebase_interval
                 .unwrap_or_else(|| MIN_REBASE_INTERVAL.max(period.saturating_mul(2)))
                 as usize,
@@ -140,8 +139,7 @@ impl QuadRegFilter {
     }
 
     fn reset(&mut self) {
-        self.idx = 0;
-        self.count = 0;
+        self.buffer.clear();
         self.clear_sums();
     }
 
@@ -150,28 +148,6 @@ impl QuadRegFilter {
         self.sxz = 0.0;
         self.sx2z = 0.0;
         self.szz = 0.0;
-    }
-
-    fn slide(&mut self, i: usize, value: f64) {
-        let (tail_i, tail_value) = self.buffer[self.idx];
-        self.sub(tail_i, tail_value);
-        self.push(i, value);
-        self.add(i, value);
-    }
-
-    fn push(&mut self, i: usize, value: f64) {
-        if self.count == 0 {
-            self.anchor = i;
-        }
-        if self.count < self.buffer.len() {
-            self.count += 1;
-        }
-
-        self.buffer[self.idx] = (i, value);
-        self.idx += 1;
-        if self.idx == self.buffer.len() {
-            self.idx = 0;
-        }
     }
 
     fn add(&mut self, i: usize, z: f64) {
@@ -190,19 +166,33 @@ impl QuadRegFilter {
         self.szz -= z * z;
     }
 
-    fn rebase_interval_reached(&self, i: usize) -> bool {
+    fn rebase_needed(&self, i: usize) -> bool {
         self.rebase_interval > 0 && i - self.anchor >= self.rebase_interval
     }
 
-    fn rebase_sums(&mut self) {
-        if self.count == self.buffer.len() {
-            self.clear_sums();
-            self.anchor = self.buffer[self.idx].0;
-            for idx in 0..self.buffer.len() {
-                let (i, value) = self.buffer[idx];
-                self.add(i, value);
-            }
+    fn rebase_sums(&mut self, i: usize) {
+        if !self.buffer.is_full() {
+            return;
         }
+
+        let anchor = i + 1 - self.buffer.capacity();
+        let mut sz = 0.0;
+        let mut sxz = 0.0;
+        let mut sx2z = 0.0;
+        let mut szz = 0.0;
+        for (x, &value) in self.buffer.iter().enumerate() {
+            let x = x as f64;
+            sz += value;
+            sxz += x * value;
+            sx2z += x * x * value;
+            szz += value * value;
+        }
+
+        self.anchor = anchor;
+        self.sz = sz;
+        self.sxz = sxz;
+        self.sx2z = sx2z;
+        self.szz = szz;
     }
 }
 
@@ -219,17 +209,20 @@ impl Filter for QuadRegFilter {
             return None;
         };
 
-        if self.count < self.buffer.len() {
-            self.push(i, value);
-            self.add(i, value);
-        } else if self.rebase_interval_reached(i) {
-            self.push(i, value);
-            self.rebase_sums();
-        } else {
-            self.slide(i, value);
+        if self.buffer.is_empty() {
+            self.anchor = i;
         }
 
-        if self.count < self.buffer.len() {
+        match self.buffer.push(value) {
+            None => self.add(i, value),
+            Some(_) if self.rebase_needed(i) => self.rebase_sums(i),
+            Some(evicted) => {
+                self.sub(i - self.buffer.capacity(), evicted);
+                self.add(i, value);
+            }
+        }
+
+        if !self.buffer.is_full() {
             return None;
         }
 
@@ -333,8 +326,10 @@ mod tests {
 
         filter.next(Some(25.0));
         assert_eq!(filter.next_i - filter.anchor, 3);
-        assert_eq!(filter.buffer, vec![(3, 16.0), (4, 25.0), (2, 9.0)]);
-        assert_eq!(filter.idx, 2);
+        assert_eq!(
+            filter.buffer.iter().copied().collect::<Vec<_>>(),
+            [9.0, 16.0, 25.0]
+        );
         assert_eq!(filter.sxz, 66.0);
         assert_eq!(filter.sx2z, 116.0);
     }

@@ -273,6 +273,49 @@ def ref_atr(highs, lows, closes, period):
     return ref_rma(ref_trange(highs, lows, closes), period)
 
 
+def ref_dmi(highs, lows, closes, period):
+    """DMI composed independently from directional movement, ATR, and RMA."""
+    plus_dm = []
+    minus_dm = []
+    previous = None
+    for high, low in zip(highs, lows):
+        current = None if high is None or low is None else (high, low)
+        if current is None or previous is None:
+            plus_dm.append(None)
+            minus_dm.append(None)
+        else:
+            up = current[0] - previous[0]
+            down = previous[1] - current[1]
+            plus_dm.append(up if up > down and up > 0.0 else 0.0)
+            minus_dm.append(down if down > up and down > 0.0 else 0.0)
+        previous = current
+
+    atr = ref_atr(highs, lows, closes, period)
+    plus_dm = ref_rma(plus_dm, period)
+    minus_dm = ref_rma(minus_dm, period)
+    pdi = []
+    mdi = []
+    for tr, positive, negative in zip(atr, plus_dm, minus_dm):
+        if tr is None or positive is None or negative is None:
+            pdi.append(None)
+            mdi.append(None)
+        elif tr == 0.0:
+            pdi.append(0.0)
+            mdi.append(0.0)
+        else:
+            pdi.append(100.0 * positive / tr)
+            mdi.append(100.0 * negative / tr)
+
+    dx = []
+    for positive, negative in zip(pdi, mdi):
+        if positive is None or negative is None:
+            dx.append(None)
+        else:
+            total = positive + negative
+            dx.append(0.0 if total == 0.0 else 100.0 * abs(positive - negative) / total)
+    return ref_rma(dx, period), pdi, mdi
+
+
 def ref_ker(xs, period):
     """Kaufman Efficiency Ratio: the magnitude of the net move over a window of
     `period` changes divided by the total distance travelled within it, in

@@ -2,6 +2,19 @@
 
 ## 0.1.2
 
+- **Add a fused `DMI` struct kernel.** Directional movement, true range, the
+  positive and negative directional indices, and ADX now run through one
+  streaming filter. The eager kernel and Polars plugin transport one Struct
+  series with `adx`, `pdi`, and `mdi` fields, and the public `DMI()` factory
+  returns that native struct expression directly.
+
+- **Standardize multi-output indicators on native Struct expressions.** `MACD()`
+  now returns a `macd` Struct expression, matching DMI's expression and eager
+  transport. Keeping the struct intact through `.over(...)` and using
+  frame-level `unnest` gives callers explicit control over materialization and
+  avoids relying on grouped projection CSE. `ExprBundle` remains available as
+  an experiment but is no longer returned by shipped indicators.
+
 - **Add fused `DEMA`, `TEMA`, `HMA`, and `ZLEMA` kernels.** These established moving
   averages are first-class expression and eager APIs rather than Python-only
   compositions. DEMA and TEMA cascade the existing EMA state machine; HMA

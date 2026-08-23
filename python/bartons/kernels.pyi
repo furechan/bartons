@@ -56,6 +56,22 @@ def dema(series: pl.Series, *, period: int = 20) -> pl.Series:
     ...
 
 
+def dmi(high: pl.Series, low: pl.Series, close: pl.Series, *, period: int = 14) -> pl.Series:
+    """
+    Directional Movement Index.
+
+    Args:
+        high: high prices.
+        low: low prices.
+        close: close prices.
+        period: Wilder smoothing period (default 14).
+
+    Returns:
+        A Struct series with Float64 fields `adx`, `pdi`, and `mdi`.
+    """
+    ...
+
+
 def ema(series: pl.Series, *, period: int = 20) -> pl.Series:
     """
     Exponential moving average.

@@ -3,7 +3,6 @@ import pytest
 
 from helpers import assert_series_equal
 
-from bartons import ExprBundle
 from bartons.indicators import MACD
 from refimpl import ref_macd
 
@@ -34,31 +33,28 @@ def test_macd_matches_composed_reference(xs):
     periods = (3, 5, 2)
     frame = pl.DataFrame({"x": pl.Series(xs, dtype=pl.Float64)})
 
-    got = frame.select(MACD(*periods, src="x"))
+    got = frame.select(MACD(*periods, src="x")).unnest("macd")
     expected = expected_frame(xs, *periods)
 
     for name in expected.columns:
         assert_series_equal(got[name], expected[name], check_exact=False, rel_tol=1e-12)
 
 
-def test_macd_returns_named_bundle_and_defaults_to_close():
-    bundle = MACD(3, 5, 2)
-    assert isinstance(bundle, ExprBundle)
-    assert [expr.meta.output_name() for expr in bundle] == [
-        "macd",
-        "macdsignal",
-        "macdhist",
-    ]
-
+def test_macd_returns_named_struct_and_defaults_to_close():
+    result = MACD(3, 5, 2)
+    assert isinstance(result, pl.Expr)
+    assert result.meta.output_name() == "macd"
     frame = pl.DataFrame({"close": pl.Series(XS, dtype=pl.Float64)})
-    assert frame.select(bundle).columns == ["macd", "macdsignal", "macdhist"]
+    assert frame.select(result).schema["macd"] == pl.Struct(
+        {"macd": pl.Float64, "macdsignal": pl.Float64, "macdhist": pl.Float64}
+    )
 
 
 def test_macd_expression_first_form():
     frame = pl.DataFrame({"x": pl.Series(XS, dtype=pl.Float64)})
 
-    positional = frame.select(MACD(pl.col("x"), 3, 5, 2))
-    keyword = frame.select(MACD(3, 5, 2, src=pl.col("x")))
+    positional = frame.select(MACD(pl.col("x"), 3, 5, 2)).unnest("macd")
+    keyword = frame.select(MACD(3, 5, 2, src=pl.col("x"))).unnest("macd")
 
     assert positional.equals(keyword)
 

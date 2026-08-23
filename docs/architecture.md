@@ -71,8 +71,38 @@ name is a presentation concern of the indicator layer.
 
 The name is the bare factory name, matching the kernels and bearta, so
 `EMA(20)` and `EMA(50)` still collide and still want an explicit `.alias`. An
-outer alias always wins. An `ExprBundle` is left alone: its members carry their
-own names and the bundle has none of its own.
+outer alias always wins. The experimental `ExprBundle` utility is left alone by
+the decorators because its members carry their own names and the bundle has
+none of its own; shipped indicators no longer return it.
+
+### Fused struct transport, bundle presentation
+
+DMI is the multi-output kernel case. Its Rust filter computes ADX, plus DI,
+and minus DI together and `run_filter` builds one Struct series with `adx`,
+`pdi`, and `mdi` fields. Both native boundaries preserve that transport: the
+eager `kernels.dmi` call and the `dmi_expr` plugin entry point return the same
+Struct dtype.
+
+The public `DMI()` factory returns that Struct expression unchanged, named
+`dmi`. MACD, although composed in Python rather than fused in Rust, follows the
+same interface and returns a `macd` Struct expression. Multi-output indicators
+therefore retain a real Polars expression identity through `.alias()`, `.over()`
+and query planning; eager and expression kernels also expose the same logical
+type.
+
+Unpacking is deliberately explicit. Expression-level `.struct.unnest()` expands
+the fields inside the query plan and may duplicate a windowed projection when
+grouped CSE is unavailable. A controlled query can instead compute the struct
+once and cross the materialization boundary before unpacking:
+
+```python
+frame.select("ticker", DMI().over("ticker")).unnest("dmi")
+```
+
+Frame-level `unnest` rejects collisions with existing field names. That is an
+accepted Polars quirk: preserving the native struct gives callers control over
+whether unpacking happens before or after computation. `ExprBundle` remains in
+the package as an experiment, but is not the multi-output indicator interface.
 
 The two names are therefore independent strings — a literal in the Rust driver
 call, and the Python factory's `__name__` — for the kernel-backed indicators,
@@ -97,7 +127,9 @@ three-value `kernels::HighLowCloseInput`; MFI similarly uses
 vocabulary. `FilterInput` maps
 each row type to its exact Polars source signature, casted storage and traversal.
 STREAK exercises the non-float path: `Option<bool>` from a Boolean series and
-`i64` into an Int64 output builder. A filter needing another source shape adds
+`i64` into an Int64 output builder. DMI exercises structured output: its output
+value owns three independently nullable floats and its builder finishes them as
+one Struct series. A filter needing another source shape adds
 only that concrete row type and `FilterInput` implementation; `run_filter`
 itself is already independent of source arity and dtype.
 

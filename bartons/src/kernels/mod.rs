@@ -27,3 +27,4 @@ pub mod streak;
 pub mod linreg;
 pub mod quadreg;
 pub mod mfi;
+pub mod dmi;

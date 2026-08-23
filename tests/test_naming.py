@@ -25,8 +25,9 @@ ARGS = {
     "QUADREG": (3,), "QUADREG_CURVE": (3,), "QUADREG_SLOPE": (3,),
     "QUADREG_RVALUE": (3,), "QUADREG_RMSE": (3,),
     "MFI": (2,),
+    "DMI": (2,),
 }
-SINGLE = [name for name in indicators.__all__ if name != "MACD"]
+SINGLE = list(indicators.__all__)
 
 OHLC = {
     "open": [1.0, 2.0, 3.0, 4.0],
@@ -68,11 +69,6 @@ def test_whole_catalogue_composes_in_one_context():
     """No two factories collide on a default name."""
     got = _df().with_columns([_build(name) for name in SINGLE])
     assert got.columns == list(OHLC) + [name.lower() for name in SINGLE]
-
-
-def test_bundle_members_keep_their_own_names():
-    """MACD returns an ExprBundle, which names its members and is left alone."""
-    assert _df().select(*_build("MACD")).columns == ["macd", "macdsignal", "macdhist"]
 
 
 def test_same_indicator_twice_still_needs_an_alias():
@@ -140,6 +136,7 @@ KERNEL_BACKED = [
     "LINREG", "LINREG_SLOPE", "LINREG_RVALUE", "LINREG_RMSE",
     "QUADREG", "QUADREG_CURVE", "QUADREG_SLOPE", "QUADREG_RVALUE", "QUADREG_RMSE",
     "MFI",
+    "DMI",
 ]
 
 
@@ -153,7 +150,7 @@ def test_kernel_and_expression_names_agree(name):
     series = {k: df[k] for k in ("high", "low", "close", "volume")}
     period = ARGS.get(name, ())
 
-    if name in ("TRANGE", "ATR"):
+    if name in ("TRANGE", "ATR", "DMI"):
         eager = getattr(kernels, name.lower())(
             series["high"], series["low"], series["close"],
             **({"period": period[0]} if period else {}),

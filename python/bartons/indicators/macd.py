@@ -1,6 +1,5 @@
 import polars as pl
 
-from ..bundle import ExprBundle
 from ..prelude import wrap_src_indicator
 from ..typing import IntoExprColumn
 from .ema import EMA
@@ -13,11 +12,11 @@ def MACD(
     signal: int = 9,
     *,
     src: IntoExprColumn | None = None,
-) -> ExprBundle:
+) -> pl.Expr:
     """Moving Average Convergence/Divergence lines.
 
-    This is native Polars composition over the EMA kernel. It returns the
-    independently named ``macd``, ``macdsignal`` and ``macdhist`` expressions.
+    This is native Polars composition over the EMA kernel. It returns one
+    struct expression with ``macd``, ``macdsignal`` and ``macdhist`` fields.
 
     Args:
         fast: period of the fast EMA.
@@ -32,8 +31,8 @@ def MACD(
     line = EMA(fast, src=src) - EMA(slow, src=src)
     signal_line = EMA(signal, src=line)
 
-    return ExprBundle(
-        macd=line,
-        macdsignal=signal_line,
-        macdhist=line - signal_line,
+    return pl.struct(
+        line.alias("macd"),
+        signal_line.alias("macdsignal"),
+        (line - signal_line).alias("macdhist"),
     )

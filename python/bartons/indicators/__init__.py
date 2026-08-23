@@ -38,6 +38,7 @@ from .streak import STREAK
 from .linreg import LINREG, LINREG_RMSE, LINREG_RVALUE, LINREG_SLOPE
 from .quadreg import QUADREG, QUADREG_CURVE, QUADREG_RMSE, QUADREG_RVALUE, QUADREG_SLOPE
 from .mfi import MFI
+from .dmi import DMI
 
 __all__ = [
     "EMA",
@@ -72,4 +73,5 @@ __all__ = [
     "QUADREG_RVALUE",
     "QUADREG_RMSE",
     "MFI",
+    "DMI",
 ]

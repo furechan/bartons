@@ -69,9 +69,9 @@ def _named(factory: Callable[P, R]) -> Callable[P, R]:
     collide and still want an explicit ``.alias``. An outer alias always wins,
     so callers lose nothing.
 
-    An :class:`~bartons.bundle.ExprBundle` is left alone — its members carry
-    their own names (``macd``, ``macdsignal``, ``macdhist``) and the bundle has
-    no single name to give them. Adapted from bearta's ``_named``.
+    An experimental :class:`~bartons.bundle.ExprBundle` is left alone — its
+    members carry their own names and the bundle has no single name to give
+    them. Adapted from bearta's ``_named``.
     """
     name = getattr(factory, "__name__", type(factory).__name__).lower()
 

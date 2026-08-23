@@ -19,7 +19,7 @@ pip install bartons
 
 ```python
 import polars as pl
-from bartons.indicators import ATR, CCI, EMA, MACD, RSI, SMA, TYPPRICE
+from bartons.indicators import ATR, CCI, DMI, EMA, MACD, RSI, SMA, TYPPRICE
 from bartons.samples import sample_prices
 
 prices = sample_prices("daily")
@@ -105,15 +105,28 @@ CCI(20, src=TYPPRICE())          # same thing
 | `QUADREG_RVALUE(period=20)` | Rolling quadratic partial r-value |
 | `QUADREG_RMSE(period=20)` | Rolling quadratic-regression RMSE |
 | `MFI(period=14)` | Money Flow Index |
+| `DMI(period=14)` | ADX, plus DI and minus DI expressions |
 <!-- indicators:end -->
 
 
-Multi-output native indicators return an `ExprBundle`, essentially a tuple of expressions:
+Multi-output indicators return one native Polars struct expression. Keep it
+intact through the query, especially through grouped evaluation, then unnest the
+materialized frame when top-level columns are needed:
 
 ```python
-prices.with_columns(MACD())             # tuple works as single argument
-prices.with_columns(*MACD(), SMA(20))   # splat when mixing with other expressions
+prices.select("date", MACD()).unnest("macd")
+
+prices.select(
+    "ticker",
+    DMI().over("ticker"),
+).unnest("dmi")
 ```
+
+Expression-level `DMI().over("ticker").struct.unnest()` is convenient, but it
+projects the fields inside the query plan and may repeat a windowed kernel when
+grouped projection common-subexpression elimination is unavailable. Frame-level
+`unnest` makes the single struct computation explicit. It requires the field
+names not to collide with columns already present in that frame.
 
 ## Eager API
 
@@ -124,6 +137,7 @@ expression layer:
 from bartons import kernels
 
 kernels.ema(prices["close"], period=20)
+kernels.dmi(prices["high"], prices["low"], prices["close"]).struct.unnest()
 ```
 
 Parameters are keyword-only here. This path needs `polars>=1.28`; the expression

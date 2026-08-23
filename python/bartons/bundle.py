@@ -1,4 +1,4 @@
-"""Expression bundles: named argument packs for Polars frame contexts."""
+"""Experimental expression bundles: named packs for Polars frame contexts."""
 
 import warnings
 from collections.abc import Iterable
@@ -12,13 +12,13 @@ IntoExpr: TypeAlias = pl.Expr | str
 
 
 class ExprBundle(tuple[pl.Expr, ...]):
-    """A group of independently named expressions destined for one frame context.
+    """Experimental group of named expressions destined for one frame context.
 
-    Polars flattens the bundle when it is the sole positional argument. Splat it
-    when mixing it with other expressions::
+    Shipped multi-output indicators use native Struct expressions instead. This
+    utility remains available for evaluating the tuple-based alternative::
 
-        prices.with_columns(MACD())
-        prices.with_columns(*MACD(), SMA(20))
+        pair = ExprBundle(left=pl.col("a"), right=pl.col("b"))
+        frame.select(pair)
     """
 
     def __new__(cls, *args: IntoExpr, **kwargs: IntoExpr) -> "ExprBundle":
@@ -39,7 +39,7 @@ class ExprBundle(tuple[pl.Expr, ...]):
     def struct(self):
         """Compatibility bridge for struct-era call sites."""
         warnings.warn(
-            "ExprBundle.struct is transitional — pass the bundle directly, "
+            "ExprBundle is experimental — pass the bundle directly, "
             "or use .as_struct() when you want a record column",
             DeprecationWarning,
             stacklevel=2,

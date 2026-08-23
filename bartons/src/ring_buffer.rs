@@ -119,13 +119,4 @@ mod tests {
         assert_eq!(buffer.push(3), None);
         assert_eq!(buffer.iter().copied().collect::<Vec<_>>(), [3]);
     }
-
-    #[test]
-    fn supports_regression_pairs() {
-        let mut buffer = RingBuffer::<(usize, f64)>::new(2);
-        buffer.push((4, 1.5));
-        buffer.push((5, 2.5));
-        assert_eq!(buffer.push((6, 3.5)), Some((4, 1.5)));
-        assert_eq!(buffer.iter().copied().collect::<Vec<_>>(), [(5, 2.5), (6, 3.5)]);
-    }
 }
