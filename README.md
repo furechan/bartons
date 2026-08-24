@@ -37,6 +37,13 @@ prices.select("date", "close", EMA(20), RSI(14), ATR(14)).tail(3)
 └────────────┴────────────┴────────────┴───────────┴──────────┘
 ```
 
+## Conventions
+
+Price frames use a `date` or `datetime` column followed by lowercase `open`,
+`high`, `low`, `close`, and `volume` columns. Indicators refer to these lowercase
+OHLCV names by default; pass explicit column names or expressions when your
+schema differs.
+
 Each indicator names its output after itself in lowercase like `ema`, `sma` ... Use explicit aliases to avoid name collisions:
 
 ```python
