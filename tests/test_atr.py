@@ -3,7 +3,7 @@ import pytest
 from helpers import assert_series_equal
 
 from bartons import kernels
-from bartons.indicators import ATR
+from bartons.indicators import ATR, NATR
 from refimpl import ref_atr
 
 
@@ -73,6 +73,37 @@ def test_atr_accepts_column_names_and_exprs():
     expected = expected_series([10.0, 12.0, 11.0, 13.0], [8.0, 9.0, 9.0, 10.0], [9.0, 11.0, 10.0, 12.0], 2)
     assert_series_equal(by_name, expected, check_exact=False, rel_tol=1e-12)
     assert_series_equal(by_expr, expected, check_exact=False, rel_tol=1e-12)
+
+
+def test_natr_is_raw_atr_over_close():
+    highs, lows, closes, period = CASES[0]
+    df = _df(highs, lows, closes)
+    got = df.select(NATR(period))["natr"]
+    expected = df.select(ATR(period).truediv(pl.col("close")).alias("natr"))["natr"]
+    assert_series_equal(got, expected)
+
+
+def test_natr_accepts_custom_inputs():
+    df = pl.DataFrame(
+        {
+            "h": [10, 12, 11, 13],
+            "l": [8, 9, 9, 10],
+            "c": [9, 11, 10, 12],
+        }
+    )
+    custom = df.select(NATR(2, high="h", low="l", close="c"))
+    default = df.rename({"h": "high", "l": "low", "c": "close"}).select(NATR(2))
+    assert custom.equals(default)
+
+
+def test_natr_is_not_scaled_by_100():
+    highs, lows, closes, period = CASES[0]
+    df = _df(highs, lows, closes)
+    raw = df.select(NATR(period))["natr"]
+    scaled = df.select(NATR(period).mul(100.0))["natr"]
+
+    index = next(index for index, value in enumerate(raw) if value is not None)
+    assert scaled[index] == raw[index] * 100.0
 
 
 @pytest.mark.parametrize("highs,lows,closes,period", CASES)

@@ -3,9 +3,9 @@ import polars as pl
 from polars.plugins import register_plugin_function
 
 from ...prelude import PLUGIN_PATH, wrap_indicator
-from ...typing import IntoExprColumn
+from ...typing import IntoExprColumn, into_expr
 
-__all__ = ("ATR",)
+__all__ = ("ATR", "NATR")
 
 
 @wrap_indicator
@@ -34,3 +34,25 @@ def ATR(
         is_elementwise=False,
         kwargs=dict(period=period),
     )
+
+
+@wrap_indicator
+def NATR(
+    period: int = 14,
+    *,
+    high: IntoExprColumn = "high",
+    low: IntoExprColumn = "low",
+    close: IntoExprColumn = "close",
+) -> pl.Expr:
+    """Raw fractional Normalized Average True Range.
+
+    ``ATR(period) / close``. The result is a fractional ratio; multiply by 100
+    explicitly when percentage points are desired.
+
+    Args:
+        period: ATR smoothing period.
+        high: high column expression or name.
+        low: low column expression or name.
+        close: close column expression or name.
+    """
+    return ATR(period, high=high, low=low, close=close).truediv(into_expr(close))

@@ -8,6 +8,8 @@ START = "<!-- indicators:start -->"
 END = "<!-- indicators:end -->"
 
 INDICATORS = {
+    "ADL": ("ADL()", "Accumulation/Distribution Line"),
+    "ADOSC": ("ADOSC(fast=3, slow=10)", "Chaikin A/D Oscillator"),
     "EMA": ("EMA(period)", "Exponential moving average"),
     "DEMA": ("DEMA(period)", "Double exponential moving average"),
     "TEMA": ("TEMA(period=20)", "Triple exponential moving average"),
@@ -24,12 +26,14 @@ INDICATORS = {
     "RSI": ("RSI(period)", "Wilder's relative strength index"),
     "TRANGE": ("TRANGE()", "True range"),
     "ATR": ("ATR(period)", "Average true range"),
+    "NATR": ("NATR(period=14)", "Raw fractional normalized average true range"),
     "BBANDS": (
         "BBANDS(period=20, nbdev=2.0)",
         "Bollinger upper, middle and lower bands",
     ),
     "BBP": ("BBP(period=20, nbdev=2.0)", "Bollinger Percent B ratio"),
     "BBW": ("BBW(period=20, nbdev=2.0)", "Bollinger BandWidth ratio"),
+    "BOP": ("BOP()", "Unsmoothed Balance of Power"),
     "MACD": (
         "MACD(fast=12, slow=26, signal=9)",
         "MACD, signal and histogram expressions",
@@ -46,6 +50,7 @@ INDICATORS = {
         "Weighted close price, `(high + low + 2 * close) / 4`",
     ),
     "CCI": ("CCI(period=20)", "Commodity Channel Index"),
+    "CMF": ("CMF(period=20)", "Chaikin Money Flow"),
     "KER": ("KER(period=10)", "Kaufman efficiency ratio"),
     "KAMA": (
         "KAMA(period=10, fastn=2, slown=30)",
@@ -71,7 +76,13 @@ INDICATORS = {
     "QUADREG_RVALUE": ("QUADREG_RVALUE(period=20)", "Rolling quadratic partial r-value"),
     "QUADREG_RMSE": ("QUADREG_RMSE(period=20)", "Rolling quadratic-regression RMSE"),
     "MFI": ("MFI(period=14)", "Money Flow Index"),
+    "OBV": ("OBV()", "On-Balance Volume"),
+    "PPO": ("PPO(fast=12, slow=26)", "Raw fractional Price Percentage Oscillator"),
     "DMI": ("DMI(period=14)", "ADX, plus DI and minus DI expressions"),
+    "DONCHIAN": (
+        "DONCHIAN(period=20)",
+        "Donchian upper, middle and lower channels",
+    ),
 }
 
 

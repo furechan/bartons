@@ -31,7 +31,9 @@ from bartons.indicators import (
     BBP,
     BBW,
     CCI,
+    CMF,
     DEMA,
+    DONCHIAN,
     EMA,
     KAMA,
     KER,
@@ -41,6 +43,7 @@ from bartons.indicators import (
     LINREG_RVALUE,
     LINREG_SLOPE,
     MFI,
+    NATR,
     TEMA,
     QUADREG,
     QUADREG_CURVE,
@@ -56,10 +59,10 @@ from bartons.indicators import (
 from mintalib.expressions import (
     ALMA as M_ALMA,
     BBANDS as M_BBANDS, BBP as M_BBP, BBW as M_BBW,
-    SMA as M_SMA, EMA as M_EMA, DEMA as M_DEMA, TEMA as M_TEMA,
+    SMA as M_SMA, EMA as M_EMA, DEMA as M_DEMA, DONCHIAN as M_DONCHIAN, TEMA as M_TEMA,
     HMA as M_HMA, WMA as M_WMA, RMA as M_RMA,
     ROC as M_ROC,
-    RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, CCI as M_CCI, MFI as M_MFI,
+    RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, NATR as M_NATR, CCI as M_CCI, CMF as M_CMF, MFI as M_MFI,
     KER as M_KER, KAMA as M_KAMA, KELTNER as M_KELTNER, SAR as M_SAR, TSF as M_TSF,
     STOCH as M_STOCH,
     SLOPE as M_SLOPE, RVALUE as M_RVALUE, QSF as M_QSF, CURVE as M_CURVE,
@@ -69,6 +72,7 @@ from mintalib.expressions import (
 
 PAIRS = [
     ("BBANDS(20)", BBANDS(20), M_BBANDS(20)),
+    ("DONCHIAN(20)", DONCHIAN(20), M_DONCHIAN(20)),
     ("BBP(20)", BBP(20), M_BBP(20)),
     ("BBW(20)", BBW(20), M_BBW(20)),
     ("SMA(20)", SMA(20),  M_SMA(20)),
@@ -83,7 +87,10 @@ PAIRS = [
     ("RSI(14)", RSI(14),  M_RSI(14)),
     ("TRANGE",  TRANGE(), M_TRANGE()),
     ("ATR(14)", ATR(14),  M_ATR(14)),
+    # Timing only: mintalib scales the same fractional ratio by 100.
+    ("NATR(14)", NATR(14), M_NATR(14)),
     ("CCI(20)", CCI(20),  M_CCI(20)),
+    ("CMF(20)", CMF(20), M_CMF(20)),
     ("MFI(14)", MFI(14), M_MFI(14)),
     # KER/KAMA are timing pairs only: mintalib's calc_ker spans period-1 changes
     # in the numerator against period in the denominator, so its numbers differ

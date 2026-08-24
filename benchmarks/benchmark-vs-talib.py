@@ -59,8 +59,11 @@ pta = _import_polars_talib()
 
 from bartons.samples import sample_prices, sample_dataset
 from bartons.indicators import (
+    ADL,
+    ADOSC,
     ATR,
     BBANDS,
+    BOP,
     CCI,
     DEMA,
     EMA,
@@ -68,6 +71,8 @@ from bartons.indicators import (
     LINREG,
     LINREG_SLOPE,
     MFI,
+    OBV,
+    PPO,
     ROC,
     TEMA,
     RSI,
@@ -81,11 +86,14 @@ from bartons.indicators import (
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
 
 PAIRS = [
+    ("ADL", ADL(), pta.ad()),
+    ("ADOSC(3,10)", ADOSC(3, 10), pta.adosc(fastperiod=3, slowperiod=10)),
     (
         "BBANDS(20)",
         BBANDS(20),
         pta.bbands(timeperiod=20, nbdevup=2.0, nbdevdn=2.0),
     ),
+    ("BOP", BOP(), pta.bop()),
     ("SMA(20)", SMA(20),  pta.sma(timeperiod=20)),
     ("EMA(20)", EMA(20),  pta.ema(timeperiod=20)),
     ("DEMA(20)", DEMA(20), pta.dema(timeperiod=20)),
@@ -96,6 +104,10 @@ PAIRS = [
     ("ATR(14)", ATR(14),  pta.atr(timeperiod=14)),
     ("CCI(20)", CCI(20),  pta.cci(timeperiod=20)),
     ("MFI(14)", MFI(14), pta.mfi(timeperiod=14)),
+    # Timing only: TA-Lib seeds OBV with the first volume; bartons starts at zero.
+    ("OBV", OBV(), pta.obv()),
+    # Timing only: TA-Lib scales the same fractional oscillator by 100.
+    ("PPO(12,26)", PPO(12, 26), pta.ppo(fastperiod=12, slowperiod=26)),
     # Timing only: TA-Lib scales the same fractional change by 100.
     ("ROC(10)", ROC(10), pta.roc(timeperiod=10)),
     (

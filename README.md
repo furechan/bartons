@@ -73,15 +73,20 @@ CCI(20, src=TYPPRICE())          # same thing
 <!-- indicators:start -->
 | | |
 |---|---|
+| `ADL()` | Accumulation/Distribution Line |
+| `ADOSC(fast=3, slow=10)` | Chaikin A/D Oscillator |
 | `ALMA(period=9, offset=0.85, sigma=6.0)` | Arnaud Legoux moving average |
 | `ATR(period)` | Average true range |
 | `AVGPRICE()` | Average price, `(open + high + low + close) / 4` |
 | `BBANDS(period=20, nbdev=2.0)` | Bollinger upper, middle and lower bands |
 | `BBP(period=20, nbdev=2.0)` | Bollinger Percent B ratio |
 | `BBW(period=20, nbdev=2.0)` | Bollinger BandWidth ratio |
+| `BOP()` | Unsmoothed Balance of Power |
 | `CCI(period=20)` | Commodity Channel Index |
+| `CMF(period=20)` | Chaikin Money Flow |
 | `DEMA(period)` | Double exponential moving average |
 | `DMI(period=14)` | ADX, plus DI and minus DI expressions |
+| `DONCHIAN(period=20)` | Donchian upper, middle and lower channels |
 | `EMA(period)` | Exponential moving average |
 | `HMA(period)` | Hull moving average |
 | `KAMA(period=10, fastn=2, slown=30)` | Kaufman adaptive moving average |
@@ -95,6 +100,9 @@ CCI(20, src=TYPPRICE())          # same thing
 | `MAD(period=20)` | Rolling mean absolute deviation |
 | `MEDPRICE()` | Median price, `(high + low) / 2` |
 | `MFI(period=14)` | Money Flow Index |
+| `NATR(period=14)` | Raw fractional normalized average true range |
+| `OBV()` | On-Balance Volume |
+| `PPO(fast=12, slow=26)` | Raw fractional Price Percentage Oscillator |
 | `QUADREG(period=20, offset=0)` | Rolling quadratic-regression curve |
 | `QUADREG_CURVE(period=20)` | Rolling quadratic coefficient |
 | `QUADREG_RMSE(period=20)` | Rolling quadratic-regression RMSE |

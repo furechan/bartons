@@ -2,6 +2,36 @@
 
 ## 0.1.2
 
+- **Add expression-native `ADL` and `ADOSC`.** The Accumulation/Distribution
+  Line cumulatively sums HLCV money-flow volume, while the Chaikin oscillator
+  composes fast and slow EMA kernels over that line. Neither requires a new
+  kernel.
+
+- **Add expression-native `BOP`.** Balance of Power is the unsmoothed per-bar
+  `(close - open) / (high - low)` expression. Smoothing remains an explicit
+  composition such as `SMA(20, src=BOP())`.
+
+- **Add expression-native `NATR`.** Normalized ATR lives alongside `ATR` and
+  returns the raw `ATR / close` ratio. Scaling to percentage points remains
+  explicit and no additional kernel is introduced.
+
+- **Add expression-native `PPO`.** The scalar Price Percentage Oscillator
+  composes fast and slow EMA kernels and returns their raw fractional spread.
+  Scaling to percentage points remains explicit and no dedicated kernel is
+  added.
+
+- **Add expression-native `CMF`.** Chaikin Money Flow composes the HLC money
+  flow multiplier with volume and native rolling sums. It accepts configurable
+  HLCV expressions and requires no dedicated kernel.
+
+- **Add expression-native `DONCHIAN`.** Donchian Channels compose rolling high
+  and low extrema into an `upperband`, `middleband`, and `lowerband` struct,
+  without wrapping native Polars extrema in dedicated kernels.
+
+- **Add expression-native `OBV`.** On-Balance Volume maps close direction to
+  signed volume and delegates accumulation to Polars `cum_sum`. The first row
+  and incomplete changes remain null while later rows resume the running sum.
+
 - **Add expression-native `KELTNER`.** Keltner Channels compose the existing
   typical-price, EMA, and ATR expressions into an `upperband`, `middleband`, and
   `lowerband` struct. Its high, low, and close inputs remain configurable,
