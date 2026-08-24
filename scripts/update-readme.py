@@ -10,6 +10,8 @@ END = "<!-- indicators:end -->"
 INDICATORS = {
     "ADL": ("ADL()", "Accumulation/Distribution Line"),
     "ADOSC": ("ADOSC(fast=3, slow=10)", "Chaikin A/D Oscillator"),
+    "AROON": ("AROON(period=14)", "Aroon Down and Up"),
+    "AROONOSC": ("AROONOSC(period=14)", "Aroon Oscillator"),
     "EMA": ("EMA(period)", "Exponential moving average"),
     "DEMA": ("DEMA(period)", "Double exponential moving average"),
     "TEMA": ("TEMA(period=20)", "Triple exponential moving average"),

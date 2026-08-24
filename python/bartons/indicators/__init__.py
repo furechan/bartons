@@ -21,6 +21,7 @@ column as the leading positional argument, which makes them compose with
 # import EMA``.
 from .lib.adl import *
 from .lib.alma import *
+from .lib.aroon import *
 from .lib.atr import *
 from .lib.bbands import *
 from .lib.bop import *

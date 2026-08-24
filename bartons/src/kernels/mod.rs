@@ -29,3 +29,4 @@ pub mod quadreg;
 pub mod mfi;
 pub mod dmi;
 pub mod alma;
+pub mod aroon;

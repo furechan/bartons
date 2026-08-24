@@ -61,6 +61,8 @@ from bartons.samples import sample_prices, sample_dataset
 from bartons.indicators import (
     ADL,
     ADOSC,
+    AROON,
+    AROONOSC,
     ATR,
     BBANDS,
     BOP,
@@ -88,6 +90,8 @@ from bartons.indicators import (
 PAIRS = [
     ("ADL", ADL(), pta.ad()),
     ("ADOSC(3,10)", ADOSC(3, 10), pta.adosc(fastperiod=3, slowperiod=10)),
+    ("AROON(14)", AROON(14), pta.aroon(timeperiod=14)),
+    ("AROONOSC(14)", AROONOSC(14), pta.aroonosc(timeperiod=14)),
     (
         "BBANDS(20)",
         BBANDS(20),
@@ -142,6 +146,22 @@ def fmt_ms(s: float) -> str:
     return f"{s * 1000:.3f}"
 
 
+STRUCT_FIELDS = {
+    "AROON": ("aroondown", "aroonup"),
+    "BBANDS": ("upperband", "middleband", "lowerband"),
+    "STOCH": ("slowk", "slowd"),
+}
+
+
+def fill_nan(name: str, expr: pl.Expr) -> pl.Expr:
+    fields = STRUCT_FIELDS.get(name.partition("(")[0])
+    if fields is None:
+        return expr.fill_nan(None)
+    return expr.struct.with_fields(
+        *(pl.field(field).fill_nan(None) for field in fields)
+    )
+
+
 def null_first_ohlc_row(df: pl.DataFrame) -> pl.DataFrame:
     """Set the first chronological OHLC row to null in each input series."""
     time_col = "date" if "date" in df.columns else "datetime"
@@ -174,7 +194,7 @@ def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, numbe
         try:
             t_b = runner(df, b_expr, repeat=repeat, number=number)
             t_t = runner(df, t_expr, repeat=repeat, number=number)
-            t_n = runner(df, t_expr.fill_nan(None), repeat=repeat, number=number)
+            t_n = runner(df, fill_nan(name, t_expr), repeat=repeat, number=number)
         except Exception as e:
             print(f"  {name:<22}  skipped ({e})")
             continue
@@ -195,7 +215,7 @@ def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, numbe
         # the one-by-one sum above.
         b_exprs = [b.alias(n) for n, b, _ in pairs]
         t_exprs = [t.alias(n) for n, _, t in pairs]
-        n_exprs = [t.fill_nan(None).alias(n) for n, _, t in pairs]
+        n_exprs = [fill_nan(n, t).alias(n) for n, _, t in pairs]
         try:
             t_b = bench_combined(df, b_exprs, over=over, repeat=repeat, number=number)
             t_t = bench_combined(df, t_exprs, over=over, repeat=repeat, number=number)

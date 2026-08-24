@@ -2,6 +2,12 @@
 
 ## 0.1.2
 
+- **Add the `AROON` kernel.** One high/low ring buffer holds `period + 1`
+  observations and finds the most recent rolling extremes in one
+  oldest-to-newest traversal. It returns an `aroondown`/`aroonup` struct and
+  matches TA-Lib's window and tie conventions. The expression-native
+  `AROONOSC` indicator subtracts those two fields without another kernel.
+
 - **Add expression-native `ADL` and `ADOSC`.** The Accumulation/Distribution
   Line cumulatively sums HLCV money-flow volume, while the Chaikin oscillator
   composes fast and slow EMA kernels over that line. Neither requires a new

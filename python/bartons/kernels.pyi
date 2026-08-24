@@ -27,6 +27,21 @@ def alma(series: pl.Series, *, period: int = 9, offset: float = 0.85, sigma: flo
     ...
 
 
+def aroon(high: pl.Series, low: pl.Series, *, period: int = 14) -> pl.Series:
+    """
+    Aroon Up and Down.
+
+    Args:
+        high: high prices.
+        low: low prices.
+        period: maximum age of an extreme (default 14).
+
+    Returns:
+        A Struct series with Float64 fields `aroondown` and `aroonup`.
+    """
+    ...
+
+
 def atr(high: pl.Series, low: pl.Series, close: pl.Series, *, period: int = 14) -> pl.Series:
     """
     Average True Range (Wilder's).

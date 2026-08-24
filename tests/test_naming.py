@@ -37,6 +37,7 @@ ARGS = {
     "MFI": (2,),
     "DMI": (2,),
     "ALMA": (2,),
+    "AROON": (2,), "AROONOSC": (2,),
 }
 SINGLE = list(indicators.__all__)
 
@@ -146,7 +147,7 @@ KERNEL_BACKED = [
     "EMA", "DEMA", "TEMA", "HMA", "ZLEMA", "SMA", "RMA", "WMA", "RSI", "TRANGE", "ATR", "MAD", "CCI", "KER", "KAMA", "SAR", "STREAK",
     "LINREG", "LINREG_SLOPE", "LINREG_RVALUE", "LINREG_RMSE",
     "QUADREG", "QUADREG_CURVE", "QUADREG_SLOPE", "QUADREG_RVALUE", "QUADREG_RMSE",
-    "MFI", "ALMA",
+    "MFI", "ALMA", "AROON",
     "DMI",
 ]
 
@@ -165,6 +166,10 @@ def test_kernel_and_expression_names_agree(name):
         eager = getattr(kernels, name.lower())(
             series["high"], series["low"], series["close"],
             **({"period": period[0]} if period else {}),
+        )
+    elif name == "AROON":
+        eager = getattr(kernels, name.lower())(
+            series["high"], series["low"], period=period[0]
         )
     elif name == "SAR":
         eager = kernels.sar(series["high"], series["low"])

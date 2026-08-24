@@ -76,6 +76,8 @@ CCI(20, src=TYPPRICE())          # same thing
 | `ADL()` | Accumulation/Distribution Line |
 | `ADOSC(fast=3, slow=10)` | Chaikin A/D Oscillator |
 | `ALMA(period=9, offset=0.85, sigma=6.0)` | Arnaud Legoux moving average |
+| `AROON(period=14)` | Aroon Down and Up |
+| `AROONOSC(period=14)` | Aroon Oscillator |
 | `ATR(period)` | Average true range |
 | `AVGPRICE()` | Average price, `(open + high + low + close) / 4` |
 | `BBANDS(period=20, nbdev=2.0)` | Bollinger upper, middle and lower bands |

@@ -14,6 +14,7 @@ static ALLOC: PolarsAllocator = PolarsAllocator::new();
 #[pymodule(name = "kernels")]
 fn python_kernels(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
+    m.add_function(wrap_pyfunction!(kernels::aroon::aroon_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::ema::ema_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::dema::dema_py, m)?)?;
     m.add_function(wrap_pyfunction!(kernels::tema::tema_py, m)?)?;

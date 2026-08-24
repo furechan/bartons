@@ -11,6 +11,11 @@ from .lib.adl import (
 
 from .lib.alma import ALMA
 
+from .lib.aroon import (
+    AROON,
+    AROONOSC,
+)
+
 from .lib.atr import (
     ATR,
     NATR,
@@ -102,6 +107,8 @@ __all__ = [
     "ADL",
     "ADOSC",
     "ALMA",
+    "AROON",
+    "AROONOSC",
     "ATR",
     "AVGPRICE",
     "BBANDS",
