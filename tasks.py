@@ -1,13 +1,12 @@
 """Project workflows. Run ``uv run inv --list`` to see available tasks."""
 
-from __future__ import annotations
-
 import os
 import shlex
 import shutil
 import sysconfig
 import urllib.error
 import urllib.request
+
 from pathlib import Path
 
 from invoke.context import Context
@@ -21,7 +20,7 @@ PYPROJECT = ROOT / "pyproject.toml"
 BUILD_JOBS = max(1, (os.cpu_count() or 2) // 2)
 
 
-def run_tests(c: Context) -> None:
+def cargo_test(c: Context) -> None:
     python_libdir = sysconfig.get_config_var("LIBDIR")
     env = {
         "PYO3_PYTHON": str(ROOT / ".venv/bin/python"),
@@ -35,10 +34,9 @@ def run_tests(c: Context) -> None:
         "cargo test --manifest-path bartons/Cargo.toml --no-default-features",
         env=env,
     )
-    c.run("uv run pytest")
 
 
-def clean_dist() -> None:
+def clean_dist(c: Context) -> None:
     if DIST.exists():
         shutil.rmtree(DIST)
     DIST.mkdir()
@@ -48,7 +46,7 @@ def capture_output(c: Context, command: str) -> str:
     return c.run(command, hide=True).stdout.strip()
 
 
-def check_pypi(version: str) -> None:
+def check_pypi(c: Context, version: str) -> None:
     url = f"https://pypi.org/pypi/bartons/{version}/json"
     try:
         urllib.request.urlopen(url).close()
@@ -77,7 +75,8 @@ def publish_guard(c: Context) -> None:
         raise Exit(f"refusing to publish: branch is not synchronized ({branch_status})")
 
     version = capture_output(c, "uv version --short")
-    check_pypi(version)
+
+    check_pypi(c, version)
 
     commit = capture_output(c, "git rev-parse --short HEAD")
     print(f"ok: clean, synchronized {branch} at {commit}")
@@ -91,14 +90,16 @@ def make(c: Context) -> None:
     c.run("python scripts/generate-kernel-stubs.py")
     c.run("python scripts/generate-indicator-stubs.py")
     c.run("uv run python scripts/update-readme.py")
-    run_tests(c)
     c.run("uv run ty check")
+    test(c)
 
 
 @task
 def build(c: Context, jobs: int = BUILD_JOBS) -> None:
     """Build an sdist and its wheel, then test the wheel."""
-    clean_dist()
+
+    clean_dist(c)
+
     c.run("maturin sdist --manifest-path bartons/Cargo.toml --out dist")
 
     sdists = list(DIST.glob("*.tar.gz"))
@@ -134,7 +135,8 @@ def publish(c: Context) -> None:
 @task
 def test(c: Context) -> None:
     """Run native Rust tests and pytest."""
-    run_tests(c)
+    c.run("uv run pytest")
+
 
 
 @task
