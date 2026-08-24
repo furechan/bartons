@@ -117,6 +117,69 @@ def ref_sma(xs, period):
     return out
 
 
+def ref_bbands(xs, period=20, nbdev=2.0):
+    """Bollinger Bands using population standard deviation per full window."""
+    upper = []
+    middle = []
+    lower = []
+    window = []
+    for value in xs:
+        if value is None:
+            window = []
+        else:
+            window.append(value)
+            if len(window) > period:
+                window.pop(0)
+
+        if len(window) < period:
+            upper.append(None)
+            middle.append(None)
+            lower.append(None)
+            continue
+
+        mean = sum(window) / period
+        deviation = math.sqrt(
+            sum((item - mean) ** 2 for item in window) / period
+        )
+        middle.append(mean)
+        upper.append(mean + nbdev * deviation)
+        lower.append(mean - nbdev * deviation)
+    return upper, middle, lower
+
+
+def ref_stoch(highs, lows, closes, period=14, fastn=3, slown=3):
+    """Slow stochastic oscillator composed from direct rolling windows."""
+
+    def rolling(values, window_size, aggregate):
+        result = []
+        window = []
+        for value in values:
+            if value is None:
+                window = []
+            else:
+                window.append(value)
+                if len(window) > window_size:
+                    window.pop(0)
+            result.append(
+                aggregate(window) if len(window) == window_size else None
+            )
+        return result
+
+    lowest = rolling(lows, period, min)
+    highest = rolling(highs, period, max)
+    fastk = [
+        None
+        if close is None or low is None or high is None
+        else 100.0 * (close - low) / (high - low)
+        if high != low
+        else float("nan")
+        for close, low, high in zip(closes, lowest, highest)
+    ]
+    slowk = rolling(fastk, fastn, lambda values: sum(values) / fastn)
+    slowd = rolling(slowk, slown, lambda values: sum(values) / slown)
+    return slowk, slowd
+
+
 def ref_mad(xs, period):
     """Rolling mean absolute deviation, recomputed directly per window."""
     out = []

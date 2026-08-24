@@ -76,6 +76,9 @@ CCI(20, src=TYPPRICE())          # same thing
 | `ALMA(period=9, offset=0.85, sigma=6.0)` | Arnaud Legoux moving average |
 | `ATR(period)` | Average true range |
 | `AVGPRICE()` | Average price, `(open + high + low + close) / 4` |
+| `BBANDS(period=20, nbdev=2.0)` | Bollinger upper, middle and lower bands |
+| `BBP(period=20, nbdev=2.0)` | Bollinger Percent B ratio |
+| `BBW(period=20, nbdev=2.0)` | Bollinger BandWidth ratio |
 | `CCI(period=20)` | Commodity Channel Index |
 | `DEMA(period)` | Double exponential moving average |
 | `DMI(period=14)` | ADX, plus DI and minus DI expressions |
@@ -100,6 +103,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `RSI(period)` | Wilder's relative strength index |
 | `SAR(afs=0.02, maxaf=0.2)` | Parabolic Stop and Reverse |
 | `SMA(period)` | Simple moving average |
+| `STOCH(period=14, fastn=3, slown=3)` | Slow stochastic oscillator, `%K` and `%D` |
 | `STREAK(src)` | Consecutive true count |
 | `TEMA(period=20)` | Triple exponential moving average |
 | `TRANGE()` | True range |

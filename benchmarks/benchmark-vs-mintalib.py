@@ -27,6 +27,9 @@ from bartons.samples import random_prices
 from bartons.indicators import (
     ALMA,
     ATR,
+    BBANDS,
+    BBP,
+    BBW,
     CCI,
     DEMA,
     EMA,
@@ -44,21 +47,27 @@ from bartons.indicators import (
     RSI,
     SAR,
     SMA,
+    STOCH,
     TRANGE,
     WMA,
 )
 from mintalib.expressions import (
     ALMA as M_ALMA,
+    BBANDS as M_BBANDS, BBP as M_BBP, BBW as M_BBW,
     SMA as M_SMA, EMA as M_EMA, DEMA as M_DEMA, TEMA as M_TEMA,
     HMA as M_HMA, WMA as M_WMA, RMA as M_RMA,
     RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, CCI as M_CCI, MFI as M_MFI,
     KER as M_KER, KAMA as M_KAMA, SAR as M_SAR, TSF as M_TSF,
+    STOCH as M_STOCH,
     SLOPE as M_SLOPE, RVALUE as M_RVALUE, QSF as M_QSF, CURVE as M_CURVE,
 )
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
 
 PAIRS = [
+    ("BBANDS(20)", BBANDS(20), M_BBANDS(20)),
+    ("BBP(20)", BBP(20), M_BBP(20)),
+    ("BBW(20)", BBW(20), M_BBW(20)),
     ("SMA(20)", SMA(20),  M_SMA(20)),
     ("EMA(20)", EMA(20),  M_EMA(20)),
     ("DEMA(20)", DEMA(20), M_DEMA(20)),
@@ -78,6 +87,7 @@ PAIRS = [
     ("KER(10)", KER(10),  M_KER(10)),
     ("KAMA(10)", KAMA(10), M_KAMA(10)),
     ("SAR", SAR(), M_SAR()),
+    ("STOCH(14,3,3)", STOCH(14, 3, 3), M_STOCH(14, 3, 3)),
     ("LINREG(20)", LINREG(20), M_TSF(20)),
     ("LINREG_SLOPE(20)", LINREG_SLOPE(20), M_SLOPE(20)),
     ("LINREG_RVALUE(20)", LINREG_RVALUE(20), M_RVALUE(20)),

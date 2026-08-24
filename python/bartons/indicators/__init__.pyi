@@ -8,6 +8,12 @@ from .lib.alma import ALMA
 
 from .lib.atr import ATR
 
+from .lib.bbands import (
+    BBANDS,
+    BBP,
+    BBW,
+)
+
 from .lib.cci import CCI
 
 from .lib.dema import DEMA
@@ -58,6 +64,8 @@ from .lib.sar import SAR
 
 from .lib.sma import SMA
 
+from .lib.stoch import STOCH
+
 from .lib.streak import STREAK
 
 from .lib.tema import TEMA
@@ -72,6 +80,9 @@ __all__ = [
     "ALMA",
     "ATR",
     "AVGPRICE",
+    "BBANDS",
+    "BBP",
+    "BBW",
     "CCI",
     "DEMA",
     "DMI",
@@ -96,6 +107,7 @@ __all__ = [
     "RSI",
     "SAR",
     "SMA",
+    "STOCH",
     "STREAK",
     "TEMA",
     "TRANGE",

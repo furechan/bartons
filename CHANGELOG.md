@@ -2,6 +2,23 @@
 
 ## 0.1.2
 
+- **Centralize expression input conversion.** `bartons.typing.into_expr` is now
+  the runtime counterpart to `IntoExprColumn`, converting column names and
+  Series where Python composition requires a concrete `pl.Expr` and replacing
+  local `_expr` helpers. Plugin-backed indicators continue passing inputs to
+  `register_plugin_function`, which already owns that conversion boundary.
+
+- **Add expression-native `STOCH`.** The slow stochastic oscillator composes
+  rolling high/low extrema with successive `%K` and `%D` moving averages and
+  returns one Polars struct with `slowk` and `slowd` fields. It accepts custom
+  high, low, and close expressions and requires no Rust kernel.
+
+- **Add the expression-native Bollinger Bands family.** `BBANDS` returns one
+  Polars struct with `upperband`, `middleband`, and `lowerband` fields; `BBP` and `BBW`
+  compose only the scalar expressions they require. All three use population
+  standard deviation and remain native Polars query expressions without a Rust
+  kernel.
+
 - **Move indicator implementations behind the public facade.** Modules now live
   under `bartons.indicators.lib`, keeping implementation module objects out of
   the `bartons.indicators` namespace. Public imports remain unchanged, and the

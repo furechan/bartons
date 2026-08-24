@@ -23,6 +23,12 @@ INDICATORS = {
     "RSI": ("RSI(period)", "Wilder's relative strength index"),
     "TRANGE": ("TRANGE()", "True range"),
     "ATR": ("ATR(period)", "Average true range"),
+    "BBANDS": (
+        "BBANDS(period=20, nbdev=2.0)",
+        "Bollinger upper, middle and lower bands",
+    ),
+    "BBP": ("BBP(period=20, nbdev=2.0)", "Bollinger Percent B ratio"),
+    "BBW": ("BBW(period=20, nbdev=2.0)", "Bollinger BandWidth ratio"),
     "MACD": (
         "MACD(fast=12, slow=26, signal=9)",
         "MACD, signal and histogram expressions",
@@ -45,6 +51,10 @@ INDICATORS = {
         "Kaufman adaptive moving average",
     ),
     "SAR": ("SAR(afs=0.02, maxaf=0.2)", "Parabolic Stop and Reverse"),
+    "STOCH": (
+        "STOCH(period=14, fastn=3, slown=3)",
+        "Slow stochastic oscillator, `%K` and `%D`",
+    ),
     "STREAK": ("STREAK(src)", "Consecutive true count"),
     "LINREG": ("LINREG(period=20, offset=0)", "Rolling linear-regression line"),
     "LINREG_SLOPE": ("LINREG_SLOPE(period=20)", "Rolling linear-regression slope"),

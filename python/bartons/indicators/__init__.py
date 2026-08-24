@@ -21,6 +21,7 @@ column as the leading positional argument, which makes them compose with
 # import EMA``.
 from .lib.alma import *
 from .lib.atr import *
+from .lib.bbands import *
 from .lib.cci import *
 from .lib.dema import *
 from .lib.dmi import *
@@ -38,6 +39,7 @@ from .lib.rma import *
 from .lib.rsi import *
 from .lib.sar import *
 from .lib.sma import *
+from .lib.stoch import *
 from .lib.streak import *
 from .lib.tema import *
 from .lib.trange import *

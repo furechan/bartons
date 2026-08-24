@@ -28,7 +28,7 @@ import timeit
 import polars as pl
 
 from bartons.samples import sample_prices, sample_dataset
-from bartons.indicators import ALMA, EMA, SMA, RMA, WMA, RSI, TRANGE, ATR, KER, STREAK
+from bartons.indicators import ALMA, ATR, BBANDS, EMA, KER, RMA, RSI, SMA, STOCH, STREAK, TRANGE, WMA
 
 
 # ── Native polars equivalents ───────────────────────────────────────────────────
@@ -67,6 +67,27 @@ def native_atr(period: int) -> pl.Expr:
     return native_trange().ewm_mean(alpha=1.0 / period, adjust=False)
 
 
+def native_bbands(period: int, nbdev: float = 2.0) -> pl.Expr:
+    src = pl.col("close")
+    middle = src.rolling_mean(period)
+    deviation = src.rolling_std(period, ddof=0) * nbdev
+    return pl.struct(
+        (middle + deviation).alias("upperband"),
+        middle.alias("middleband"),
+        (middle - deviation).alias("lowerband"),
+    )
+
+
+def native_stoch(period: int, fastn: int, slown: int) -> pl.Expr:
+    high, low, close = pl.col("high"), pl.col("low"), pl.col("close")
+    lowest = low.rolling_min(period)
+    highest = high.rolling_max(period)
+    fastk = 100.0 * (close - lowest) / (highest - lowest)
+    slowk = fastk.rolling_mean(fastn)
+    slowd = slowk.rolling_mean(slown)
+    return pl.struct(slowk.alias("slowk"), slowd.alias("slowd"))
+
+
 def native_ker(period: int) -> pl.Expr:
     """KER composed from native exprs: |net move| over path length.
 
@@ -90,6 +111,8 @@ def native_streak(src: pl.Expr) -> pl.Expr:
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
 
 PAIRS = [
+    ("BBANDS(20)", BBANDS(20), native_bbands(20)),
+    ("STOCH(14,3,3)", STOCH(14, 3, 3), native_stoch(14, 3, 3)),
     ("SMA(20)", SMA(20),  pl.col("close").rolling_mean(20)),
     ("EMA(20)", EMA(20),  pl.col("close").ewm_mean(span=20, adjust=False)),
     ("RMA(20)", RMA(20),  pl.col("close").ewm_mean(alpha=1.0 / 20, adjust=False)),

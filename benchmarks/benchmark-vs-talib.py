@@ -60,6 +60,7 @@ pta = _import_polars_talib()
 from bartons.samples import sample_prices, sample_dataset
 from bartons.indicators import (
     ATR,
+    BBANDS,
     CCI,
     DEMA,
     EMA,
@@ -71,6 +72,7 @@ from bartons.indicators import (
     RSI,
     SAR,
     SMA,
+    STOCH,
     TRANGE,
     WMA,
 )
@@ -78,6 +80,11 @@ from bartons.indicators import (
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
 
 PAIRS = [
+    (
+        "BBANDS(20)",
+        BBANDS(20),
+        pta.bbands(timeperiod=20, nbdevup=2.0, nbdevdn=2.0),
+    ),
     ("SMA(20)", SMA(20),  pta.sma(timeperiod=20)),
     ("EMA(20)", EMA(20),  pta.ema(timeperiod=20)),
     ("DEMA(20)", DEMA(20), pta.dema(timeperiod=20)),
@@ -88,6 +95,11 @@ PAIRS = [
     ("ATR(14)", ATR(14),  pta.atr(timeperiod=14)),
     ("CCI(20)", CCI(20),  pta.cci(timeperiod=20)),
     ("MFI(14)", MFI(14), pta.mfi(timeperiod=14)),
+    (
+        "STOCH(14,3,3)",
+        STOCH(14, 3, 3),
+        pta.stoch(fastk_period=14, slowk_period=3, slowd_period=3),
+    ),
     # Timing only: both are adaptive moving averages, but their initialization
     # differs, so early values do not match exactly.
     ("KAMA(10)", KAMA(10), pta.kama(timeperiod=10)),

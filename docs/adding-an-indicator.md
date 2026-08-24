@@ -95,7 +95,12 @@ public `bartons.indicators` facade. Copy
 [python/bartons/indicators/lib/ema.py](../python/bartons/indicators/lib/ema.py): the
 shared `PLUGIN_PATH` (the `bartons` package dir holding the compiled `.so`) is
 imported from [`bartons.prelude`](../python/bartons/prelude.py), and
-`IntoExprColumn` from the parent. Follow the mintalib convention: **period
+`IntoExprColumn` and its runtime counterpart `into_expr` from the parent.
+Use `into_expr` whenever an expression-only implementation needs an actual
+`pl.Expr` for operators or expression methods; do not add a local conversion
+helper. Do not use it merely before `register_plugin_function`, which already
+accepts `IntoExprColumn` inputs and owns that conversion boundary.
+Follow the mintalib convention: **period
 first, `src` keyword-only defaulting to `pl.col("close")`**.
 
 Wrap every factory. `@wrap_src_indicator` (also from the prelude) is for

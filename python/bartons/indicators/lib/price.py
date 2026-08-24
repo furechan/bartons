@@ -22,7 +22,7 @@ indicator TA-Lib gives it to.
 import polars as pl
 
 from ...prelude import wrap_indicator
-from ...typing import IntoExprColumn
+from ...typing import IntoExprColumn, into_expr
 
 __all__ = ("AVGPRICE", "MEDPRICE", "TYPPRICE", "WCLPRICE")
 
@@ -43,7 +43,9 @@ def AVGPRICE(
         low: low column expression or name.
         close: close column expression or name.
     """
-    return (_expr(open) + _expr(high) + _expr(low) + _expr(close)) / 4.0
+    return (
+        into_expr(open) + into_expr(high) + into_expr(low) + into_expr(close)
+    ) / 4.0
 
 
 @wrap_indicator
@@ -61,7 +63,7 @@ def MEDPRICE(
         high: high column expression or name.
         low: low column expression or name.
     """
-    return (_expr(high) + _expr(low)) / 2.0
+    return (into_expr(high) + into_expr(low)) / 2.0
 
 
 @wrap_indicator
@@ -80,7 +82,7 @@ def TYPPRICE(
         low: low column expression or name.
         close: close column expression or name.
     """
-    return (_expr(high) + _expr(low) + _expr(close)) / 3.0
+    return (into_expr(high) + into_expr(low) + into_expr(close)) / 3.0
 
 
 @wrap_indicator
@@ -97,12 +99,6 @@ def WCLPRICE(
         low: low column expression or name.
         close: close column expression or name.
     """
-    return (_expr(high) + _expr(low) + 2.0 * _expr(close)) / 4.0
-
-
-def _expr(value: IntoExprColumn) -> pl.Expr:
-    if isinstance(value, str):
-        return pl.col(value)
-    if isinstance(value, pl.Series):
-        return pl.lit(value)
-    return value
+    return (
+        into_expr(high) + into_expr(low) + 2.0 * into_expr(close)
+    ) / 4.0
