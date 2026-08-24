@@ -24,7 +24,7 @@ def implementation_modules() -> list[str]:
 
 def module_exports(module: str) -> tuple[str, ...]:
     """Read one implementation module's literal ``__all__`` declaration."""
-    path = PACKAGE / f"{module}.py"
+    path = PACKAGE / f"{module.replace('.', '/')}.py"
     tree = ast.parse(path.read_text())
     for node in tree.body:
         if isinstance(node, ast.Assign) and any(

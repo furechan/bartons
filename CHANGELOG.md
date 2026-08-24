@@ -2,6 +2,12 @@
 
 ## 0.1.2
 
+- **Move indicator implementations behind the public facade.** Modules now live
+  under `bartons.indicators.lib`, keeping implementation module objects out of
+  the `bartons.indicators` namespace. Public imports remain unchanged, and the
+  facade now derives exports from implementation provenance rather than an
+  uppercase-name convention.
+
 - **Replace the Just workflow with Invoke.** `tasks.py` is now the single readable
   task graph. `uv run inv build` creates an sdist, builds its wheel with a
   persistent Cargo target, and tests that wheel in one phase; `publish` only

@@ -20,7 +20,7 @@ factories that compose on top.
 The sets may sometimes coincide, but that is incidental. A composite such as
 BBANDS (`SMA ± k·std`) belongs in Python and needs no Rust counterpart; `MACD`
 and the `price` transforms are the shipped cases. The directories are named for these roles
-(`bartons/src/kernels/` and `python/bartons/indicators/`) so their divergence
+(`bartons/src/kernels/` and `python/bartons/indicators/lib/`) so their divergence
 reads as intended rather than as drift.
 
 Recognized standalone indicators may still warrant fused kernels even when
@@ -32,7 +32,7 @@ boundaries. Incidental combinations such as MACD remain expression graphs.
 ### Elementwise reductions stay out of Rust
 
 An indicator that reduces several columns elementwise — the price transforms in
-`indicators/price.py`, such as `TYPPRICE`'s `(high + low + close) / 3` — gets
+`indicators/lib/price.py`, such as `TYPPRICE`'s `(high + low + close) / 3` — gets
 no kernel, and any kernel consuming it takes the reduced series. Polars already
 computes the reduction vectorized on both surfaces: as an expression on the
 lazy path, and as `Series` arithmetic on the eager one, so `kernels.cci((high +
@@ -49,12 +49,13 @@ Keeping the reduction in one place also keeps it defined once. `CCI` and `MFI`
 supply `TYPPRICE()` as their default `src`; nothing restates the formula. MFI's
 kernel then combines that reduced source with volume over time.
 
-These factories are grouped in one `price.py` rather than a file each — the
+These factories are grouped in one `lib/price.py` rather than a file each — the
 one-file-per-indicator rule tracks kernels, and they have none. They stay
 re-exported flat from `indicators/__init__.py`, so there is still exactly one
-import path. Each implementation module declares its factories in `__all__`;
-the package initializer star-imports only those declared names and dynamically
-collects its uppercase runtime exports. A generated `indicators/__init__.pyi`
+public import path. Keeping implementations under `indicators/lib/` prevents
+their module objects from polluting the facade namespace. Each implementation
+module declares its factories in `__all__`; the package initializer star-imports
+only those names and selects exports by their `indicators.lib` provenance. A generated `indicators/__init__.pyi`
 provides the corresponding explicit re-exports to static analyzers.
 
 ## Output names

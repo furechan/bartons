@@ -16,31 +16,36 @@ column as the leading positional argument, which makes them compose with
     pl.col("close").pipe(EMA, 5).pipe(RSI, 14)
 """
 
-from .alma import *
-from .atr import *
-from .cci import *
-from .dema import *
-from .dmi import *
-from .ema import *
-from .hma import *
-from .kama import *
-from .ker import *
-from .linreg import *
-from .macd import *
-from .mad import *
-from .mfi import *
-from .price import *
-from .quadreg import *
-from .rma import *
-from .rsi import *
-from .sar import *
-from .sma import *
-from .streak import *
-from .tema import *
-from .trange import *
-from .wma import *
-from .zlema import *
+# Keep implementation modules under ``lib`` so their module objects do not land
+# in this facade namespace. Public imports remain ``from bartons.indicators
+# import EMA``.
+from .lib.alma import *
+from .lib.atr import *
+from .lib.cci import *
+from .lib.dema import *
+from .lib.dmi import *
+from .lib.ema import *
+from .lib.hma import *
+from .lib.kama import *
+from .lib.ker import *
+from .lib.linreg import *
+from .lib.macd import *
+from .lib.mad import *
+from .lib.mfi import *
+from .lib.price import *
+from .lib.quadreg import *
+from .lib.rma import *
+from .lib.rsi import *
+from .lib.sar import *
+from .lib.sma import *
+from .lib.streak import *
+from .lib.tema import *
+from .lib.trange import *
+from .lib.wma import *
+from .lib.zlema import *
 
 __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
-    name for name in dir() if name.isupper()
+    name
+    for name, obj in vars().items()
+    if getattr(obj, "__module__", "").startswith(f"{__name__}.lib.")
 ]

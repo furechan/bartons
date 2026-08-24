@@ -6,12 +6,22 @@ a column called `close` or `high` — overwriting the column it read, and
 colliding with any sibling reading the same source.
 """
 
+from types import ModuleType
+
 import polars as pl
 import pytest
 
 from bartons import indicators
 from bartons.bundle import ExprBundle
 from bartons.prelude import wrap_indicator, wrap_src_indicator
+
+
+def test_indicator_facade_hides_implementation_modules():
+    assert not any(
+        isinstance(obj, ModuleType)
+        and obj.__name__.startswith("bartons.indicators.lib.")
+        for obj in vars(indicators).values()
+    )
 
 
 # Leading positional args needed to build each factory, by name.

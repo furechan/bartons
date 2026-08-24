@@ -127,7 +127,7 @@ were both stale and confounded, and the corrected experiment now lives in
 
 `ty` (Astral's type checker, https://github.com/astral-sh/ty) is the project's
 designated type checker; run it as `uv run ty check`. The expression factories in
-`python/bartons/indicators/` are the checkable surface, including the wrapped
+`python/bartons/indicators/lib/` holds the checkable implementations, including the wrapped
 single-source ones — `wrap_src_indicator` returns a `SrcIndicator` protocol
 declaring both call forms as overloads, so `EMA(20)` and `EMA(pl.col("x"), 20)`
 both type as `pl.Expr`.
@@ -155,15 +155,15 @@ checklist (entry points, naming, conventions, tests). In short: add a Rust
 kernel + `#[polars_expr]` + `#[pyfunction]` in `bartons/src/kernels/<name>.rs`,
 declare it with `pub mod <name>;` in `bartons/src/kernels/mod.rs`, register the
 pyfunction in `bartons/src/lib.rs`, add the `<NAME>()` factory in
-`python/bartons/indicators/<name>.py` with its module-owned `__all__`, add one
-star import for that module in
+`python/bartons/indicators/lib/<name>.py` with its module-owned `__all__`, add one
+star import from that module in
 `python/bartons/indicators/__init__.py`, then mirror `tests/test_ema.py`.
 EMA and SMA are the reference implementations.
 
 ## Key files
 
 - [bartons/src/kernels/ema.rs](bartons/src/kernels/ema.rs) — reference implementation: the `ema` kernel, `EmaKwargs`, and the `ema_expr` / `ema_py` bindings
-- [python/bartons/indicators/ema.py](python/bartons/indicators/ema.py) — Python-side plugin registration; factories live in the `indicators` sub-package (`from bartons.indicators import EMA`)
+- [python/bartons/indicators/lib/ema.py](python/bartons/indicators/lib/ema.py) — Python-side plugin registration; implementations live under `lib`, while the public facade remains `from bartons.indicators import EMA`
 - [python/bartons/prelude.py](python/bartons/prelude.py) — shared factory machinery: `PLUGIN_PATH` and the `wrap_src_indicator` decorator (mirrors `bearta.prelude`)
 - [pyproject.toml](pyproject.toml) — Maturin config (module name, python-source, manifest-path)
 - [bartons/Cargo.toml](bartons/Cargo.toml) — Rust dependencies (pyo3, pyo3-polars, polars)

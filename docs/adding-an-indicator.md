@@ -88,10 +88,11 @@ Copy [bartons/src/kernels/ema.rs](../bartons/src/kernels/ema.rs). It contains al
 - **Do not** register `<name>_expr` — the polars plugin machinery finds it by
   symbol; adding it to the module is wrong.
 
-### 3. Python expression factory — `python/bartons/indicators/<name>.py`
+### 3. Python expression factory — `python/bartons/indicators/lib/<name>.py`
 
-Factories live in the `bartons.indicators` sub-package. Copy
-[python/bartons/indicators/ema.py](../python/bartons/indicators/ema.py): the
+Implementations live under `bartons.indicators.lib` and are re-exported by the
+public `bartons.indicators` facade. Copy
+[python/bartons/indicators/lib/ema.py](../python/bartons/indicators/lib/ema.py): the
 shared `PLUGIN_PATH` (the `bartons` package dir holding the compiled `.so`) is
 imported from [`bartons.prelude`](../python/bartons/prelude.py), and
 `IntoExprColumn` from the parent. Follow the mintalib convention: **period
@@ -110,7 +111,7 @@ An indicator whose extra inputs collapse *elementwise* into one series is
 single-source, not multi-input: build the reduction as its own expression
 factory and make that the default `src`. CCI does this with `TYPPRICE()`, which
 lives with the other OHLC transforms in
-[python/bartons/indicators/price.py](../python/bartons/indicators/price.py). See
+[python/bartons/indicators/lib/price.py](../python/bartons/indicators/lib/price.py). See
 [Elementwise reductions stay out of Rust](architecture.md#elementwise-reductions-stay-out-of-rust)
 for why the reduction gets no kernel, and for the ATR case where it does not
 apply.
@@ -118,8 +119,8 @@ apply.
 ```python
 from polars.plugins import register_plugin_function
 
-from ..prelude import PLUGIN_PATH, wrap_src_indicator
-from ..typing import IntoExprColumn
+from ...prelude import PLUGIN_PATH, wrap_src_indicator
+from ...typing import IntoExprColumn
 
 __all__ = ("<NAME>",)
 
@@ -137,9 +138,9 @@ def <NAME>(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
 
 The implementation module owns its public surface through `__all__`. In
 [python/bartons/indicators/__init__.py](../python/bartons/indicators/__init__.py),
-add only `from .<name> import *`. The star import is constrained by the
+add only `from .lib.<name> import *`. The star import is constrained by the
 implementation's `__all__`; the initializer derives its runtime `__all__`
-dynamically from uppercase imported names. `uv run inv stubs` generates explicit
+dynamically from implementation provenance. `uv run inv stubs` generates explicit
 typed re-exports for static analyzers. Adding another factory to an existing
 module therefore changes only that module's `__all__`.
 

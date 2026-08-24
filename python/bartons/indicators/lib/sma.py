@@ -2,18 +2,15 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from ..prelude import PLUGIN_PATH, wrap_src_indicator
-from ..typing import IntoExprColumn
+from ...prelude import PLUGIN_PATH, wrap_src_indicator
+from ...typing import IntoExprColumn
 
-__all__ = ("WMA",)
+__all__ = ("SMA",)
 
 
 @wrap_src_indicator
-def WMA(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
-    """Weighted moving average (linear weights).
-
-    Each window value is weighted by its recency: the oldest gets weight 1 and
-    the newest gets weight ``period``, divided by ``period*(period+1)/2``.
+def SMA(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
+    """Simple moving average.
 
     Args:
         period: averaging period.
@@ -26,7 +23,7 @@ def WMA(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,
-        function_name="wma_expr",
+        function_name="sma_expr",
         is_elementwise=False,
         kwargs=dict(period=period),
     )
