@@ -2,6 +2,16 @@
 
 ## 0.1.2
 
+- **Add expression-native `KELTNER`.** Keltner Channels compose the existing
+  typical-price, EMA, and ATR expressions into an `upperband`, `middleband`, and
+  `lowerband` struct. Its high, low, and close inputs remain configurable,
+  without adding a dedicated Rust kernel.
+
+- **Add expression-native `ROC`.** Raw fractional rate of change delegates to
+  Polars `pct_change`, supports arbitrary expressions and periods, and preserves
+  native null and floating-point behavior without a Rust kernel. Scaling for
+  display is deliberately left to callers.
+
 - **Centralize expression input conversion.** `bartons.typing.into_expr` is now
   the runtime counterpart to `IntoExprColumn`, converting column names and
   Series where Python composition requires a concrete `pl.Expr` and replacing

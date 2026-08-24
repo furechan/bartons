@@ -1,6 +1,6 @@
 # bartons
 
-Polars plugin providing financial/technical analysis expressions, implemented in Rust via PyO3 + Maturin. Currently exposes EMA, DEMA, TEMA, HMA, ZLEMA, ALMA, SMA, RMA, WMA, RSI, STOCH, TRANGE, ATR, BBANDS, BBP, BBW, MAD, CCI, MFI, DMI, KER, KAMA, SAR, STREAK, the LINREG and QUADREG families, and the kernel-free MACD and price transforms (AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE).
+Polars plugin providing financial/technical analysis expressions, implemented in Rust via PyO3 + Maturin. Currently exposes EMA, DEMA, TEMA, HMA, ZLEMA, ALMA, SMA, RMA, WMA, ROC, RSI, STOCH, TRANGE, ATR, BBANDS, BBP, BBW, KELTNER, MAD, CCI, MFI, DMI, KER, KAMA, SAR, STREAK, the LINREG and QUADREG families, and the kernel-free MACD and price transforms (AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE).
 
 ## Architecture
 

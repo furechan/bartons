@@ -68,6 +68,7 @@ from bartons.indicators import (
     LINREG,
     LINREG_SLOPE,
     MFI,
+    ROC,
     TEMA,
     RSI,
     SAR,
@@ -95,6 +96,8 @@ PAIRS = [
     ("ATR(14)", ATR(14),  pta.atr(timeperiod=14)),
     ("CCI(20)", CCI(20),  pta.cci(timeperiod=20)),
     ("MFI(14)", MFI(14), pta.mfi(timeperiod=14)),
+    # Timing only: TA-Lib scales the same fractional change by 100.
+    ("ROC(10)", ROC(10), pta.roc(timeperiod=10)),
     (
         "STOCH(14,3,3)",
         STOCH(14, 3, 3),

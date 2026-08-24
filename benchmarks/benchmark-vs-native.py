@@ -28,7 +28,7 @@ import timeit
 import polars as pl
 
 from bartons.samples import sample_prices, sample_dataset
-from bartons.indicators import ALMA, ATR, BBANDS, EMA, KER, RMA, RSI, SMA, STOCH, STREAK, TRANGE, WMA
+from bartons.indicators import ALMA, ATR, BBANDS, EMA, KER, RMA, ROC, RSI, SMA, STOCH, STREAK, TRANGE, WMA
 
 
 # ── Native polars equivalents ───────────────────────────────────────────────────
@@ -113,6 +113,7 @@ def native_streak(src: pl.Expr) -> pl.Expr:
 PAIRS = [
     ("BBANDS(20)", BBANDS(20), native_bbands(20)),
     ("STOCH(14,3,3)", STOCH(14, 3, 3), native_stoch(14, 3, 3)),
+    ("ROC(10)", ROC(10), pl.col("close").pct_change(10)),
     ("SMA(20)", SMA(20),  pl.col("close").rolling_mean(20)),
     ("EMA(20)", EMA(20),  pl.col("close").ewm_mean(span=20, adjust=False)),
     ("RMA(20)", RMA(20),  pl.col("close").ewm_mean(alpha=1.0 / 20, adjust=False)),

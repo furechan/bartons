@@ -19,6 +19,7 @@ INDICATORS = {
     ),
     "SMA": ("SMA(period)", "Simple moving average"),
     "RMA": ("RMA(period)", "Wilder's running moving average"),
+    "ROC": ("ROC(period=1)", "Raw fractional rate of change"),
     "WMA": ("WMA(period)", "Weighted moving average"),
     "RSI": ("RSI(period)", "Wilder's relative strength index"),
     "TRANGE": ("TRANGE()", "True range"),
@@ -49,6 +50,10 @@ INDICATORS = {
     "KAMA": (
         "KAMA(period=10, fastn=2, slown=30)",
         "Kaufman adaptive moving average",
+    ),
+    "KELTNER": (
+        "KELTNER(period=20, nbatr=2.0)",
+        "Keltner upper, middle and lower channels",
     ),
     "SAR": ("SAR(afs=0.02, maxaf=0.2)", "Parabolic Stop and Reverse"),
     "STOCH": (

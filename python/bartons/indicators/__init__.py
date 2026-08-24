@@ -29,6 +29,7 @@ from .lib.ema import *
 from .lib.hma import *
 from .lib.kama import *
 from .lib.ker import *
+from .lib.keltner import *
 from .lib.linreg import *
 from .lib.macd import *
 from .lib.mad import *
@@ -36,6 +37,7 @@ from .lib.mfi import *
 from .lib.price import *
 from .lib.quadreg import *
 from .lib.rma import *
+from .lib.roc import *
 from .lib.rsi import *
 from .lib.sar import *
 from .lib.sma import *

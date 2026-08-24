@@ -28,6 +28,8 @@ from .lib.kama import KAMA
 
 from .lib.ker import KER
 
+from .lib.keltner import KELTNER
+
 from .lib.linreg import (
     LINREG,
     LINREG_SLOPE,
@@ -57,6 +59,8 @@ from .lib.quadreg import (
 )
 
 from .lib.rma import RMA
+
+from .lib.roc import ROC
 
 from .lib.rsi import RSI
 
@@ -89,6 +93,7 @@ __all__ = [
     "EMA",
     "HMA",
     "KAMA",
+    "KELTNER",
     "KER",
     "LINREG",
     "LINREG_RMSE",
@@ -104,6 +109,7 @@ __all__ = [
     "QUADREG_RVALUE",
     "QUADREG_SLOPE",
     "RMA",
+    "ROC",
     "RSI",
     "SAR",
     "SMA",

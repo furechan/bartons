@@ -85,6 +85,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `EMA(period)` | Exponential moving average |
 | `HMA(period)` | Hull moving average |
 | `KAMA(period=10, fastn=2, slown=30)` | Kaufman adaptive moving average |
+| `KELTNER(period=20, nbatr=2.0)` | Keltner upper, middle and lower channels |
 | `KER(period=10)` | Kaufman efficiency ratio |
 | `LINREG(period=20, offset=0)` | Rolling linear-regression line |
 | `LINREG_RMSE(period=20)` | Rolling linear-regression RMSE |
@@ -100,6 +101,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `QUADREG_RVALUE(period=20)` | Rolling quadratic partial r-value |
 | `QUADREG_SLOPE(period=20, offset=0)` | Rolling quadratic-regression slope |
 | `RMA(period)` | Wilder's running moving average |
+| `ROC(period=1)` | Raw fractional rate of change |
 | `RSI(period)` | Wilder's relative strength index |
 | `SAR(afs=0.02, maxaf=0.2)` | Parabolic Stop and Reverse |
 | `SMA(period)` | Simple moving average |

@@ -180,6 +180,20 @@ def ref_stoch(highs, lows, closes, period=14, fastn=3, slown=3):
     return slowk, slowd
 
 
+def ref_roc(xs, period=1):
+    """Percentage change from the value exactly ``period`` rows earlier."""
+    result = []
+    for index, value in enumerate(xs):
+        previous = xs[index - period] if index >= period else None
+        if value is None or previous is None:
+            result.append(None)
+        elif previous == 0:
+            result.append(float("nan") if value == 0 else math.copysign(float("inf"), value))
+        else:
+            result.append(value / previous - 1.0)
+    return result
+
+
 def ref_mad(xs, period):
     """Rolling mean absolute deviation, recomputed directly per window."""
     out = []
