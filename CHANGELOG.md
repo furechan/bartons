@@ -2,6 +2,12 @@
 
 ## 0.1.2
 
+- **Add expression-native `MOM`.** Momentum delegates the difference from a
+  lagged value to Polars `diff` and requires no dedicated kernel.
+
+- **Add expression-native `WILLR`.** Williams %R composes native rolling high
+  and low extrema and requires no dedicated kernel.
+
 - **Add the `AROON` kernel.** One high/low ring buffer holds `period + 1`
   observations and finds the most recent rolling extremes in one
   oldest-to-newest traversal. It returns an `aroondown`/`aroonup` struct and

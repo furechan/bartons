@@ -73,6 +73,7 @@ from bartons.indicators import (
     LINREG,
     LINREG_SLOPE,
     MFI,
+    MOM,
     OBV,
     PPO,
     ROC,
@@ -83,6 +84,7 @@ from bartons.indicators import (
     STOCH,
     TRANGE,
     WMA,
+    WILLR,
 )
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
@@ -103,11 +105,13 @@ PAIRS = [
     ("DEMA(20)", DEMA(20), pta.dema(timeperiod=20)),
     ("TEMA(20)", TEMA(20), pta.tema(timeperiod=20)),
     ("WMA(20)", WMA(20),  pta.wma(timeperiod=20)),
+    ("WILLR(14)", WILLR(14), pta.willr(timeperiod=14)),
     ("RSI(14)", RSI(14),  pta.rsi(timeperiod=14)),
     ("TRANGE",  TRANGE(), pta.trange()),
     ("ATR(14)", ATR(14),  pta.atr(timeperiod=14)),
     ("CCI(20)", CCI(20),  pta.cci(timeperiod=20)),
     ("MFI(14)", MFI(14), pta.mfi(timeperiod=14)),
+    ("MOM(10)", MOM(10), pta.mom(timeperiod=10)),
     # Timing only: TA-Lib seeds OBV with the first volume; bartons starts at zero.
     ("OBV", OBV(), pta.obv()),
     # Timing only: TA-Lib scales the same fractional oscillator by 100.

@@ -62,6 +62,8 @@ from .lib.mad import MAD
 
 from .lib.mfi import MFI
 
+from .lib.mom import MOM
+
 from .lib.obv import OBV
 
 from .lib.price import (
@@ -101,6 +103,8 @@ from .lib.trange import TRANGE
 
 from .lib.wma import WMA
 
+from .lib.willr import WILLR
+
 from .lib.zlema import ZLEMA
 
 __all__ = [
@@ -133,6 +137,7 @@ __all__ = [
     "MAD",
     "MEDPRICE",
     "MFI",
+    "MOM",
     "NATR",
     "OBV",
     "PPO",
@@ -152,6 +157,7 @@ __all__ = [
     "TRANGE",
     "TYPPRICE",
     "WCLPRICE",
+    "WILLR",
     "WMA",
     "ZLEMA",
 ]

@@ -39,6 +39,7 @@ from .lib.linreg import *
 from .lib.macd import *
 from .lib.mad import *
 from .lib.mfi import *
+from .lib.mom import *
 from .lib.obv import *
 from .lib.price import *
 from .lib.ppo import *
@@ -53,6 +54,7 @@ from .lib.streak import *
 from .lib.tema import *
 from .lib.trange import *
 from .lib.wma import *
+from .lib.willr import *
 from .lib.zlema import *
 
 __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]

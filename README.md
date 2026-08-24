@@ -94,7 +94,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `KAMA(period=10, fastn=2, slown=30)` | Kaufman adaptive moving average |
 | `KELTNER(period=20, nbatr=2.0)` | Keltner upper, middle and lower channels |
 | `KER(period=10)` | Kaufman efficiency ratio |
-| `LINREG(period=20, offset=0)` | Rolling linear-regression line |
+| `LINREG(period=20, offset=0)` | Rolling linear-regression forecast |
 | `LINREG_RMSE(period=20)` | Rolling linear-regression RMSE |
 | `LINREG_RVALUE(period=20)` | Rolling linear-regression r-value |
 | `LINREG_SLOPE(period=20)` | Rolling linear-regression slope |
@@ -102,10 +102,11 @@ CCI(20, src=TYPPRICE())          # same thing
 | `MAD(period=20)` | Rolling mean absolute deviation |
 | `MEDPRICE()` | Median price, `(high + low) / 2` |
 | `MFI(period=14)` | Money Flow Index |
+| `MOM(period=1)` | Momentum |
 | `NATR(period=14)` | Raw fractional normalized average true range |
 | `OBV()` | On-Balance Volume |
 | `PPO(fast=12, slow=26)` | Raw fractional Price Percentage Oscillator |
-| `QUADREG(period=20, offset=0)` | Rolling quadratic-regression curve |
+| `QUADREG(period=20, offset=0)` | Rolling quadratic-regression forecast |
 | `QUADREG_CURVE(period=20)` | Rolling quadratic coefficient |
 | `QUADREG_RMSE(period=20)` | Rolling quadratic-regression RMSE |
 | `QUADREG_RVALUE(period=20)` | Rolling quadratic partial r-value |
@@ -121,6 +122,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `TRANGE()` | True range |
 | `TYPPRICE()` | Typical price, `(high + low + close) / 3` |
 | `WCLPRICE()` | Weighted close price, `(high + low + 2 * close) / 4` |
+| `WILLR(period=14)` | Williams %R |
 | `WMA(period)` | Weighted moving average |
 | `ZLEMA(period)` | Zero-lag exponential moving average |
 <!-- indicators:end -->

@@ -38,6 +38,7 @@ ARGS = {
     "DMI": (2,),
     "ALMA": (2,),
     "AROON": (2,), "AROONOSC": (2,),
+    "WILLR": (2,),
 }
 SINGLE = list(indicators.__all__)
 

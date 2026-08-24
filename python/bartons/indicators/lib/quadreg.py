@@ -38,7 +38,7 @@ def QUADREG(
     *,
     src: IntoExprColumn | None = None,
 ) -> pl.Expr:
-    """Rolling quadratic-regression curve evaluated at the current bar.
+    """Rolling quadratic-regression forecast.
 
     Args:
         period: regression-window length.

@@ -32,7 +32,7 @@ def LINREG(
     *,
     src: IntoExprColumn | None = None,
 ) -> pl.Expr:
-    """Rolling linear-regression line evaluated at the current bar.
+    """Rolling linear-regression forecast.
 
     Args:
         period: regression-window length.
