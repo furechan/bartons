@@ -3,8 +3,8 @@
 ## 0.1.2
 
 - Publish the public GitHub repository, issue tracker and changelog in package
-  metadata, and link the README to the public project resources, supported wheel
-  platforms, development workflow and license.
+  metadata, and document supported wheel platforms, the development workflow and
+  the license in the README without self-referential repository links.
 
 - Adopt the dispatch-only GitHub Actions build and trusted-publishing workflows
   as the sole release path, recording the first partial upload and its recovery.

@@ -3,8 +3,6 @@
 Financial and technical-analysis expressions for [polars](https://docs.pola.rs/),
 implemented in Rust as a native plugin (PyO3 + maturin).
 
-[PyPI](https://pypi.org/project/bartons/) · [Source](https://github.com/furechan/bartons) · [Issues](https://github.com/furechan/bartons/issues) · [Changelog](https://github.com/furechan/bartons/blob/main/CHANGELOG.md)
-
 Each indicator is a factory returning a `pl.Expr`, so it composes with the rest of
 polars — inside `select`, `with_columns`, `over`, lazy frames, and so on.
 
@@ -189,7 +187,7 @@ uv run inv test
 
 ## License
 
-Bartons is available under the [MIT License](LICENSE.txt).
+Bartons is available under the MIT License.
 
 ## Related Projects
 

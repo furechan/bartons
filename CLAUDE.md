@@ -166,6 +166,13 @@ EMA and SMA are the reference implementations.
 - [pyproject.toml](pyproject.toml) — Maturin config (module name, python-source, manifest-path)
 - [bartons/Cargo.toml](bartons/Cargo.toml) — Rust dependencies (pyo3, pyo3-polars, polars)
 
+## README
+
+`README.md` is the distribution long description and must render correctly on
+PyPI as well as GitHub. Never use repository-relative links or self-referential
+links back to this repository there. External documentation and related-project
+links must use absolute public URLs.
+
 ## Docs
 
 Open work is tracked in [BACKLOG.md](BACKLOG.md).
