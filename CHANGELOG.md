@@ -2,6 +2,9 @@
 
 ## 0.1.2
 
+- Adopt the dispatch-only GitHub Actions build and trusted-publishing workflows
+  as the sole release path, recording the first partial upload and its recovery.
+
 - Include `LICENSE.txt` in the sdist so its contents satisfy the PEP 639
   `License-File` metadata and PyPI accepts the source archive.
 

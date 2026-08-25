@@ -53,18 +53,16 @@ or pull request by default.
 
 ## Release workflow
 
-**This local path owns releases.** `.github/workflows/build.yml` and
-`publish.yml` are experimental, inactive, and have never published anything — see
-[docs/github-workflow.md](docs/github-workflow.md), which also records that their
-server-side configuration is incomplete. They are a second upload path for the
-same artifacts, and PyPI never frees a filename, so publishing a version through
-both is not recoverable. Do not release through CI without deciding to move
-ownership there first.
+**GitHub Actions owns releases.** `build.yml` creates and smoke-tests the complete
+cross-platform artifact set; `publish.yml` retrieves the successful full build
+for the same commit and uploads those exact artifacts through PyPI trusted
+publishing. The older local `uv run inv publish` path remains available for
+development but must not publish a version also handled by CI: PyPI never frees a
+filename, so two upload paths cannot safely share a release.
 
-
-Run releases from a clean branch that is fully synchronized with its upstream.
-Do not publish from a branch that is ahead, behind, or has uncommitted work that
-is not intended for the release.
+Run releases from a clean `main` branch that is fully synchronized with its
+upstream. Do not publish from a branch that is ahead, behind, or has uncommitted
+work that is not intended for the release.
 
 1. Fetch and verify repository state with `git fetch`, `git status`, and
    `git rev-list --left-right --count @{upstream}...HEAD`. Both counts must be
@@ -75,19 +73,19 @@ is not intended for the release.
 3. Review the complete diff and commit and push all intended release changes,
    including any README update. Do not create an empty checkpoint commit when
    nothing changed.
-4. Run `uv run inv build`. It clears `dist/`, creates the sdist, builds the
-   native Linux ARM64 wheel from that sdist, and tests the wheel outside the
-   checkout. This is the only build-and-validation phase.
-5. Inspect the prepared files and build output. Releases ship a native ARM64
-   wheel and the sdist only — the cross-compiled AMD64 wheel was dropped on
-   2026-08-21 because it could not be imported here, so nothing untested goes out.
-   x86_64 users build from the sdist, which needs a Rust toolchain. Restore the
-   AMD64 wheel when CI can smoke-test it natively; see
-   [docs/github-workflow.md](docs/github-workflow.md).
-6. Run `uv run inv publish`. It never compiles: it verifies the clean,
-   synchronized branch and unused PyPI version, pauses for confirmation, uploads
-   the wheel and sdist currently in `dist/`, and bumps the patch version.
-7. After publishing succeeds, review the version bump, commit it, and push.
+4. Dispatch `gh workflow run build.yml -f scope=full`, then watch it to completion.
+   All five wheels and the sdist must build, install, and pass their smoke tests.
+5. Download and inspect that run's six artifacts. Do not rebuild between inspection
+   and publication.
+6. Dispatch `gh workflow run publish.yml` first. This default dry run must resolve
+   the expected commit and full-build run without uploading anything.
+7. Dispatch `gh workflow run publish.yml -f dry_run=false` and watch the upload to
+   completion. Verify the complete release on PyPI; workflow failure can occur
+   after some immutable files upload, so inspect PyPI rather than assuming failure
+   was atomic.
+8. Tag the released commit and push the tag.
+9. Run `uv run inv bump`, review the patch-version change, commit it, and push so
+   `main` names the next release.
 
 Never continue past a failed build, test, synchronization check, version guard,
 artifact validation, upload, or PyPI verification. Retain and review the publish
@@ -174,9 +172,9 @@ Open work is tracked in [BACKLOG.md](BACKLOG.md).
 
 - [docs/architecture.md](docs/architecture.md) — project layers, boundaries, and source layout
 - [docs/github-workflow.md](docs/github-workflow.md) — the two dispatch-only GitHub Actions
-  workflows in `.github/workflows/`, **experimental and never run**, plus the cost analysis
-  behind their shape and the PyPI facts (immutable `Requires-Dist`, filenames never
-  reusable, yank-not-delete)
+  workflows that own releases, their operational history and cost analysis, and
+  the PyPI facts (immutable `Requires-Dist`, filenames never reusable,
+  yank-not-delete)
 - [docs/adding-an-indicator.md](docs/adding-an-indicator.md) — the end-to-end checklist
 - [docs/unified-run-driver.md](docs/unified-run-driver.md) — implemented typed `run_filter` design; new dtypes or source arities add only the concrete `FilterInput` signature they require
 - [docs/builder-vs-collect-benchmark.md](docs/builder-vs-collect-benchmark.md) — recorded kernel micro-benchmark (2026-08-17): the `Filter` abstraction is free, `append_option` costs ~1.6× — read before touching the builder append in `run_filter`

@@ -2,41 +2,31 @@
 
 ## Status
 
-**Experimental. Inactive. Not the release mechanism.**
+**Active. Dispatch-only. The release mechanism.**
 
 | | |
 |---|---|
-| Releases today | cut locally with `uv run inv build` and `uv run inv publish` — see [CLAUDE.md](../CLAUDE.md) |
-| These workflows | installed, dispatch-only, **never used to publish anything** |
-| Repository | private, GitHub Free |
-| Server-side config | **absent** — no PyPI trusted publisher, no GitHub environment |
-| Would benefit from | the repo going public — see [Why public would help](#why-public-would-help) |
+| Releases today | built by `build.yml`, published by `publish.yml` — see [CLAUDE.md](../CLAUDE.md) |
+| These workflows | active and dispatch-only; nothing runs implicitly on a push, PR or tag |
+| Repository | public, GitHub Free |
+| Server-side config | PyPI trusted publisher and GitHub `pypi` environment configured |
+| First publication | `0.1.3` on 2026-08-25; five wheels uploaded, sdist rejected for a missing declared license file |
 
-Nothing should be published through these until that is a deliberate decision
-rather than a default. They are a *second* upload path for the same artifacts,
-and PyPI never frees a filename, so only one path may own a release.
-
-**Standing decision (2026-08-21): kept as a prototype, deferred until the
-repository goes public or the project becomes more prominent.** The local release
-cycle is sufficient at this scale — the author is effectively the only consumer,
-and the local `uv run inv build` task already builds and validates the complete
-sdist-to-wheel artifact chain. Everything CI would add is either free only
-on a public repo (unmetered runners, the approval gate, artifact storage) or
-matters only with users to protect. Revisit at that point, not before; the
-workflows stay installed and inert so the analysis and the working YAML are both
-to hand when it happens.
+CI became the sole release path on 2026-08-25. The local publisher must not upload
+a version also handled by CI: PyPI never frees a filename, and the two paths cannot
+safely share ownership of one release.
 
 Both are **dispatch-only** — nothing runs on a push, a pull request, a tag or a
 schedule — and `publish.yml` publishes nothing unless explicitly told to.
 
 Built 2026-08-17, archived unused the same day, then reworked and installed for
-experimentation on 2026-08-21. The history matters because much of what follows
-was learned while deciding *not* to run this, and the cost analysis is why it is
-shaped the way it is.
+experimentation on 2026-08-21. The first full matrix and trusted-publishing run
+completed on 2026-08-25; the results and recovery notes below supersede the old
+prototype status.
 
 ## What this is
 
-A PyPI release pipeline for `bartons`, on trial:
+A PyPI release pipeline for `bartons`:
 
 - **`build.yml`** — builds five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
   arm64/x86_64, Windows x64) plus the sdist. Native YAML matrices separate the
@@ -46,9 +36,9 @@ A PyPI release pipeline for `bartons`, on trial:
   commit, verify it, and publish its artifacts to PyPI over OIDC. Builds nothing.
   `dry_run` defaults to true, so the default invocation resolves and reports
   without publishing.
-A step-by-step release handoff also existed; it was dropped rather than archived,
-being wholly CI-specific. The parts of it that outlive CI — the version policy and
-the PyPI notes — are recorded below.
+A step-by-step release handoff also existed; it was dropped rather than archived.
+The live procedure is in [CLAUDE.md](../CLAUDE.md); the design and operational
+history remain here.
 
 ## Why it was archived at first
 
@@ -117,23 +107,24 @@ halves the cost, since the release no longer rebuilds what you already built.
 
 **On the approval gate.** `environment: pypi` with required reviewers pauses the
 publish job, giving the same inspect-then-ship shape within one run. It is
-declared in `publish.yml` and the environment was created on 2026-08-17, but
-required reviewers were never enabled — and cannot be, on a **private** repo on
-the **Free** plan, where environment protection rules are unavailable. The
-two-step flow above needs no plan and no pause, which is why it is the primary
-mechanism; the gate becomes an option if the repo goes public.
+declared in `publish.yml`; the environment was created on 2026-08-25. Required
+reviewers were unavailable while the repository was private on GitHub Free and
+can be enabled now that it is public. The explicit dry-run/full-publish split
+remains required even with an approval gate.
 
 Note the interaction with **artifact retention**: with build and publish fused,
 artifacts only had to survive minutes. Split apart, the retention window is how
 long a build stays releasable — downloading expired artifacts fails, so an
 aged-out build must be rebuilt. `build.yml` sets `retention-days: 30` rather than
-the 90-day default: a generous deadline that still needs ~15 full matrices in a
-month to press the 500 MB Free storage quota, a full run being ~33 MB. Actions
-storage is free on public repos, so this only binds while the repo is private.
+the 90-day default. This originally protected the private repository's 500 MB
+Free storage quota; public-repository Actions storage is unmetered, but the
+30-day release deadline remains explicit.
 
-**Publishing failure is atomic.** `publish` declared `needs: build`, so any failing
-target meant nothing was published. A broken release is a wasted run and a deleted
-tag, never a half-published version.
+**Publishing failure is not atomic.** PyPI accepts files one at a time and never
+frees their names. The first CI publication uploaded all five `0.1.3` wheels, then
+rejected the sdist because its metadata declared `LICENSE.txt` while the archive
+omitted it. `skip-existing: true` makes a retry capable of filling missing files,
+but it cannot replace an accepted file. Always inspect PyPI after a failed upload.
 
 **manylinux tags come from the build environment, not the host you want.**
 `maturin build` on the dev machine (glibc 2.41) produced `manylinux_2_34`, which
@@ -177,89 +168,43 @@ These are properties of the project, not of CI:
   a repeated dispatch idempotent for those files; advancing the version remains
   the release process's responsibility.
 
-## Setup still outstanding
+## Current server-side setup
 
-The workflows are in place, but the account-side configuration is not finished:
+- PyPI trusts owner `furechan`, repository `bartons`, workflow `publish.yml`, and
+  environment `pypi`.
+- GitHub has a `pypi` environment. Add a required reviewer now that the repository
+  is public if an account-side approval pause is desired.
+- Full build run [`32898960470`](https://github.com/furechan/bartons/actions/runs/32898960470)
+  succeeded on 2026-08-25 at commit `8200fbf`, producing and smoke-testing five
+  platform wheels plus the sdist.
+- Publish run [`32902795340`](https://github.com/furechan/bartons/actions/runs/32902795340)
+  authenticated successfully through OIDC and partially published `0.1.3`. The
+  sdist license omission is fixed for `0.1.4`; `0.1.3` should be yanked after the
+  complete replacement release is available.
 
-- **PyPI trusted publisher — none exists.** One was registered on 2026-08-17
-  naming workflow `release.yml`, and has since been removed. Nothing on the PyPI
-  side authorizes this repository today, which also means the 2026-08-21 rename to
-  `publish.yml` costs nothing: there is no stale entry to correct, only one to
-  create. Registering it — owner/repo, workflow **`publish.yml`**, environment
-  `pypi` — is a prerequisite for any upload, since trusted publishing is keyed to
-  the workflow *filename*. Without it, OIDC auth fails at the last step, after the
-  whole matrix has been built.
-- **The `pypi` GitHub environment — does not exist either.** The GitHub API reports
-  zero environments on this repository. `publish.yml` names `environment: pypi`, and
-  GitHub creates an environment implicitly the first time a job references one, so
-  this is not a hard failure — but it will be created bare. Required reviewers, the
-  protection rule that would pause the publish job, **cannot be enabled at all**
-  while the repo is private on the Free plan. That is not blocking: the two-step
-  build-then-publish flow gives the same inspect-before-ship shape without a pause.
-  The gate becomes available if the repo goes public.
-- **Action versions** in the YAML were current on 2026-08-17 and should be checked
-  before the first real release.
-- **`build.yml` has run once; `publish.yml` has never run.** Linux-scope build run
-  [`32527717046`](https://github.com/furechan/bartons/actions/runs/32527717046)
-  succeeded on 2026-08-21 at commit `0d6c28f`, producing the Linux x86_64 and
-  aarch64 wheels plus the sdist. The full cross-platform matrix remains untested,
-  and no artifact from these workflows has been published.
+## Why the repository is public
 
-## Why public would help
-
-Every remaining rough edge is softer, or gone, on a public repository:
+The repository became public on 2026-08-25 for these operational benefits:
 
 - **Runner minutes become free.** Standard runners are unmetered on public repos,
   so the multipliers stop mattering and the full six-target matrix costs nothing.
-  Today a full matrix is billed against the 2,000-minute monthly Free allowance.
+  The full matrix no longer consumes the private-repository Free allowance.
 - **The approval gate becomes available.** Environment protection rules — required
-  reviewers pausing the publish job — are public-repo-only on Free. That is the one
-  piece of the design that cannot be exercised at all while the repo is private.
+  reviewers pausing the publish job — are available on a public Free repository.
 - **Artifact storage becomes free**, which removes the retention/quota tension and
   the reason `retention-days` is capped at 30.
 - **Little is actually hidden today.** The published sdist on PyPI already contains
-  every `.rs` and `.py` source file, so the private repo protects the docs, tests,
-  tooling and commit history rather than the code.
+  every `.rs` and `.py` source file; making the repository public additionally
+  exposes its docs, tests, tooling and commit history.
 
-## Next steps
-
-**None of this is scheduled.** Per the standing decision above, the trigger for
-picking it up is the repository going public — everything below is deferred until
-then, recorded so the thread can be resumed without re-deriving it.
-
-1. **Measure the steady-state cost.** Dispatch `build.yml` a second time, unchanged,
-   on the same commit:
-
-   ```sh
-   gh workflow run build.yml -f scope=linux
-   ```
-
-   The first run reported `Cache hits: 0` but wrote 360 objects to the GitHub
-   Actions cache (`ghac`) with zero errors, so its ~14-minute jobs are a cold-start
-   cost. A second run is the first chance to see what a build normally costs. If the
-   wheel jobs drop to a few minutes, sccache works — and the `sdist` job, which has
-   no caching at all, becomes the sole long pole and would want the same treatment.
-   If they do not, the cache is being written but not restored, and the fix is an
-   explicit `actions/cache` or `Swatinem/rust-cache` step.
-
-2. **Register a PyPI trusted publisher** naming owner/repo, workflow
-   `publish.yml`, environment `pypi` — none exists at present (see above).
-
-3. **Run `publish.yml` in dry-run mode** against a real `build.yml` run, to exercise
-   the resolution and every guard without uploading anything.
-
-4. **Refresh the action versions**, current as of 2026-08-17.
-
-5. **Only then** decide whether CI owns publishing. It cannot share that job with
-   `uv run inv publish`.
-
-## First run
+## Release commands
 
 ```sh
-gh workflow run build.yml -f scope=linux      # cheapest end-to-end check
+gh workflow run build.yml -f scope=full
 gh run watch <run-id>
 gh run download <run-id> --dir /tmp/check
 gh workflow run publish.yml                   # dry run: resolves, reports, publishes nothing
+gh workflow run publish.yml -f dry_run=false  # publish the inspected artifacts
 ```
 
 The dry run is safe to repeat. Only `-f dry_run=false` uploads.
