@@ -19,7 +19,7 @@ name = "bartons"
 version = "0.1.4"
 requires-python = ">=3.11"
 license = "MIT"
-description = "Financial and technical-analysis expressions for polars, implemented in Rust"
+description = "Financial and technical-analysis expressions for Polars, implemented in Rust"
 readme = "README.md"
 authors = [{ name = "Furechan", email = "furechan@xsmail.com" }]
 keywords = [
@@ -63,6 +63,12 @@ dependencies = [
     # `[1.28, 1.44)`. See docs/test-compat-helpers.md.
     "polars>=1.28,<1.44",
 ]
+
+[project.urls]
+Homepage = "https://github.com/furechan/bartons"
+Source = "https://github.com/furechan/bartons"
+Issues = "https://github.com/furechan/bartons/issues"
+Changelog = "https://github.com/furechan/bartons/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = [

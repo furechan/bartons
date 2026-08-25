@@ -3,13 +3,17 @@
 Financial and technical-analysis expressions for [polars](https://docs.pola.rs/),
 implemented in Rust as a native plugin (PyO3 + maturin).
 
+[PyPI](https://pypi.org/project/bartons/) · [Source](https://github.com/furechan/bartons) · [Issues](https://github.com/furechan/bartons/issues) · [Changelog](https://github.com/furechan/bartons/blob/main/CHANGELOG.md)
+
 Each indicator is a factory returning a `pl.Expr`, so it composes with the rest of
 polars — inside `select`, `with_columns`, `over`, lazy frames, and so on.
 
 ## Install
 
 Requires Python 3.11+ and `polars>=1.28,<1.44`. Wheels are `cp311-abi3`, so one
-wheel per platform covers every Python from 3.11 up.
+wheel per platform covers every Python from 3.11 up. Prebuilt wheels support
+Linux x86_64 and ARM64, macOS Intel and Apple silicon, and Windows x64; other
+platforms can build from the sdist with a Rust toolchain.
 
 ```sh
 pip install bartons
@@ -67,7 +71,7 @@ TYPPRICE()                              # high, low and close
 TYPPRICE(high="h", low="l", close="c")  # other column names
 ```
 
-`CCI` is single-source indicator, but defaults its source to `TYPPRICE()`
+`CCI` is a single-source indicator, but defaults its source to `TYPPRICE()`
 rather than `pl.col("close")`:
 
 ```python
@@ -167,6 +171,25 @@ kernels.dmi(prices["high"], prices["low"], prices["close"]).struct.unnest()
 
 Parameters are keyword-only here. This path needs `polars>=1.28`; the expression
 API alone works further back.
+
+## Development
+
+Set up the development environment and run the complete source-tree validation:
+
+```sh
+uv sync
+uv run inv make
+```
+
+Run the Rust and Python tests without regenerating the extension and stubs:
+
+```sh
+uv run inv test
+```
+
+## License
+
+Bartons is available under the [MIT License](LICENSE.txt).
 
 ## Related Projects
 
