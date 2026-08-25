@@ -41,10 +41,9 @@ jobs:
   # Finds the build to publish, and refuses to name one that should not be.
   #
   # The artifacts carry no record of the commit they were compiled from, but
-  # their *run* does, and each artifact belongs to exactly one run — so the
-  # search goes commit -> run -> artifacts. Matching `head_sha` against the
-  # commit this workflow was dispatched at is the whole provenance link: it is
-  # what guarantees the wheels being published were built from this source.
+  # their run does. Resolve the newest successful full build whose `head_sha`
+  # matches this dispatch, guaranteeing that it built this source and completed
+  # every release target.
   guard:
     name: Resolve the build to publish
     runs-on: ubuntu-latest
@@ -53,7 +52,6 @@ jobs:
       actions: read    # list other runs and their artifacts
     outputs:
       run_id: ${{ steps.resolve.outputs.run_id }}
-      version: ${{ steps.resolve.outputs.version }}
     steps:
       - uses: actions/checkout@v7
 
@@ -62,45 +60,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version=$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)
-          echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "releasing bartons $version from ${GITHUB_SHA:0:7}"
 
-          # /pypi/{name}/{version}/json is 404 until that version exists, so this
-          # needs no parsing. Testing for == 404 also fails closed: a timeout or a
-          # 5xx blocks the release rather than waving it through.
-          code=$(curl -sS -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/bartons/$version/json")
-          [[ "$code" == 404 ]] || {
-            echo "::error::bartons $version is already on PyPI (HTTP $code) — bump the version"
-            exit 1
-          }
-
-          # A partial matrix must never be publishable: PyPI never frees a
-          # filename, so a release missing a wheel cannot be completed later,
-          # only superseded. Requiring the whole set also disambiguates a
-          # `scope=linux` run from a `scope=full` one at the same commit.
-          need=(dist-linux-x86_64 dist-linux-aarch64 dist-macos-arm64
-                dist-macos-x86_64 dist-windows-x64 dist-sdist)
-
-          found=""
-          runs=$(gh api \
+          found=$(gh api \
             "/repos/$GITHUB_REPOSITORY/actions/workflows/build.yml/runs?head_sha=$GITHUB_SHA&status=success&per_page=20" \
-            --jq '.workflow_runs[].id')
-
-          for run in $runs; do
-            # Expired artifacts are still listed; skipping them here is what
-            # stops a resolved run from downloading nothing.
-            have=$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run/artifacts" \
-              --jq '[.artifacts[] | select(.expired | not) | .name] | join(" ")')
-            missing=""
-            for name in "${need[@]}"; do
-              [[ " $have " == *" $name "* ]] || missing+=" $name"
-            done
-            if [[ -z "$missing" ]]; then found=$run; break; fi
-            echo "run $run: incomplete, missing$missing"
-          done
+            --jq '[.workflow_runs[] | select(.display_title == "Build (full)")][0].id // empty')
 
           [[ -n "$found" ]] || {
-            echo "::error::no successful build.yml run at ${GITHUB_SHA:0:7} has a complete, unexpired artifact set — run: gh workflow run build.yml -f scope=full"
+            echo "::error::no successful Build (full) run exists at ${GITHUB_SHA:0:7} — run: gh workflow run build.yml -f scope=full"
             exit 1
           }
 
@@ -108,8 +75,7 @@ jobs:
           {
             echo "### Ready to publish bartons $version"
             echo "- commit \`${GITHUB_SHA:0:7}\`, build run [\`$found\`]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$found)"
-            echo "- artifacts: $(echo "${need[@]}" | tr ' ' ', ')"
-            echo "- \`$version\` is not yet on PyPI"
+            echo "- artifacts: five platform wheels and the sdist from \`Build (full)\`"
             if [[ "${{ inputs.dry_run }}" == "true" ]]; then
               echo ""
               echo "Dry run — nothing was published. Rerun with \`-f dry_run=false\` to publish."
@@ -148,3 +114,5 @@ jobs:
 
       # No `password:` — the action performs the OIDC exchange itself.
       - uses: pypa/gh-action-pypi-publish@v1.14.2
+        with:
+          skip-existing: true

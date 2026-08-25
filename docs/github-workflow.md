@@ -39,8 +39,9 @@ shaped the way it is.
 A PyPI release pipeline for `bartons`, on trial:
 
 - **`build.yml`** — builds five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
-  arm64/x86_64, Windows x64) plus the sdist. A `setup` job emits the matrix as
-  JSON so the target list can be scoped at dispatch time (`linux` or `full`).
+  arm64/x86_64, Windows x64) plus the sdist. Native YAML matrices separate the
+  always-built Linux targets from the macOS and Windows targets selected by a
+  `full` dispatch.
 - **`publish.yml`** — on manual dispatch: resolve the `build.yml` run for this
   commit, verify it, and publish its artifacts to PyPI over OIDC. Builds nothing.
   `dry_run` defaults to true, so the default invocation resolves and reports
@@ -70,7 +71,7 @@ windows ×2, macOS ×10. The full six-job matrix bills roughly:
 | Job | Wall | Multiplier | Billed |
 |---|---|---|---|
 | linux-x86_64 | ~8 min | ×1 | 8 |
-| linux-aarch64 (cross) | ~10 min | ×1 | 10 |
+| linux-aarch64 (native) | ~10 min | ×1 | 10 |
 | macos-arm64 | ~8 min | ×10 | 80 |
 | macos-x86_64 | ~8 min | ×10 | 80 |
 | windows-x64 | ~8 min | ×2 | 16 |
@@ -86,13 +87,13 @@ packaging or compiled code changed) and could be called by `publish.yml` via
 alone: every build is now something asked for by name. `workflow_call` in
 particular is incompatible with how `publish.yml` now works — a reusable
 workflow uploads its artifacts to the *caller's* run, so a called build has no
-run of its own for the commit -> run -> artifacts search to find.
+run of its own for the commit -> full-run search to find.
 
 Two costs of that, both deliberate. `workflow_dispatch` is resolved from the
 **default branch**, so a change to `build.yml` cannot be exercised before it
 merges — `pull_request` was the only pre-merge path that ran it. And the dispatch
-default is `linux`, so a release wants `-f scope=full`; `publish.yml`'s guard
-names the missing artifacts when it is short.
+default is `linux`, so a release wants `-f scope=full`; each run records its
+scope in its display name so `publish.yml` can select only `Build (full)`.
 
 **Wheels must not be accumulated across runs without proving provenance.** GitHub
 artifacts are scoped to their run, so assembling a release from an earlier run
@@ -105,13 +106,10 @@ run, at the cost of rebuilding artifacts you may have just built by hand — and
 then needed an approval gate to make the result inspectable before upload.
 
 **The current design closes the gap directly instead** (rewritten 2026-08-21).
-Every run records the `head_sha` it was built from, and each artifact belongs to
-exactly one run, so `publish.yml` searches commit -> run -> artifacts: the run it
-resolves must have `head_sha` equal to the commit being released, must have
-succeeded, must carry the complete artifact set, and none of them may have
-expired. That is the same guarantee the single-run design got structurally, made
-explicit — which is the trade, since it is now code that can have bugs rather
-than an invariant that cannot be violated.
+Every run records the `head_sha` it was built from and its scope in its display
+name. `publish.yml` selects the newest successful `Build (full)` run whose
+`head_sha` equals the commit being released. Workflow success guarantees every
+full-matrix job completed; artifact download fails if its files have expired.
 
 What it buys is a build step and a publish step that are genuinely separate: build
 on demand, inspect the real artifacts at leisure, publish exactly those. It also
@@ -127,7 +125,7 @@ mechanism; the gate becomes an option if the repo goes public.
 
 Note the interaction with **artifact retention**: with build and publish fused,
 artifacts only had to survive minutes. Split apart, the retention window is how
-long a build stays releasable — `publish.yml` refuses expired artifacts, so an
+long a build stays releasable — downloading expired artifacts fails, so an
 aged-out build must be rebuilt. `build.yml` sets `retention-days: 30` rather than
 the 90-day default: a generous deadline that still needs ~15 full matrices in a
 month to press the 500 MB Free storage quota, a full run being ~33 MB. Actions
@@ -175,8 +173,9 @@ These are properties of the project, not of CI:
   names the one after. A `.devN` scheme was tried first and dropped before 0.1.0. This README
   and `publish.yml` both described that retired scheme until 2026-08-21; the
   decision to keep stable-only rather than restore it is recorded in
-  `BACKLOG.md`, and rests on the PyPI-availability check in `guard` making a
-  re-publish structurally impossible — the protection `.devN` was buying.
+  `BACKLOG.md`. The CI publisher skips filenames already present on PyPI, making
+  a repeated dispatch idempotent for those files; advancing the version remains
+  the release process's responsibility.
 
 ## Setup still outstanding
 
@@ -200,9 +199,11 @@ The workflows are in place, but the account-side configuration is not finished:
   The gate becomes available if the repo goes public.
 - **Action versions** in the YAML were current on 2026-08-17 and should be checked
   before the first real release.
-- **Nothing has ever run.** `workflow_dispatch` is resolved from the default branch,
-  so these could not be exercised until they landed on `main`. The first dispatch of
-  `build.yml` is also the first test of the workflows themselves.
+- **`build.yml` has run once; `publish.yml` has never run.** Linux-scope build run
+  [`32527717046`](https://github.com/furechan/bartons/actions/runs/32527717046)
+  succeeded on 2026-08-21 at commit `0d6c28f`, producing the Linux x86_64 and
+  aarch64 wheels plus the sdist. The full cross-platform matrix remains untested,
+  and no artifact from these workflows has been published.
 
 ## Why public would help
 

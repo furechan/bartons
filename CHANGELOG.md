@@ -2,6 +2,24 @@
 
 ## 0.1.2
 
+- Restore the CI release matrix's macOS x86_64 artifact by moving its build
+  from GitHub's retired `macos-13` runner to `macos-15-intel`.
+
+- Harden CI artifact builds by pinning `maturin-action` and Maturin, requiring
+  the Cargo lockfile, and enabling Maturin's PyPI compatibility validation.
+
+- Build the Linux aarch64 wheel on a native GitHub ARM64 runner and require it
+  to pass the same installation, import, and pytest smoke test as every wheel.
+
+- Express the wheel targets as native YAML matrices instead of generating JSON
+  with an inline Python setup job.
+
+- Let the CI publisher skip files already present on PyPI instead of rejecting
+  the release version during its guard step.
+
+- Label build runs with their requested scope and resolve publication directly
+  to the newest successful full build instead of inspecting every artifact set.
+
 - **Add expression-native `MOM`.** Momentum delegates the difference from a
   lagged value to Polars `diff` and requires no dedicated kernel.
 
