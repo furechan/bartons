@@ -118,6 +118,12 @@ def build(c: Context, jobs: int = BUILD_JOBS) -> None:
 
 
 @task
+def bump(c: Context) -> None:
+    """Advance the project to the next patch version without syncing."""
+    c.run("uv version --bump patch --no-sync")
+
+
+@task
 def publish(c: Context) -> None:
     """Upload the current dist/ artifacts and bump the patch version."""
     publish_guard(c)
@@ -129,7 +135,7 @@ def publish(c: Context) -> None:
         raise Exit("publish cancelled")
     quoted = shlex.join(str(path) for path in artifacts)
     c.run(f"uv run maturin upload --non-interactive {quoted}")
-    c.run("uv version --bump patch --no-sync")
+    bump(c)
 
 
 @task

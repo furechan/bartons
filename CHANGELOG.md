@@ -2,6 +2,12 @@
 
 ## 0.1.2
 
+- Include `LICENSE.txt` in the sdist so its contents satisfy the PEP 639
+  `License-File` metadata and PyPI accepts the source archive.
+
+- Add `uv run inv bump` as the explicit post-publish patch-version command and
+  have the local publisher reuse it.
+
 - Restore the CI release matrix's macOS x86_64 artifact by moving its build
   from GitHub's retired `macos-13` runner to `macos-15-intel`.
 

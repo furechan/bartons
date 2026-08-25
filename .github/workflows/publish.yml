@@ -24,7 +24,7 @@
 #   4. gh workflow run publish.yml                    # dry run: what would ship
 #   5. gh workflow run publish.yml -f dry_run=false   # publish
 #   6. git tag -a v0.2.0 -m "0.2.0" && git push --follow-tags
-#   7. `just bump`, then commit and push, so the repo names the release after this
+#   7. `uv run inv bump`, then commit and push, so the repo names the release after this
 name: Publish
 
 on:
