@@ -53,12 +53,12 @@ or pull request by default.
 
 ## Release workflow
 
-**GitHub Actions owns releases.** `build.yml` creates and smoke-tests the complete
-cross-platform artifact set; `publish.yml` retrieves the successful full build
-for the same commit and uploads those exact artifacts through PyPI trusted
-publishing. The older local `uv run inv publish` path remains available for
-development but must not publish a version also handled by CI: PyPI never frees a
-filename, so two upload paths cannot safely share a release.
+**GitHub Actions owns releases.** `release.yml` creates and smoke-tests the
+sdist plus a complete five-platform wheel matrix, pauses for confirmation on
+the protected `pypi` environment, then uploads those exact artifacts through
+PyPI trusted publishing. The older local `uv run inv publish` path remains
+available for development but must not publish a version also handled by CI:
+PyPI never frees a filename, so two upload paths cannot safely share a release.
 
 Run releases from a clean `main` branch that is fully synchronized with its
 upstream. Do not publish from a branch that is ahead, behind, or has uncommitted
@@ -73,18 +73,14 @@ work that is not intended for the release.
 3. Review the complete diff and commit and push all intended release changes,
    including any README update. Do not create an empty checkpoint commit when
    nothing changed.
-4. Dispatch `gh workflow run build.yml -f scope=full`, then watch it to completion.
+4. Dispatch `gh workflow run release.yml`, then watch it through the build phase.
    All five wheels and the sdist must build, install, and pass their smoke tests.
-5. Download and inspect that run's six artifacts. Do not rebuild between inspection
-   and publication.
-6. Dispatch `gh workflow run publish.yml` first. This default dry run must resolve
-   the expected commit and full-build run without uploading anything.
-7. Dispatch `gh workflow run publish.yml -f dry_run=false` and watch the upload to
-   completion. Verify the complete release on PyPI; workflow failure can occur
-   after some immutable files upload, so inspect PyPI rather than assuming failure
-   was atomic.
-8. Tag the released commit and push the tag.
-9. Run `uv run inv bump`, review the patch-version change, commit it, and push so
+5. Review and approve the protected `pypi` environment deployment. The workflow
+   then downloads and verifies the six artifacts before publishing them.
+6. Verify the complete release on PyPI; workflow failure can occur after some
+   immutable files upload, so inspect PyPI rather than assuming failure was atomic.
+7. Tag the released commit and push the tag.
+8. Run `uv run inv bump`, review the patch-version change, commit it, and push so
    `main` names the next release.
 
 Never continue past a failed build, test, synchronization check, version guard,

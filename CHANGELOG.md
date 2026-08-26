@@ -2,6 +2,12 @@
 
 ## 0.1.2
 
+- **Consolidate the release workflow.** A dispatch-only `release.yml` builds and
+  smoke-tests one sdist plus one complete five-platform wheel matrix, pauses for
+  confirmation through the protected `pypi` environment, and publishes those
+  exact artifacts via trusted publishing. It replaces the separate build and
+  publish workflows and their release options.
+
 - **Expose concrete `close` source defaults.** Single-source indicators that
   read `close` by default now declare `src="close"` directly instead of using
   nullable `None` as an internal sentinel. `CCI` and `MFI` retain nullable

@@ -6,18 +6,19 @@
 
 | | |
 |---|---|
-| Releases today | built by `build.yml`, published by `publish.yml` — see [CLAUDE.md](../CLAUDE.md) |
-| These workflows | active and dispatch-only; nothing runs implicitly on a push, PR or tag |
+| Releases today | built, confirmed and published by `release.yml` — see [CLAUDE.md](../CLAUDE.md) |
+| This workflow | active and dispatch-only; nothing runs implicitly on a push, PR or tag |
 | Repository | public, GitHub Free |
-| Server-side config | PyPI trusted publisher and GitHub `pypi` environment configured |
+| Server-side config | GitHub confirmation configured; PyPI trusted publisher must be changed to `release.yml` |
 | First publication | `0.1.3` on 2026-08-25; five wheels uploaded, sdist rejected for a missing declared license file |
 
-CI became the sole release path on 2026-08-25. The local publisher must not upload
+CI became the sole release path on 2026-08-25. The separate `build.yml` and
+`publish.yml` workflows were consolidated into `release.yml` on 2026-08-26. The local publisher must not upload
 a version also handled by CI: PyPI never frees a filename, and the two paths cannot
 safely share ownership of one release.
 
-Both are **dispatch-only** — nothing runs on a push, a pull request, a tag or a
-schedule — and `publish.yml` publishes nothing unless explicitly told to.
+It is **dispatch-only** — nothing runs on a push, a pull request, a tag or a
+schedule — and publication waits for approval on the protected `pypi` environment.
 
 Built 2026-08-17, archived unused the same day, then reworked and installed for
 experimentation on 2026-08-21. The first full matrix and trusted-publishing run
@@ -26,16 +27,12 @@ prototype status.
 
 ## What this is
 
-A PyPI release pipeline for `bartons`:
-
-- **`build.yml`** — builds five `cp311-abi3` wheels (linux x86_64/aarch64, macOS
-  arm64/x86_64, Windows x64) plus the sdist. Native YAML matrices separate the
-  always-built Linux targets from the macOS and Windows targets selected by a
-  `full` dispatch.
-- **`publish.yml`** — on manual dispatch: resolve the `build.yml` run for this
-  commit, verify it, and publish its artifacts to PyPI over OIDC. Builds nothing.
-  `dry_run` defaults to true, so the default invocation resolves and reports
-  without publishing.
+A PyPI release pipeline for `bartons`: **`release.yml`** builds five
+`cp311-abi3` wheels (Linux x86_64/aarch64, macOS arm64/x86_64, Windows x64) in
+one complete matrix, alongside one sdist job. Every job installs and smoke-tests
+its own artifact. Once all six builds succeed, the protected `pypi` environment
+asks for confirmation; the publish job then downloads, counts and uploads those
+exact six artifacts over OIDC.
 A step-by-step release handoff also existed; it was dropped rather than archived.
 The live procedure is in [CLAUDE.md](../CLAUDE.md); the design and operational
 history remain here.
@@ -71,19 +68,14 @@ windows ×2, macOS ×10. The full six-job matrix bills roughly:
 That number is why there is no `push` trigger at all: a README fix landing on
 `main` would otherwise have cost ~200 billed minutes.
 
-As archived, `build.yml` also ran on pull requests (linux only, and only when
-packaging or compiled code changed) and could be called by `publish.yml` via
-`workflow_call`. Both were removed on 2026-08-21, leaving `workflow_dispatch`
-alone: every build is now something asked for by name. `workflow_call` in
-particular is incompatible with how `publish.yml` now works — a reusable
-workflow uploads its artifacts to the *caller's* run, so a called build has no
-run of its own for the commit -> full-run search to find.
+Earlier versions ran Linux-only and full builds as separate jobs and later split
+building from publishing across `build.yml` and `publish.yml`. Those designs are
+retired. `release.yml` has one dispatch mode and one complete wheel matrix:
+asking for a release always means building every wheel and the sdist.
 
-Two costs of that, both deliberate. `workflow_dispatch` is resolved from the
-**default branch**, so a change to `build.yml` cannot be exercised before it
-merges — `pull_request` was the only pre-merge path that ran it. And the dispatch
-default is `linux`, so a release wants `-f scope=full`; each run records its
-scope in its display name so `publish.yml` can select only `Build (full)`.
+`workflow_dispatch` is resolved from the **default branch**, so a change to the
+workflow cannot be exercised before it lands. This is the deliberate cost of
+having no automatic push or pull-request trigger.
 
 **Wheels must not be accumulated across runs without proving provenance.** GitHub
 artifacts are scoped to their run, so assembling a release from an earlier run
@@ -91,34 +83,20 @@ means pulling artifacts by run ID — and by itself nothing then guarantees they
 came from the commit being released. Wheels from different runs can carry
 identical version numbers and different code.
 
-The original design ruled that out by building everything inside the tag's own
-run, at the cost of rebuilding artifacts you may have just built by hand — and it
-then needed an approval gate to make the result inspectable before upload.
-
-**The current design closes the gap directly instead** (rewritten 2026-08-21).
-Every run records the `head_sha` it was built from and its scope in its display
-name. `publish.yml` selects the newest successful `Build (full)` run whose
-`head_sha` equals the commit being released. Workflow success guarantees every
-full-matrix job completed; artifact download fails if its files have expired.
-
-What it buys is a build step and a publish step that are genuinely separate: build
-on demand, inspect the real artifacts at leisure, publish exactly those. It also
-halves the cost, since the release no longer rebuilds what you already built.
+The current design rules that out structurally: all artifacts are uploaded by
+the wheel matrix and sdist job in one run, and the publish job downloads
+artifacts from that same run only after every build succeeds. The approval pause
+does not start another run or rebuild anything, so the files tested are the files
+published.
 
 **On the approval gate.** `environment: pypi` with required reviewers pauses the
-publish job, giving the same inspect-then-ship shape within one run. It is
-declared in `publish.yml`; the environment was created on 2026-08-25. Required
-reviewers were unavailable while the repository was private on GitHub Free and
-can be enabled now that it is public. The explicit dry-run/full-publish split
-remains required even with an approval gate.
+publish job after the matrix succeeds and before GitHub grants the job access or
+OIDC credentials. It is declared in `release.yml`; the environment requires
+confirmation from `furechan` and permits self-review.
 
-Note the interaction with **artifact retention**: with build and publish fused,
-artifacts only had to survive minutes. Split apart, the retention window is how
-long a build stays releasable — downloading expired artifacts fails, so an
-aged-out build must be rebuilt. `build.yml` sets `retention-days: 30` rather than
-the 90-day default. This originally protected the private repository's 500 MB
-Free storage quota; public-repository Actions storage is unmetered, but the
-30-day release deadline remains explicit.
+Artifacts use GitHub's repository-default retention. They normally survive only
+the build-to-approval interval, and a canceled release run is never reused as the
+source for a later publication.
 
 **Publishing failure is not atomic.** PyPI accepts files one at a time and never
 frees their names. The first CI publication uploaded all five `0.1.3` wheels, then
@@ -170,10 +148,11 @@ These are properties of the project, not of CI:
 
 ## Current server-side setup
 
-- PyPI trusts owner `furechan`, repository `bartons`, workflow `publish.yml`, and
-  environment `pypi`.
-- GitHub has a `pypi` environment. Add a required reviewer now that the repository
-  is public if an account-side approval pause is desired.
+- PyPI trusted publishing still names the retired `publish.yml` workflow. Change
+  it to owner `furechan`, repository `bartons`, workflow `release.yml`, and
+  environment `pypi` before dispatching a release.
+- GitHub's `pypi` environment requires approval from `furechan`, with self-review
+  allowed, so the workflow pauses for confirmation after the build matrix.
 - Full build run [`32898960470`](https://github.com/furechan/bartons/actions/runs/32898960470)
   succeeded on 2026-08-25 at commit `8200fbf`, producing and smoke-testing five
   platform wheels plus the sdist.
@@ -191,8 +170,8 @@ The repository became public on 2026-08-25 for these operational benefits:
   The full matrix no longer consumes the private-repository Free allowance.
 - **The approval gate becomes available.** Environment protection rules — required
   reviewers pausing the publish job — are available on a public Free repository.
-- **Artifact storage becomes free**, which removes the retention/quota tension and
-  the reason `retention-days` is capped at 30.
+- **Artifact storage becomes free**, which removes the former retention/quota
+  tension.
 - **Little is actually hidden today.** The published sdist on PyPI already contains
   every `.rs` and `.py` source file; making the repository public additionally
   exposes its docs, tests, tooling and commit history.
@@ -200,11 +179,9 @@ The repository became public on 2026-08-25 for these operational benefits:
 ## Release commands
 
 ```sh
-gh workflow run build.yml -f scope=full
+gh workflow run release.yml
 gh run watch <run-id>
-gh run download <run-id> --dir /tmp/check
-gh workflow run publish.yml                   # dry run: resolves, reports, publishes nothing
-gh workflow run publish.yml -f dry_run=false  # publish the inspected artifacts
 ```
 
-The dry run is safe to repeat. Only `-f dry_run=false` uploads.
+After the six build jobs succeed, approve the `pypi` environment deployment in
+GitHub. Approval resumes the same run and publishes its artifacts.
