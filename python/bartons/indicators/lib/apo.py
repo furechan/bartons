@@ -1,4 +1,4 @@
-"""Percentage Price Oscillator composed from generic moving averages."""
+"""Absolute Price Oscillator composed from generic moving averages."""
 
 import polars as pl
 
@@ -6,29 +6,29 @@ from ...prelude import wrap_src_indicator
 from ...typing import IntoExprColumn, MAType
 from .ma import MA
 
-__all__ = ("PPO",)
+__all__ = ("APO",)
 
 
 @wrap_src_indicator
-def PPO(
+def APO(
     fast: int = 12,
     slow: int = 26,
     *,
     matype: MAType = "ema",
     src: IntoExprColumn = "close",
 ) -> pl.Expr:
-    """Price Percentage Oscillator in percentage points.
+    """Absolute Price Oscillator in the source's units.
 
-    ``100 * (MA(fast) - MA(slow)) / MA(slow)``. The moving-average type
-    defaults to EMA, matching the MACD-like convention; use ``matype="sma"``
-    for TA-Lib's default behavior.
+    Returns ``MA(fast) - MA(slow)``. The moving-average type defaults to EMA,
+    matching the MACD-like convention; use ``matype="sma"`` for TA-Lib's
+    default behavior.
 
     Args:
         fast: fast moving-average period.
         slow: slow moving-average period.
         matype: moving-average type accepted by :func:`MA`.
-        src: input column expression or name; defaults to ``close``.
+        src: input column expression or name.
     """
     fast_ma = MA(fast, matype=matype, src=src)
     slow_ma = MA(slow, matype=matype, src=src)
-    return fast_ma.sub(slow_ma).truediv(slow_ma).mul(100.0)
+    return fast_ma.sub(slow_ma)

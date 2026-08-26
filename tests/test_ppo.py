@@ -1,8 +1,9 @@
 import polars as pl
+import pytest
 
 from helpers import assert_series_equal
 
-from bartons.indicators import EMA, PPO
+from bartons.indicators import EMA, MA, PPO
 
 
 VALUES = [10.0, 11.0, 13.0, 12.0, 15.0, 14.0, 16.0, 18.0, 17.0, 19.0]
@@ -34,3 +35,26 @@ def test_ppo_is_scaled_by_100():
 
     index = next(index for index, value in enumerate(got) if value is not None)
     assert got[index] == raw[index] * 100.0
+
+
+def test_ppo_defaults_to_ema():
+    frame = pl.DataFrame({"close": VALUES})
+    assert frame.select(PPO(3, 5)).equals(
+        frame.select(PPO(3, 5, matype="ema"))
+    )
+
+
+def test_ppo_supports_configurable_matype():
+    frame = pl.DataFrame({"close": VALUES})
+    got = frame.select(PPO(3, 5, matype="sma"))["ppo"]
+    fast = MA(3, matype="sma")
+    slow = MA(5, matype="sma")
+    expected = frame.select(
+        fast.sub(slow).truediv(slow).mul(100.0).alias("ppo")
+    )["ppo"]
+    assert_series_equal(got, expected)
+
+
+def test_ppo_rejects_positional_matype():
+    with pytest.raises(TypeError):
+        PPO(3, 5, "sma")  # type: ignore  # intentionally invalid call shape

@@ -11,6 +11,8 @@ from .lib.adl import (
 
 from .lib.alma import ALMA
 
+from .lib.apo import APO
+
 from .lib.aroon import (
     AROON,
     AROONOSC,
@@ -37,7 +39,12 @@ from .lib.cmo import CMO
 
 from .lib.dema import DEMA
 
-from .lib.dmi import DMI
+from .lib.dmi import (
+    DMI,
+    ADX,
+    PDI,
+    MDI,
+)
 
 from .lib.donchian import DONCHIAN
 
@@ -57,6 +64,8 @@ from .lib.linreg import (
     LINREG_RVALUE,
     LINREG_RMSE,
 )
+
+from .lib.ma import MA
 
 from .lib.macd import MACD
 
@@ -114,6 +123,8 @@ from .lib.trix import TRIX
 
 from .lib.ultosc import ULTOSC
 
+from .lib.vwma import VWMA
+
 from .lib.wma import WMA
 
 from .lib.willr import WILLR
@@ -123,7 +134,9 @@ from .lib.zlema import ZLEMA
 __all__ = [
     "ADL",
     "ADOSC",
+    "ADX",
     "ALMA",
+    "APO",
     "AROON",
     "AROONOSC",
     "ATR",
@@ -147,13 +160,16 @@ __all__ = [
     "LINREG_RMSE",
     "LINREG_RVALUE",
     "LINREG_SLOPE",
+    "MA",
     "MACD",
     "MAD",
+    "MDI",
     "MEDPRICE",
     "MFI",
     "MOM",
     "NATR",
     "OBV",
+    "PDI",
     "PPO",
     "QUADREG",
     "QUADREG_CURVE",
@@ -175,6 +191,7 @@ __all__ = [
     "TRIX",
     "TYPPRICE",
     "ULTOSC",
+    "VWMA",
     "WCLPRICE",
     "WILLR",
     "WMA",

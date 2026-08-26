@@ -4,7 +4,7 @@ import pytest
 from helpers import assert_series_equal
 
 from bartons import kernels
-from bartons.indicators import DMI
+from bartons.indicators import ADX, DMI, MDI, PDI
 from refimpl import ref_dmi
 
 
@@ -69,6 +69,23 @@ def test_eager_kernel_returns_named_struct():
 def test_frame_level_unnest_exposes_fields():
     got = frame().select(DMI(2)).unnest("dmi")
     assert got.equals(expected())
+
+
+def test_scalar_selectors_match_dmi_fields():
+    prices = frame()
+    fields = prices.select(DMI(2)).unnest("dmi")
+    got = prices.select(ADX(2), PDI(2), MDI(2))
+    assert got.equals(fields)
+
+
+@pytest.mark.parametrize("selector", [ADX, PDI, MDI])
+def test_scalar_selectors_accept_custom_inputs(selector):
+    prices = frame().rename({"high": "h", "low": "l", "close": "c"})
+    by_name = prices.select(selector(2, high="h", low="l", close="c"))
+    by_expr = prices.select(
+        selector(2, high=pl.col("h"), low=pl.col("l"), close=pl.col("c"))
+    )
+    assert by_name.equals(by_expr)
 
 
 def test_grouped_struct_matches_separate_groups():

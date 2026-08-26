@@ -84,7 +84,9 @@ CCI(20, src=TYPPRICE())          # same thing
 |---|---|
 | `ADL()` | Accumulation/Distribution Line |
 | `ADOSC(fast=3, slow=10)` | Chaikin A/D Oscillator |
+| `ADX(period=14)` | Average Directional Index |
 | `ALMA(period=9, offset=0.85, sigma=6.0)` | Arnaud Legoux moving average |
+| `APO(fast=12, slow=26, matype="ema")` | Absolute Price Oscillator |
 | `AROON(period=14)` | Aroon Down and Up |
 | `AROONOSC(period=14)` | Aroon Oscillator |
 | `ATR(period)` | Average true range |
@@ -108,14 +110,17 @@ CCI(20, src=TYPPRICE())          # same thing
 | `LINREG_RMSE(period=20)` | Rolling linear-regression RMSE |
 | `LINREG_RVALUE(period=20)` | Rolling linear-regression r-value |
 | `LINREG_SLOPE(period=20)` | Rolling linear-regression slope |
+| `MA(period=30, matype="sma")` | Generic moving-average dispatcher |
 | `MACD(fast=12, slow=26, signal=9)` | MACD, signal and histogram expressions |
 | `MAD(period=20)` | Rolling mean absolute deviation |
+| `MDI(period=14)` | Negative Directional Indicator |
 | `MEDPRICE()` | Median price, `(high + low) / 2` |
 | `MFI(period=14)` | Money Flow Index |
 | `MOM(period=1)` | Momentum |
 | `NATR(period=14)` | Normalized Average True Range (%) |
 | `OBV()` | On-Balance Volume |
-| `PPO(fast=12, slow=26)` | Price Percentage Oscillator (%) |
+| `PDI(period=14)` | Positive Directional Indicator |
+| `PPO(fast=12, slow=26, matype="ema")` | Price Percentage Oscillator (%) |
 | `QUADREG(period=20, offset=0)` | Rolling quadratic-regression forecast |
 | `QUADREG_CURVE(period=20)` | Rolling quadratic coefficient |
 | `QUADREG_RMSE(period=20)` | Rolling quadratic-regression RMSE |
@@ -136,6 +141,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `TRIX(period=30)` | Triple-smoothed EMA rate of change (%) |
 | `TYPPRICE()` | Typical price, `(high + low + close) / 3` |
 | `ULTOSC(fast=7, medium=14, slow=28)` | Ultimate Oscillator |
+| `VWMA(period=20)` | Volume-weighted moving average |
 | `WCLPRICE()` | Weighted close price, `(high + low + 2 * close) / 4` |
 | `WILLR(period=14)` | Williams %R |
 | `WMA(period)` | Weighted moving average |

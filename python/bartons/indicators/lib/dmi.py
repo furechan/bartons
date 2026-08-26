@@ -5,7 +5,7 @@ from polars.plugins import register_plugin_function
 from ...prelude import PLUGIN_PATH, wrap_indicator
 from ...typing import IntoExprColumn
 
-__all__ = ("DMI",)
+__all__ = ("DMI", "ADX", "PDI", "MDI")
 
 
 @wrap_indicator
@@ -29,3 +29,39 @@ def DMI(
         is_elementwise=False,
         kwargs=dict(period=period),
     )
+
+
+@wrap_indicator
+def ADX(
+    period: int = 14,
+    *,
+    high: IntoExprColumn = "high",
+    low: IntoExprColumn = "low",
+    close: IntoExprColumn = "close",
+) -> pl.Expr:
+    """Average Directional Index selected from :func:`DMI`."""
+    return DMI(period, high=high, low=low, close=close).struct.field("adx")
+
+
+@wrap_indicator
+def PDI(
+    period: int = 14,
+    *,
+    high: IntoExprColumn = "high",
+    low: IntoExprColumn = "low",
+    close: IntoExprColumn = "close",
+) -> pl.Expr:
+    """Positive Directional Indicator selected from :func:`DMI`."""
+    return DMI(period, high=high, low=low, close=close).struct.field("pdi")
+
+
+@wrap_indicator
+def MDI(
+    period: int = 14,
+    *,
+    high: IntoExprColumn = "high",
+    low: IntoExprColumn = "low",
+    close: IntoExprColumn = "close",
+) -> pl.Expr:
+    """Negative Directional Indicator selected from :func:`DMI`."""
+    return DMI(period, high=high, low=low, close=close).struct.field("mdi")

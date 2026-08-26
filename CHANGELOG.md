@@ -2,6 +2,26 @@
 
 ## 0.1.2
 
+- **Add `APO` and configurable PPO moving averages.** Both scalar oscillators
+  dispatch through `MA`, defaulting to the conventional MACD-like EMA pair
+  while accepting every supported `matype`; explicit `matype="sma"` provides
+  TA-Lib's default calculation without changing Bartons' existing PPO results.
+
+- **Add the generic expression-level `MA` dispatcher.** A typed lowercase
+  `matype` selects SMA, EMA, WMA, DEMA, TEMA, or KAMA while preserving the
+  concrete indicator kernels and expression-first composition. The public
+  `MAType` literal alias lives in `bartons.typing`; no generic kernel is added.
+
+- **Add expression-native `VWMA`.** Complete rolling sums of price-volume and
+  volume produce the volume-weighted moving average without another Rust
+  kernel, with configurable price and volume inputs. Volume weights are masked
+  wherever the corresponding price is null so the two rolling inputs remain
+  aligned.
+
+- **Add scalar `ADX`, `PDI`, and `MDI` factories.** Each selects its named field
+  from the existing fused `DMI` struct kernel, providing convenient scalar
+  expressions without duplicating directional-movement implementations.
+
 - **Consolidate the release workflow.** A dispatch-only `release.yml` builds and
   smoke-tests one sdist plus one complete five-platform wheel matrix, pauses for
   confirmation through the protected `pypi` environment, and publishes those
