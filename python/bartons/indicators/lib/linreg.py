@@ -12,10 +12,8 @@ def _linreg(
     period: int,
     output: str,
     offset: int,
-    src: IntoExprColumn | None,
+    src: IntoExprColumn,
 ) -> pl.Expr:
-    if src is None:
-        src = pl.col("close")
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,
@@ -30,7 +28,7 @@ def LINREG(
     period: int = 20,
     offset: int = 0,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Rolling linear-regression forecast.
 
@@ -46,7 +44,7 @@ def LINREG(
 def LINREG_SLOPE(
     period: int = 20,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Rolling linear-regression slope."""
     return _linreg(period, "slope", 0, src)
@@ -56,7 +54,7 @@ def LINREG_SLOPE(
 def LINREG_RVALUE(
     period: int = 20,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Rolling linear-regression correlation coefficient."""
     return _linreg(period, "rvalue", 0, src)
@@ -66,7 +64,7 @@ def LINREG_RVALUE(
 def LINREG_RMSE(
     period: int = 20,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Typical size of the regression's fitting errors.
 

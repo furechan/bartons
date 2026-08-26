@@ -9,7 +9,7 @@ __all__ = ("RSI",)
 
 
 @wrap_src_indicator
-def RSI(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
+def RSI(period: int, *, src: IntoExprColumn = "close") -> pl.Expr:
     """Wilder's Relative Strength Index.
 
     Bar-to-bar gains and losses are each smoothed with a Wilder average
@@ -21,9 +21,6 @@ def RSI(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
         src: input column expression; defaults to ``pl.col("close")``.
             A column name string is also accepted.
     """
-    if src is None:
-        src = pl.col("close")
-
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,

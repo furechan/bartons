@@ -61,6 +61,14 @@ def ref_tema(xs, period):
     ]
 
 
+def ref_trix(xs, period):
+    """TRIX from three independent EMA passes, scaled to percentage points."""
+    first = ref_ema(xs, period)
+    second = ref_ema(first, period)
+    third = ref_ema(second, period)
+    return [None if value is None else 100.0 * value for value in ref_roc(third, 1)]
+
+
 def ref_zlema(xs, period):
     """ZLEMA from an independently materialized de-lagged source and EMA."""
     lag = (period - 1) // 2
@@ -180,6 +188,85 @@ def ref_stoch(highs, lows, closes, period=14, fastn=3, slown=3):
     return slowk, slowd
 
 
+def ref_ultosc(highs, lows, closes, fast=7, medium=14, slow=28):
+    """Ultimate Oscillator from independently materialized rolling sums."""
+    pressure = []
+    ranges = []
+    for index, (high, low, close) in enumerate(zip(highs, lows, closes)):
+        previous_close = closes[index - 1] if index else None
+        if high is None or low is None or close is None or previous_close is None:
+            pressure.append(None)
+            ranges.append(None)
+            continue
+        pressure.append(close - min(low, previous_close))
+        ranges.append(max(high, previous_close) - min(low, previous_close))
+
+    def ratio(period):
+        result = []
+        for index in range(len(pressure)):
+            window_pressure = pressure[index - period + 1 : index + 1]
+            window_ranges = ranges[index - period + 1 : index + 1]
+            if (
+                len(window_pressure) < period
+                or any(value is None for value in window_pressure)
+                or any(value is None for value in window_ranges)
+            ):
+                result.append(None)
+                continue
+            denominator = sum(value for value in window_ranges if value is not None)
+            numerator = sum(value for value in window_pressure if value is not None)
+            result.append(
+                numerator / denominator
+                if denominator != 0.0
+                else float("nan")
+            )
+        return result
+
+    fast_values = ratio(fast)
+    medium_values = ratio(medium)
+    slow_values = ratio(slow)
+    return [
+        None
+        if fast_value is None or medium_value is None or slow_value is None
+        else 100.0 * (4.0 * fast_value + 2.0 * medium_value + slow_value) / 7.0
+        for fast_value, medium_value, slow_value in zip(
+            fast_values, medium_values, slow_values
+        )
+    ]
+
+
+def ref_stochrsi(xs, period=14, fastn=3, slown=3):
+    """Stochastic RSI composed from the independent RSI and rolling oracles."""
+
+    def rolling(values, window_size, aggregate):
+        result = []
+        window = []
+        for value in values:
+            if value is None:
+                window = []
+            else:
+                window.append(value)
+                if len(window) > window_size:
+                    window.pop(0)
+            result.append(aggregate(window) if len(window) == window_size else None)
+        return result
+
+    rsi = ref_rsi(xs, period)
+    lowest = rolling(rsi, period, min)
+    highest = rolling(rsi, period, max)
+    raw = [
+        None
+        if value is None or low is None or high is None
+        else 100.0 * (value - low) / (high - low)
+        if high != low
+        else float("nan")
+        for value, low, high in zip(rsi, lowest, highest)
+    ]
+    fastk = rolling(raw, fastn, lambda values: sum(values) / fastn)
+    fastd = rolling(fastk, slown, lambda values: sum(values) / slown)
+    return fastk, fastd
+
+
 def ref_roc(xs, period=1):
     """Percentage change from the value exactly ``period`` rows earlier."""
     result = []
@@ -191,6 +278,26 @@ def ref_roc(xs, period=1):
             result.append(float("nan") if value == 0 else math.copysign(float("inf"), value))
         else:
             result.append(value / previous - 1.0)
+    return result
+
+
+def ref_cmo(xs, period=14):
+    """Original CMO from direct rolling sums of gains and losses."""
+    changes = [
+        None if index == 0 or value is None or xs[index - 1] is None
+        else value - xs[index - 1]
+        for index, value in enumerate(xs)
+    ]
+    result = []
+    for index in range(len(changes)):
+        window = changes[index - period + 1 : index + 1]
+        if len(window) < period or any(value is None for value in window):
+            result.append(None)
+            continue
+        gains = sum(max(value, 0.0) for value in window if value is not None)
+        losses = sum(max(-value, 0.0) for value in window if value is not None)
+        total = gains + losses
+        result.append(0.0 if total == 0.0 else 100.0 * (gains - losses) / total)
     return result
 
 
@@ -253,6 +360,45 @@ def ref_rma(xs, period):
             rma += alpha * (x - rma)
         out.append(rma if count >= period else None)
     return out
+
+
+def ref_supertrend(highs, lows, closes, period=10, multiplier=3.0):
+    """Supertrend from independently materialized ATR and finalized bands."""
+    atrs = ref_atr(highs, lows, closes, period)
+    lines = []
+    directions = []
+    upper = None
+    lower = None
+    direction = None
+    previous_close = None
+
+    for high, low, close, atr in zip(highs, lows, closes, atrs):
+        if high is None or low is None or close is None or atr is None:
+            lines.append(None)
+            directions.append(None)
+            previous_close = close
+            continue
+
+        midpoint = (high + low) / 2.0
+        basic_upper = midpoint + multiplier * atr
+        basic_lower = midpoint - multiplier * atr
+        if upper is None or previous_close is None or basic_upper < upper or previous_close > upper:
+            upper = basic_upper
+        if lower is None or previous_close is None or basic_lower > lower or previous_close < lower:
+            lower = basic_lower
+
+        if direction is None:
+            direction = -1
+        elif direction == -1 and close > upper:
+            direction = 1
+        elif direction == 1 and close < lower:
+            direction = -1
+
+        lines.append(lower if direction == 1 else upper)
+        directions.append(direction)
+        previous_close = close
+
+    return lines, directions
 
 
 def ref_wma(xs, period):

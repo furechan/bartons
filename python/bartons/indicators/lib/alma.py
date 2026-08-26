@@ -14,7 +14,7 @@ def ALMA(
     offset: float = 0.85,
     sigma: float = 6.0,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Arnaud Legoux Moving Average.
 
@@ -22,9 +22,6 @@ def ALMA(
     ``sigma``. ``offset`` positions the Gaussian center within the window;
     ``sigma`` controls its shape.
     """
-    if src is None:
-        src = pl.col("close")
-
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,

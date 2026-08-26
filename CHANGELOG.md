@@ -2,6 +2,37 @@
 
 ## 0.1.2
 
+- **Expose concrete `close` source defaults.** Single-source indicators that
+  read `close` by default now declare `src="close"` directly instead of using
+  nullable `None` as an internal sentinel. `CCI` and `MFI` retain nullable
+  sources for their computed `TYPPRICE()` defaults.
+
+- **Scale `ROC` and add `ROCP`.** `ROC` now follows the conventional
+  percentage-point scale, returning `100 * (source / source.shift(period) - 1)`.
+  `ROCP` preserves the former unscaled fractional result. Both reject zero and
+  negative periods.
+
+- **Add the fused `SUPERTREND` kernel.** Wilder ATR, finalized bands and the
+  recursive trend state run in one pass and return a `supertrend`/`direction`
+  struct, with `1` for bullish and `-1` for bearish state. The first valid state
+  is bearish, matching TradingView's initialization convention.
+
+- **Add expression-native `STOCHRSI`.** Wilder RSI feeds native rolling
+  normalization and successive fast K / fast D smoothing, returning both lines
+  as one struct without another Rust kernel.
+
+- **Add expression-native `TRIX`.** Three sequential EMA expressions feed a
+  native one-row rate of change scaled to percentage points, without another
+  Rust kernel.
+
+- **Add expression-native `ULTOSC`.** Buying pressure and true range feed three
+  native rolling-sum ratios combined with the standard 4:2:1 weighting, without
+  another Rust kernel.
+
+- **Add expression-native `CMO`.** The original Chande formulation compares
+  rolling sums of gains and losses on a -100 to +100 scale. It deliberately
+  does not reproduce TA-Lib's later Wilder-smoothed, RSI-equivalent variant.
+
 - Publish the public GitHub repository, issue tracker and changelog in package
   metadata, and document supported wheel platforms, the development workflow and
   the license in the README without self-referential repository links.
@@ -55,13 +86,12 @@
   composition such as `SMA(20, src=BOP())`.
 
 - **Add expression-native `NATR`.** Normalized ATR lives alongside `ATR` and
-  returns the raw `ATR / close` ratio. Scaling to percentage points remains
-  explicit and no additional kernel is introduced.
+  returns `100 * ATR / close` in percentage points. No additional kernel is
+  introduced.
 
 - **Add expression-native `PPO`.** The scalar Price Percentage Oscillator
-  composes fast and slow EMA kernels and returns their raw fractional spread.
-  Scaling to percentage points remains explicit and no dedicated kernel is
-  added.
+  composes fast and slow EMA kernels and returns their relative spread scaled
+  to percentage points. No dedicated kernel is added.
 
 - **Add expression-native `CMF`.** Chaikin Money Flow composes the HLC money
   flow multiplier with volume and native rolling sums. It accepts configurable
@@ -80,10 +110,9 @@
   `lowerband` struct. Its high, low, and close inputs remain configurable,
   without adding a dedicated Rust kernel.
 
-- **Add expression-native `ROC`.** Raw fractional rate of change delegates to
-  Polars `pct_change`, supports arbitrary expressions and periods, and preserves
-  native null and floating-point behavior without a Rust kernel. Scaling for
-  display is deliberately left to callers.
+- **Add expression-native `ROC`.** Rate of Change delegates to Polars
+  `pct_change`, supports arbitrary expressions and periods, and preserves
+  native null and floating-point behavior without a Rust kernel.
 
 - **Centralize expression input conversion.** `bartons.typing.into_expr` is now
   the runtime counterpart to `IntoExprColumn`, converting column names and

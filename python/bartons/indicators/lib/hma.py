@@ -9,10 +9,8 @@ __all__ = ("HMA",)
 
 
 @wrap_src_indicator
-def HMA(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
+def HMA(period: int, *, src: IntoExprColumn = "close") -> pl.Expr:
     """Hull moving average using ``period//2`` and ``floor(sqrt(period))``."""
-    if src is None:
-        src = pl.col("close")
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,

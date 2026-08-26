@@ -9,10 +9,8 @@ __all__ = ("ZLEMA",)
 
 
 @wrap_src_indicator
-def ZLEMA(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
+def ZLEMA(period: int, *, src: IntoExprColumn = "close") -> pl.Expr:
     """Zero-lag EMA using lag ``(period - 1) // 2``."""
-    if src is None:
-        src = pl.col("close")
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,

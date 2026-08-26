@@ -75,11 +75,13 @@ def test_atr_accepts_column_names_and_exprs():
     assert_series_equal(by_expr, expected, check_exact=False, rel_tol=1e-12)
 
 
-def test_natr_is_raw_atr_over_close():
+def test_natr_is_scaled_atr_over_close():
     highs, lows, closes, period = CASES[0]
     df = _df(highs, lows, closes)
     got = df.select(NATR(period))["natr"]
-    expected = df.select(ATR(period).truediv(pl.col("close")).alias("natr"))["natr"]
+    expected = df.select(
+        ATR(period).truediv(pl.col("close")).mul(100.0).alias("natr")
+    )["natr"]
     assert_series_equal(got, expected)
 
 
@@ -96,14 +98,14 @@ def test_natr_accepts_custom_inputs():
     assert custom.equals(default)
 
 
-def test_natr_is_not_scaled_by_100():
+def test_natr_is_scaled_by_100():
     highs, lows, closes, period = CASES[0]
     df = _df(highs, lows, closes)
-    raw = df.select(NATR(period))["natr"]
-    scaled = df.select(NATR(period).mul(100.0))["natr"]
+    got = df.select(NATR(period))["natr"]
+    raw = df.select(ATR(period).truediv(pl.col("close")).alias("raw"))["raw"]
 
-    index = next(index for index, value in enumerate(raw) if value is not None)
-    assert scaled[index] == raw[index] * 100.0
+    index = next(index for index, value in enumerate(got) if value is not None)
+    assert got[index] == raw[index] * 100.0
 
 
 @pytest.mark.parametrize("highs,lows,closes,period", CASES)

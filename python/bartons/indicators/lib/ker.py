@@ -9,7 +9,7 @@ __all__ = ("KER",)
 
 
 @wrap_src_indicator
-def KER(period: int = 10, *, src: IntoExprColumn | None = None) -> pl.Expr:
+def KER(period: int = 10, *, src: IntoExprColumn = "close") -> pl.Expr:
     """Kaufman Efficiency Ratio.
 
     The net move over the window divided by the total distance travelled within
@@ -25,9 +25,6 @@ def KER(period: int = 10, *, src: IntoExprColumn | None = None) -> pl.Expr:
         src: input column expression; defaults to ``pl.col("close")``.
             A column name string is also accepted.
     """
-    if src is None:
-        src = pl.col("close")
-
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,

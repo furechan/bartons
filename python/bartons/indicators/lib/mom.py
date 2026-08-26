@@ -12,7 +12,7 @@ __all__ = ("MOM",)
 def MOM(
     period: int = 1,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Difference from the value ``period`` rows earlier.
 
@@ -22,4 +22,4 @@ def MOM(
     """
     if period <= 0:
         raise ValueError("period must be greater than zero")
-    return into_expr("close" if src is None else src).diff(period)
+    return into_expr(src).diff(period)

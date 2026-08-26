@@ -9,7 +9,7 @@ __all__ = ("RMA",)
 
 
 @wrap_src_indicator
-def RMA(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
+def RMA(period: int, *, src: IntoExprColumn = "close") -> pl.Expr:
     """Wilder's moving average (RSI-style smoothing).
 
     Exponential average with ``alpha = 1 / period``, seeded with the simple
@@ -20,9 +20,6 @@ def RMA(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
         src: input column expression; defaults to ``pl.col("close")``.
             A column name string is also accepted.
     """
-    if src is None:
-        src = pl.col("close")
-
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,

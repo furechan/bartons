@@ -159,7 +159,7 @@ primitives — e.g. `ref_atr` is `ref_rma` of `ref_trange`), then
 
 - both surfaces (`<NAME>()` expression and `kernels.<name>()`) and that they
   agree;
-- `src=None`→`close` default and the column-name-string form;
+- `src="close"` default and the column-name-string form;
 - warmup nulls and null handling (see below);
 - integer input is cast (not panicked);
 - invalid period raises.

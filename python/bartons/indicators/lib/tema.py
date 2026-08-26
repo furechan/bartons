@@ -9,10 +9,8 @@ __all__ = ("TEMA",)
 
 
 @wrap_src_indicator
-def TEMA(period: int = 20, *, src: IntoExprColumn | None = None) -> pl.Expr:
+def TEMA(period: int = 20, *, src: IntoExprColumn = "close") -> pl.Expr:
     """Triple exponential moving average."""
-    if src is None:
-        src = pl.col("close")
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,

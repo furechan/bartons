@@ -95,6 +95,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `BOP()` | Unsmoothed Balance of Power |
 | `CCI(period=20)` | Commodity Channel Index |
 | `CMF(period=20)` | Chaikin Money Flow |
+| `CMO(period=14)` | Rolling-window Chande Momentum Oscillator |
 | `DEMA(period)` | Double exponential moving average |
 | `DMI(period=14)` | ADX, plus DI and minus DI expressions |
 | `DONCHIAN(period=20)` | Donchian upper, middle and lower channels |
@@ -112,24 +113,29 @@ CCI(20, src=TYPPRICE())          # same thing
 | `MEDPRICE()` | Median price, `(high + low) / 2` |
 | `MFI(period=14)` | Money Flow Index |
 | `MOM(period=1)` | Momentum |
-| `NATR(period=14)` | Raw fractional normalized average true range |
+| `NATR(period=14)` | Normalized Average True Range (%) |
 | `OBV()` | On-Balance Volume |
-| `PPO(fast=12, slow=26)` | Raw fractional Price Percentage Oscillator |
+| `PPO(fast=12, slow=26)` | Price Percentage Oscillator (%) |
 | `QUADREG(period=20, offset=0)` | Rolling quadratic-regression forecast |
 | `QUADREG_CURVE(period=20)` | Rolling quadratic coefficient |
 | `QUADREG_RMSE(period=20)` | Rolling quadratic-regression RMSE |
 | `QUADREG_RVALUE(period=20)` | Rolling quadratic partial r-value |
 | `QUADREG_SLOPE(period=20, offset=0)` | Rolling quadratic-regression slope |
 | `RMA(period)` | Wilder's running moving average |
-| `ROC(period=1)` | Raw fractional rate of change |
+| `ROC(period=1)` | Rate of Change (%) |
+| `ROCP(period=1)` | Rate of Change as an unscaled fraction |
 | `RSI(period)` | Wilder's relative strength index |
 | `SAR(afs=0.02, maxaf=0.2)` | Parabolic Stop and Reverse |
 | `SMA(period)` | Simple moving average |
 | `STOCH(period=14, fastn=3, slown=3)` | Slow stochastic oscillator, `%K` and `%D` |
+| `STOCHRSI(period=14, fastn=3, slown=3)` | Stochastic RSI, fast K and fast D |
 | `STREAK(src)` | Consecutive true count |
+| `SUPERTREND(period=10, multiplier=3.0)` | Supertrend line and bullish/bearish direction |
 | `TEMA(period=20)` | Triple exponential moving average |
 | `TRANGE()` | True range |
+| `TRIX(period=30)` | Triple-smoothed EMA rate of change (%) |
 | `TYPPRICE()` | Typical price, `(high + low + close) / 3` |
+| `ULTOSC(fast=7, medium=14, slow=28)` | Ultimate Oscillator |
 | `WCLPRICE()` | Weighted close price, `(high + low + 2 * close) / 4` |
 | `WILLR(period=14)` | Williams %R |
 | `WMA(period)` | Weighted moving average |

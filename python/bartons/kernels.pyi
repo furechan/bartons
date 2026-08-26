@@ -324,6 +324,23 @@ def streak(series: pl.Series) -> pl.Series:
     ...
 
 
+def supertrend(high: pl.Series, low: pl.Series, close: pl.Series, *, period: int = 10, multiplier: float = 3.0) -> pl.Series:
+    """
+    Supertrend trend-following line and direction.
+
+    Args:
+        high: high prices.
+        low: low prices.
+        close: close prices.
+        period: Wilder ATR period (default 10).
+        multiplier: positive ATR band multiplier (default 3.0).
+
+    Returns:
+        A Struct series with Float64 `supertrend` and Int64 `direction` fields.
+    """
+    ...
+
+
 def tema(series: pl.Series, *, period: int = 20) -> pl.Series:
     """
     Triple exponential moving average.

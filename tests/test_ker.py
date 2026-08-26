@@ -32,7 +32,7 @@ def test_ker_expression(xs, period):
 
 
 def test_ker_src_defaults_to_close():
-    """src=None reads the `close` column by convention."""
+    """The default src reads the `close` column by convention."""
     df = pl.DataFrame({"close": pl.Series([1.0, 2.0, 3.0, 4.0], dtype=pl.Float64)})
     got = df.select(KER(2).alias("ker"))["ker"]
     assert_series_equal(

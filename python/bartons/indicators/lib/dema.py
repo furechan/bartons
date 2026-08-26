@@ -9,10 +9,8 @@ __all__ = ("DEMA",)
 
 
 @wrap_src_indicator
-def DEMA(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
+def DEMA(period: int, *, src: IntoExprColumn = "close") -> pl.Expr:
     """Double exponential moving average: ``2*EMA(src)-EMA(EMA(src))``."""
-    if src is None:
-        src = pl.col("close")
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,

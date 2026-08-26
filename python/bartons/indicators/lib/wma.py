@@ -9,7 +9,7 @@ __all__ = ("WMA",)
 
 
 @wrap_src_indicator
-def WMA(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
+def WMA(period: int, *, src: IntoExprColumn = "close") -> pl.Expr:
     """Weighted moving average (linear weights).
 
     Each window value is weighted by its recency: the oldest gets weight 1 and
@@ -20,9 +20,6 @@ def WMA(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
         src: input column expression; defaults to ``pl.col("close")``.
             A column name string is also accepted.
     """
-    if src is None:
-        src = pl.col("close")
-
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,

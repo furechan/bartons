@@ -36,7 +36,7 @@ def test_kama_expression(xs, period, fastn, slown):
 
 
 def test_kama_src_defaults_to_close():
-    """src=None reads the `close` column by convention."""
+    """The default src reads the `close` column by convention."""
     df = pl.DataFrame({"close": pl.Series([1.0, 2.0, 3.0, 4.0], dtype=pl.Float64)})
     got = df.select(KAMA(2).alias("kama"))["kama"]
     assert_series_equal(

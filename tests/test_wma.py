@@ -30,7 +30,7 @@ def test_wma_expression(xs, period):
 
 
 def test_wma_src_defaults_to_close():
-    """src=None reads the `close` column by convention."""
+    """The default src reads the `close` column by convention."""
     df = pl.DataFrame({"close": pl.Series([100.0, 101.0, 102.0], dtype=pl.Float64)})
     got = df.select(WMA(2).alias("wma"))["wma"]
     assert_series_equal(

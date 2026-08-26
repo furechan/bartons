@@ -30,7 +30,7 @@ def test_rma_expression(xs, period):
 
 
 def test_rma_src_defaults_to_close():
-    """src=None reads the `close` column by convention."""
+    """The default src reads the `close` column by convention."""
     df = pl.DataFrame({"close": pl.Series([100.0, 101.0, 102.0], dtype=pl.Float64)})
     got = df.select(RMA(2).alias("rma"))["rma"]
     assert_series_equal(

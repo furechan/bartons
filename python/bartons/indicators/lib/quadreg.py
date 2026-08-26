@@ -18,10 +18,8 @@ def _quadreg(
     period: int,
     output: str,
     offset: int,
-    src: IntoExprColumn | None,
+    src: IntoExprColumn,
 ) -> pl.Expr:
-    if src is None:
-        src = pl.col("close")
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,
@@ -36,7 +34,7 @@ def QUADREG(
     period: int = 20,
     offset: int = 0,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Rolling quadratic-regression forecast.
 
@@ -52,7 +50,7 @@ def QUADREG(
 def QUADREG_CURVE(
     period: int = 20,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Quadratic coefficient of the rolling regression parabola."""
     return _quadreg(period, "curve", 0, src)
@@ -63,7 +61,7 @@ def QUADREG_SLOPE(
     period: int = 20,
     offset: int = 0,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Tangent slope of the rolling regression parabola.
 
@@ -79,7 +77,7 @@ def QUADREG_SLOPE(
 def QUADREG_RVALUE(
     period: int = 20,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Partial correlation of the quadratic term given the linear term."""
     return _quadreg(period, "rvalue", 0, src)
@@ -89,7 +87,7 @@ def QUADREG_RVALUE(
 def QUADREG_RMSE(
     period: int = 20,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Root-mean-square error of the rolling quadratic fit."""
     return _quadreg(period, "rmse", 0, src)

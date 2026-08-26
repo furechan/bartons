@@ -33,6 +33,8 @@ from .lib.cci import CCI
 
 from .lib.cmf import CMF
 
+from .lib.cmo import CMO
+
 from .lib.dema import DEMA
 
 from .lib.dmi import DMI
@@ -85,7 +87,10 @@ from .lib.quadreg import (
 
 from .lib.rma import RMA
 
-from .lib.roc import ROC
+from .lib.roc import (
+    ROC,
+    ROCP,
+)
 
 from .lib.rsi import RSI
 
@@ -95,11 +100,19 @@ from .lib.sma import SMA
 
 from .lib.stoch import STOCH
 
+from .lib.stochrsi import STOCHRSI
+
 from .lib.streak import STREAK
+
+from .lib.supertrend import SUPERTREND
 
 from .lib.tema import TEMA
 
 from .lib.trange import TRANGE
+
+from .lib.trix import TRIX
+
+from .lib.ultosc import ULTOSC
 
 from .lib.wma import WMA
 
@@ -121,6 +134,7 @@ __all__ = [
     "BOP",
     "CCI",
     "CMF",
+    "CMO",
     "DEMA",
     "DMI",
     "DONCHIAN",
@@ -148,14 +162,19 @@ __all__ = [
     "QUADREG_SLOPE",
     "RMA",
     "ROC",
+    "ROCP",
     "RSI",
     "SAR",
     "SMA",
     "STOCH",
+    "STOCHRSI",
     "STREAK",
+    "SUPERTREND",
     "TEMA",
     "TRANGE",
+    "TRIX",
     "TYPPRICE",
+    "ULTOSC",
     "WCLPRICE",
     "WILLR",
     "WMA",

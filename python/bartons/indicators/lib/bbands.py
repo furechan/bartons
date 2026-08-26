@@ -23,7 +23,7 @@ def BBANDS(
     period: int = 20,
     nbdev: float = 2.0,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Bollinger Bands as an upper, middle, and lower band struct.
 
@@ -35,7 +35,7 @@ def BBANDS(
         nbdev: number of standard deviations on either side of the mean.
         src: input column expression or name; defaults to ``close``.
     """
-    source = into_expr("close" if src is None else src)
+    source = into_expr(src)
     upper, middle, lower = _bands(source, period, nbdev)
     return pl.struct(
         upper.alias("upperband"),
@@ -49,10 +49,10 @@ def BBP(
     period: int = 20,
     nbdev: float = 2.0,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Bollinger Percent B: source position within the lower/upper bands."""
-    source = into_expr("close" if src is None else src)
+    source = into_expr(src)
     upper, _, lower = _bands(source, period, nbdev)
     return (source - lower) / (upper - lower)
 
@@ -62,9 +62,9 @@ def BBW(
     period: int = 20,
     nbdev: float = 2.0,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Bollinger BandWidth: band width relative to the middle band."""
-    source = into_expr("close" if src is None else src)
+    source = into_expr(src)
     upper, middle, lower = _bands(source, period, nbdev)
     return (upper - lower) / middle

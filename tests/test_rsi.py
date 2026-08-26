@@ -47,7 +47,7 @@ def test_rsi_steady_uptrend_is_hundred():
 
 
 def test_rsi_src_defaults_to_close():
-    """src=None reads the `close` column by convention."""
+    """The default src reads the `close` column by convention."""
     xs = [10.0, 11.0, 10.0, 11.0, 10.0, 11.0]
     df = pl.DataFrame({"close": pl.Series(xs, dtype=pl.Float64)})
     got = df.select(RSI(2).alias("rsi"))["rsi"]

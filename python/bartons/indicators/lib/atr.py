@@ -44,10 +44,9 @@ def NATR(
     low: IntoExprColumn = "low",
     close: IntoExprColumn = "close",
 ) -> pl.Expr:
-    """Raw fractional Normalized Average True Range.
+    """Normalized Average True Range in percentage points.
 
-    ``ATR(period) / close``. The result is a fractional ratio; multiply by 100
-    explicitly when percentage points are desired.
+    ``100 * ATR(period) / close``.
 
     Args:
         period: ATR smoothing period.
@@ -55,4 +54,8 @@ def NATR(
         low: low column expression or name.
         close: close column expression or name.
     """
-    return ATR(period, high=high, low=low, close=close).truediv(into_expr(close))
+    return (
+        ATR(period, high=high, low=low, close=close)
+        .truediv(into_expr(close))
+        .mul(100.0)
+    )

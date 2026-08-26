@@ -27,6 +27,7 @@ from .lib.bbands import *
 from .lib.bop import *
 from .lib.cci import *
 from .lib.cmf import *
+from .lib.cmo import *
 from .lib.dema import *
 from .lib.dmi import *
 from .lib.donchian import *
@@ -50,9 +51,13 @@ from .lib.rsi import *
 from .lib.sar import *
 from .lib.sma import *
 from .lib.stoch import *
+from .lib.stochrsi import *
 from .lib.streak import *
+from .lib.supertrend import *
 from .lib.tema import *
 from .lib.trange import *
+from .lib.trix import *
+from .lib.ultosc import *
 from .lib.wma import *
 from .lib.willr import *
 from .lib.zlema import *

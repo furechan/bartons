@@ -24,6 +24,7 @@ pub mod ker;
 pub mod kama;
 pub mod sar;
 pub mod streak;
+pub mod supertrend;
 pub mod linreg;
 pub mod quadreg;
 pub mod mfi;

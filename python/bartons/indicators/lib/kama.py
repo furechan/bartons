@@ -14,7 +14,7 @@ def KAMA(
     fastn: int = 2,
     slown: int = 30,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Kaufman Adaptive Moving Average.
 
@@ -29,9 +29,6 @@ def KAMA(
         src: input column expression; defaults to ``pl.col("close")``.
             A column name string is also accepted.
     """
-    if src is None:
-        src = pl.col("close")
-
     return register_plugin_function(
         args=[src],
         plugin_path=PLUGIN_PATH,

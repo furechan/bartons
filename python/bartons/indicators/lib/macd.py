@@ -13,7 +13,7 @@ def MACD(
     slow: int = 26,
     signal: int = 9,
     *,
-    src: IntoExprColumn | None = None,
+    src: IntoExprColumn = "close",
 ) -> pl.Expr:
     """Moving Average Convergence/Divergence lines.
 
@@ -27,9 +27,6 @@ def MACD(
         src: input column expression; defaults to ``pl.col("close")``.
             A column name string is also accepted.
     """
-    if src is None:
-        src = pl.col("close")
-
     line = EMA(fast, src=src) - EMA(slow, src=src)
     signal_line = EMA(signal, src=line)
 
