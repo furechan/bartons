@@ -167,21 +167,6 @@ Bare `.unnest()` expands every struct column; pass a column name such as
 `.unnest("macd")` to expand only that struct. The resulting field names must not
 collide with existing columns.
 
-## Eager API
-
-The compiled kernels are also callable directly on polars series, bypassing the
-expression layer:
-
-```python
-from bartons import kernels
-
-kernels.ema(prices["close"], period=20)
-kernels.dmi(prices["high"], prices["low"], prices["close"]).struct.unnest()
-```
-
-Parameters are keyword-only here. This path needs `polars>=1.28`; the expression
-API alone works further back.
-
 ## Development
 
 Set up the development environment and run the complete source-tree validation:

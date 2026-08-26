@@ -2,6 +2,11 @@
 
 ## 0.1.2
 
+- **Present expressions as the sole supported user API.** The README no longer
+  advertises direct eager kernel calls, and the former kernel example notebook
+  moves from `examples/` to `playground/` with an explicit internal and
+  transitional scope. Rust kernels remain implementation details and test aids.
+
 - **Add `APO` and configurable PPO moving averages.** Both scalar oscillators
   dispatch through `MA`, defaulting to the conventional MACD-like EMA pair
   while accepting every supported `matype`; explicit `matype="sma"` provides
