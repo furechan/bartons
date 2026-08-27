@@ -147,6 +147,9 @@ def info(c: Context) -> None:
 @task
 def publish(c: Context) -> None:
     """Upload the current dist/ artifacts and bump the patch version."""
+
+    raise RuntimeError("publish has  been moved to ci. use release workflow!")
+
     publish_guard(c)
     artifacts = sorted([*DIST.glob("*.whl"), *DIST.glob("*.tar.gz")])
     if not artifacts:
