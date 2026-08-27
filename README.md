@@ -110,6 +110,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `LINREG_RMSE(period=20)` | Rolling linear-regression RMSE |
 | `LINREG_RVALUE(period=20)` | Rolling linear-regression r-value |
 | `LINREG_SLOPE(period=20)` | Rolling linear-regression slope |
+| `LROC(period=1)` | Logarithmic Rate of Change |
 | `MA(period=30, matype="sma")` | Generic moving-average dispatcher |
 | `MACD(fast=12, slow=26, signal=9)` | MACD, signal and histogram expressions |
 | `MAD(period=20)` | Rolling mean absolute deviation |

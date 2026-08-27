@@ -2,6 +2,10 @@
 
 ## 0.1.2
 
+- **Add expression-native `LROC`.** The logarithmic rate of change returns
+  `log(source) - log(source.shift(period))` without scaling, alongside `ROC`
+  and `ROCP`.
+
 - **Present expressions as the sole supported user API.** The README no longer
   advertises direct eager kernel calls, and the former kernel example notebook
   moves from `examples/` to `playground/` with an explicit internal and

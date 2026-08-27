@@ -5,7 +5,7 @@ import polars as pl
 from ...prelude import wrap_src_indicator
 from ...typing import IntoExprColumn, into_expr
 
-__all__ = ("ROC", "ROCP")
+__all__ = ("ROC", "ROCP", "LROC")
 
 
 @wrap_src_indicator
@@ -46,3 +46,23 @@ def ROCP(
         raise ValueError("period must be greater than zero")
     source = into_expr(src)
     return source.pct_change(period)
+
+
+@wrap_src_indicator
+def LROC(
+    period: int = 1,
+    *,
+    src: IntoExprColumn = "close",
+) -> pl.Expr:
+    """Logarithmic Rate of Change over ``period`` rows.
+
+    Returns ``log(source) - log(source.shift(period))`` without scaling.
+
+    Args:
+        period: positive lookback distance.
+        src: input column expression or name; defaults to ``close``.
+    """
+    if period <= 0:
+        raise ValueError("period must be greater than zero")
+    source = into_expr(src)
+    return source.log() - source.shift(period).log()

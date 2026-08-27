@@ -27,6 +27,7 @@ INDICATORS = {
     "RMA": ("RMA(period)", "Wilder's running moving average"),
     "ROC": ("ROC(period=1)", "Rate of Change (%)"),
     "ROCP": ("ROCP(period=1)", "Rate of Change as an unscaled fraction"),
+    "LROC": ("LROC(period=1)", "Logarithmic Rate of Change"),
     "WMA": ("WMA(period)", "Weighted moving average"),
     "VWMA": ("VWMA(period=20)", "Volume-weighted moving average"),
     "WILLR": ("WILLR(period=14)", "Williams %R"),

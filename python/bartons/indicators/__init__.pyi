@@ -99,6 +99,7 @@ from .lib.rma import RMA
 from .lib.roc import (
     ROC,
     ROCP,
+    LROC,
 )
 
 from .lib.rsi import RSI
@@ -160,6 +161,7 @@ __all__ = [
     "LINREG_RMSE",
     "LINREG_RVALUE",
     "LINREG_SLOPE",
+    "LROC",
     "MA",
     "MACD",
     "MAD",

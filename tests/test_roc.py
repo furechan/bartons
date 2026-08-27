@@ -5,7 +5,7 @@ import pytest
 
 from helpers import assert_series_equal
 
-from bartons.indicators import ROC, ROCP
+from bartons.indicators import LROC, ROC, ROCP
 from refimpl import ref_roc
 
 
@@ -50,7 +50,25 @@ def test_rocp_preserves_unscaled_fractional_rate_of_change():
     assert got.equals(expected)
 
 
-@pytest.mark.parametrize("indicator", [ROC, ROCP])
+def test_lroc_returns_unscaled_logarithmic_rate_of_change():
+    frame = pl.DataFrame({"close": [10.0, 11.0, 12.0, 9.0]})
+    got = frame.select(LROC())
+    expected = pl.DataFrame(
+        {
+            "lroc": [
+                None,
+                math.log(11.0) - math.log(10.0),
+                math.log(12.0) - math.log(11.0),
+                math.log(9.0) - math.log(12.0),
+            ]
+        }
+    )
+    assert_series_equal(
+        got["lroc"], expected["lroc"], check_exact=False, rel_tol=1e-12
+    )
+
+
+@pytest.mark.parametrize("indicator", [ROC, ROCP, LROC])
 def test_rate_of_change_rejects_nonpositive_period(indicator):
     with pytest.raises(ValueError, match="period"):
         indicator(0)
