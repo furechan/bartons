@@ -44,9 +44,6 @@ def clean_dist(c: Context) -> None:
     DIST.mkdir()
 
 
-def capture_output(c: Context, command: str) -> str:
-    return c.run(command, hide=True).stdout.strip()
-
 
 def latest_pypi_version() -> str:
     url = "https://pypi.org/pypi/bartons/json"
@@ -65,10 +62,8 @@ def latest_pypi_version() -> str:
 def make(c: Context) -> None:
     """Prepare and validate the source tree."""
     c.run("maturin develop --release")
-    c.run("python scripts/generate-kernel-stubs.py")
-    c.run("python scripts/generate-indicator-stubs.py")
-    c.run("uv run python scripts/update-readme.py")
-    c.run("uv run ty check")
+    stubs(c)
+    lint(c)
     test(c)
 
 
@@ -109,14 +104,15 @@ def bump(c: Context) -> None:
 @task
 def info(c: Context) -> None:
     """Show the current project version and the latest version on PyPI."""
-    print(f"Current version: {capture_output(c, 'uv version --short')}")
-    print(f"Latest on PyPI: {latest_pypi_version()}")
+    version = c.run("uv version --short", hide=True).stdout.strip()
+    pypi_version = latest_pypi_version()
+    print(f"Current version: {version}")
+    print(f"Latest on PyPI: {pypi_version}")
 
 
 @task
 def publish(c: Context) -> None:
     """Direct users to the CI-owned release workflow."""
-    del c
     raise Exit("publishing is handled by CI; run: gh workflow run release.yml")
 
 
@@ -125,6 +121,11 @@ def test(c: Context) -> None:
     """Run native Rust tests and pytest."""
     c.run("uv run pytest")
 
+
+@task
+def lint(c: Context) -> None:
+    """Run linting checks."""
+    c.run("uv run ty check")
 
 
 @task
