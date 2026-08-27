@@ -2,6 +2,10 @@
 
 ## 0.1.2
 
+- **Add expression-native `MIDPRICE`.** The standalone price indicator returns
+  the rolling highest-high and lowest-low midpoint; at period one it is
+  equivalent to `MEDPRICE`.
+
 - **Add expression-native `LROC`.** The logarithmic rate of change returns
   `log(source) - log(source.shift(period))` without scaling, alongside `ROC`
   and `ROCP`.

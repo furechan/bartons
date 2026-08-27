@@ -80,6 +80,7 @@ from .lib.obv import OBV
 from .lib.price import (
     AVGPRICE,
     MEDPRICE,
+    MIDPRICE,
     TYPPRICE,
     WCLPRICE,
 )
@@ -168,6 +169,7 @@ __all__ = [
     "MDI",
     "MEDPRICE",
     "MFI",
+    "MIDPRICE",
     "MOM",
     "NATR",
     "OBV",

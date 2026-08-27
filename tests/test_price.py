@@ -7,7 +7,7 @@ import pytest
 
 from helpers import assert_series_equal
 
-from bartons.indicators import AVGPRICE, MEDPRICE, TYPPRICE, WCLPRICE
+from bartons.indicators import AVGPRICE, MEDPRICE, MIDPRICE, TYPPRICE, WCLPRICE
 
 
 OPENS = [9.0, 10.0, None, 13.0, 14.0]
@@ -98,3 +98,34 @@ def test_medprice_is_not_a_rolling_midpoint():
     """
     with pytest.raises(TypeError):
         MEDPRICE(20)  # ty: ignore[too-many-positional-arguments]
+
+
+def test_midprice_matches_rolling_range_midpoint():
+    period = 3
+    frame = _df()
+    expected = (
+        frame["high"].rolling_max(period) + frame["low"].rolling_min(period)
+    ) / 2.0
+
+    got = frame.select(MIDPRICE(period))["midprice"]
+    assert_series_equal(got, expected.rename("midprice"))
+
+
+def test_midprice_one_equals_medprice():
+    frame = _df()
+    got = frame.select(MIDPRICE(1))["midprice"]
+    expected = frame.select(MEDPRICE())["medprice"]
+    assert_series_equal(got, expected.rename("midprice"))
+
+
+def test_midprice_accepts_custom_inputs():
+    frame = _df(names=SHORT)
+    custom = frame.select(MIDPRICE(3, high="h", low="l"))
+    default = _df().select(MIDPRICE(3))
+    assert custom.equals(default)
+
+
+@pytest.mark.parametrize("period", [0, -1])
+def test_midprice_rejects_invalid_period(period):
+    with pytest.raises(ValueError, match="period must be greater than zero"):
+        MIDPRICE(period)

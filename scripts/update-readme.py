@@ -58,6 +58,10 @@ INDICATORS = {
         "Average price, `(open + high + low + close) / 4`",
     ),
     "MEDPRICE": ("MEDPRICE()", "Median price, `(high + low) / 2`"),
+    "MIDPRICE": (
+        "MIDPRICE(period=14)",
+        "Midpoint of the rolling highest high and lowest low",
+    ),
     "TYPPRICE": ("TYPPRICE()", "Typical price, `(high + low + close) / 3`"),
     "WCLPRICE": (
         "WCLPRICE()",

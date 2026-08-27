@@ -117,6 +117,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `MDI(period=14)` | Negative Directional Indicator |
 | `MEDPRICE()` | Median price, `(high + low) / 2` |
 | `MFI(period=14)` | Money Flow Index |
+| `MIDPRICE(period=14)` | Midpoint of the rolling highest high and lowest low |
 | `MOM(period=1)` | Momentum |
 | `NATR(period=14)` | Normalized Average True Range (%) |
 | `OBV()` | On-Balance Volume |
