@@ -4,6 +4,7 @@ import json
 import os
 import shlex
 import shutil
+import sys
 import sysconfig
 import urllib.error
 import urllib.request
@@ -47,21 +48,6 @@ def capture_output(c: Context, command: str) -> str:
     return c.run(command, hide=True).stdout.strip()
 
 
-def check_pypi(c: Context, version: str) -> None:
-    url = f"https://pypi.org/pypi/bartons/{version}/json"
-    try:
-        urllib.request.urlopen(url).close()
-    except urllib.error.HTTPError as error:
-        if error.code != 404:
-            raise Exit(
-                f"refusing to publish bartons {version}: PyPI returned HTTP {error.code}"
-            ) from error
-    except urllib.error.URLError as error:
-        raise Exit(f"refusing to publish bartons {version}: {error.reason}") from error
-    else:
-        raise Exit(f"refusing to publish bartons {version}: already on PyPI")
-
-
 def latest_pypi_version() -> str:
     url = "https://pypi.org/pypi/bartons/json"
     try:
@@ -73,28 +59,6 @@ def latest_pypi_version() -> str:
         raise Exit(f"could not get the latest PyPI version: {error.reason}") from error
     except (KeyError, TypeError, ValueError) as error:
         raise Exit("could not read the latest version from PyPI's response") from error
-
-
-def publish_guard(c: Context) -> None:
-    status = capture_output(c, "git status --short --branch").splitlines()
-    if len(status) != 1:
-        raise Exit("refusing to publish: the working tree is not clean")
-
-    branch_status = status[0].removeprefix("## ")
-    if "..." not in branch_status:
-        raise Exit("refusing to publish: no upstream branch to compare against")
-
-    branch, upstream = branch_status.split("...", 1)
-    if " [" in upstream:
-        raise Exit(f"refusing to publish: branch is not synchronized ({branch_status})")
-
-    version = capture_output(c, "uv version --short")
-
-    check_pypi(c, version)
-
-    commit = capture_output(c, "git rev-parse --short HEAD")
-    print(f"ok: clean, synchronized {branch} at {commit}")
-    print(f"ok: bartons {version} is not yet on PyPI")
 
 
 @task
@@ -110,7 +74,12 @@ def make(c: Context) -> None:
 
 @task
 def build(c: Context, jobs: int = BUILD_JOBS) -> None:
-    """Build an sdist and its wheel, then test the wheel."""
+    """Legacy: build an sdist and its wheel, then test the wheel locally."""
+
+    print(
+        "warning: inv build is a legacy local check; releases are built by the CI release workflow",
+        file=sys.stderr,
+    )
 
     clean_dist(c)
 
@@ -146,20 +115,9 @@ def info(c: Context) -> None:
 
 @task
 def publish(c: Context) -> None:
-    """Upload the current dist/ artifacts and bump the patch version."""
-
-    raise RuntimeError("publish has  been moved to ci. use release workflow!")
-
-    publish_guard(c)
-    artifacts = sorted([*DIST.glob("*.whl"), *DIST.glob("*.tar.gz")])
-    if not artifacts:
-        raise Exit("no artifacts in dist/; run: inv build")
-    names = " ".join(path.name for path in artifacts)
-    if input(f"Upload {names} to PyPI? [y/N] ") not in {"y", "Y"}:
-        raise Exit("publish cancelled")
-    quoted = shlex.join(str(path) for path in artifacts)
-    c.run(f"uv run maturin upload --non-interactive {quoted}")
-    bump(c)
+    """Direct users to the CI-owned release workflow."""
+    del c
+    raise Exit("publishing is handled by CI; run: gh workflow run release.yml")
 
 
 @task

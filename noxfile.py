@@ -19,8 +19,6 @@ import os
 import shutil
 
 import nox
-from packaging.tags import sys_tags
-from packaging.utils import parse_wheel_filename
 
 nox.options.default_venv_backend = "uv"
 
@@ -61,20 +59,6 @@ def _wheel(session: nox.Session) -> str:
     """
     global _WHEEL
     if _WHEEL is None:
-        if os.environ.get("BARTONS_USE_DIST") == "1":
-            supported = set(sys_tags())
-            wheels = [
-                wheel
-                for wheel in glob.glob(os.path.abspath("dist/bartons-*.whl"))
-                if not parse_wheel_filename(os.path.basename(wheel))[3].isdisjoint(supported)
-            ]
-            if len(wheels) != 1:
-                session.error(
-                    f"release mode requires exactly one locally installable dist wheel; found {wheels}"
-                )
-            _WHEEL = wheels[0]
-            session.log(f"using release artifact {_WHEEL}")
-            return _WHEEL
         for old in glob.glob("dist/bartons-*.whl"):
             os.remove(old)
         session.install("maturin")
