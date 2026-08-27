@@ -16,7 +16,7 @@ name = "bartons"
 # mintalib). Build as often as you like; on publish, commit and push at this
 # version, then publishing bumps the patch and the result is pushed so the repo
 # names the next one.
-version = "0.1.5"
+version = "0.1.6"
 requires-python = ">=3.11"
 license = "MIT"
 description = "Financial and technical-analysis expressions for Polars, implemented in Rust"

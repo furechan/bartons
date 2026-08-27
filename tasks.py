@@ -1,5 +1,6 @@
 """Project workflows. Run ``uv run inv --list`` to see available tasks."""
 
+import json
 import os
 import shlex
 import shutil
@@ -59,6 +60,19 @@ def check_pypi(c: Context, version: str) -> None:
         raise Exit(f"refusing to publish bartons {version}: {error.reason}") from error
     else:
         raise Exit(f"refusing to publish bartons {version}: already on PyPI")
+
+
+def latest_pypi_version() -> str:
+    url = "https://pypi.org/pypi/bartons/json"
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            return json.load(response)["info"]["version"]
+    except urllib.error.HTTPError as error:
+        raise Exit(f"could not get the latest PyPI version: HTTP {error.code}") from error
+    except urllib.error.URLError as error:
+        raise Exit(f"could not get the latest PyPI version: {error.reason}") from error
+    except (KeyError, TypeError, ValueError) as error:
+        raise Exit("could not read the latest version from PyPI's response") from error
 
 
 def publish_guard(c: Context) -> None:
@@ -121,6 +135,13 @@ def build(c: Context, jobs: int = BUILD_JOBS) -> None:
 def bump(c: Context) -> None:
     """Advance the project to the next patch version without syncing."""
     c.run("uv version --bump patch --no-sync")
+
+
+@task
+def info(c: Context) -> None:
+    """Show the current project version and the latest version on PyPI."""
+    print(f"Current version: {capture_output(c, 'uv version --short')}")
+    print(f"Latest on PyPI: {latest_pypi_version()}")
 
 
 @task
