@@ -2,6 +2,16 @@
 
 ## 0.1.2
 
+- **Add an Altair Supertrend example.** A playground notebook plots bundled
+  daily OHLC prices as candlesticks with conditionally colored Supertrend
+  markers and stores an SVG output for display on GitHub.
+
+- **Unify expression-factory support.** The dual-form `expression_factory`
+  decorator replaces the indicator-specific wrappers, supports an explicit
+  output alias, and optionally adds the typed expression-first `src` calling
+  convention. Shared factory and plugin-path machinery moves from the vague
+  `prelude` module to `support`.
+
 - **Add expression-native `MIDPRICE`.** The standalone price indicator returns
   the rolling highest-high and lowest-low midpoint; at period one it is
   equivalent to `MEDPRICE`.

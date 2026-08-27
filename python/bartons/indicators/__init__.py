@@ -5,13 +5,12 @@ Each factory builds a ``pl.Expr`` that calls the compiled plugin, e.g.::
     from bartons.indicators import EMA, RSI, ATR
 
 The shared machinery they build on — ``PLUGIN_PATH`` and the
-:func:`~bartons.prelude.wrap_src_indicator` decorator — lives in
-:mod:`bartons.prelude`.
+:func:`~bartons.support.expression_factory` decorator — lives in
+:mod:`bartons.support`.
 
-Single-source factories are wrapped with
-:func:`~bartons.prelude.wrap_src_indicator` so they also take their source
-column as the leading positional argument, which makes them compose with
-:meth:`polars.Expr.pipe`::
+Single-source factories use ``expression_factory(positional_src=True)`` so they
+also take their source column as the leading positional argument, which makes
+them compose with :meth:`polars.Expr.pipe`::
 
     pl.col("close").pipe(EMA, 5).pipe(RSI, 14)
 """

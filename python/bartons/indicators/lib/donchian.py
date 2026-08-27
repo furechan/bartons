@@ -2,13 +2,13 @@
 
 import polars as pl
 
-from ...prelude import wrap_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn, into_expr
 
 __all__ = ("DONCHIAN",)
 
 
-@wrap_indicator
+@expression_factory
 def DONCHIAN(
     period: int = 20,
     *,

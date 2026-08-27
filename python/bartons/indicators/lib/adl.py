@@ -2,14 +2,14 @@
 
 import polars as pl
 
-from ...prelude import wrap_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn, into_expr
 from .ema import EMA
 
 __all__ = ("ADL", "ADOSC")
 
 
-@wrap_indicator
+@expression_factory
 def ADL(
     *,
     high: IntoExprColumn = "high",
@@ -33,7 +33,7 @@ def ADL(
     return multiplier.mul(volume).cum_sum()
 
 
-@wrap_indicator
+@expression_factory
 def ADOSC(
     fast: int = 3,
     slow: int = 10,

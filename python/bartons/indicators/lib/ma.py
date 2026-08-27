@@ -2,7 +2,7 @@
 
 import polars as pl
 
-from ...prelude import wrap_src_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn, MAType
 from .dema import DEMA
 from .ema import EMA
@@ -23,7 +23,7 @@ _MA_FACTORIES = {
 }
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def MA(
     period: int = 30,
     *,

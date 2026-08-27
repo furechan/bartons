@@ -2,7 +2,7 @@
 
 import polars as pl
 
-from ...prelude import wrap_src_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn, into_expr
 
 __all__ = ("BBANDS", "BBP", "BBW")
@@ -18,7 +18,7 @@ def _bands(
     return middle + deviation, middle, middle - deviation
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def BBANDS(
     period: int = 20,
     nbdev: float = 2.0,
@@ -44,7 +44,7 @@ def BBANDS(
     )
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def BBP(
     period: int = 20,
     nbdev: float = 2.0,
@@ -57,7 +57,7 @@ def BBP(
     return (source - lower) / (upper - lower)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def BBW(
     period: int = 20,
     nbdev: float = 2.0,

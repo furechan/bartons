@@ -2,7 +2,7 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_src_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn
 
 __all__ = (
@@ -29,7 +29,7 @@ def _quadreg(
     )
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def QUADREG(
     period: int = 20,
     offset: int = 0,
@@ -46,7 +46,7 @@ def QUADREG(
     return _quadreg(period, "forecast", offset, src)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def QUADREG_CURVE(
     period: int = 20,
     *,
@@ -56,7 +56,7 @@ def QUADREG_CURVE(
     return _quadreg(period, "curve", 0, src)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def QUADREG_SLOPE(
     period: int = 20,
     offset: int = 0,
@@ -73,7 +73,7 @@ def QUADREG_SLOPE(
     return _quadreg(period, "slope", offset, src)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def QUADREG_RVALUE(
     period: int = 20,
     *,
@@ -83,7 +83,7 @@ def QUADREG_RVALUE(
     return _quadreg(period, "rvalue", 0, src)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def QUADREG_RMSE(
     period: int = 20,
     *,

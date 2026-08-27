@@ -2,14 +2,14 @@
 
 import polars as pl
 
-from ...prelude import wrap_src_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn, MAType
 from .ma import MA
 
 __all__ = ("APO",)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def APO(
     fast: int = 12,
     slow: int = 26,

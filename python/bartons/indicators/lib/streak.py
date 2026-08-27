@@ -1,13 +1,13 @@
 import polars as pl
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn
 
 __all__ = ("STREAK",)
 
 
-@wrap_indicator
+@expression_factory
 def STREAK(src: IntoExprColumn) -> pl.Expr:
     """Count consecutive true values.
 

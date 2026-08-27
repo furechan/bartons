@@ -19,13 +19,13 @@ libraries, the unambiguous names win.
 
 import polars as pl
 
-from ...prelude import wrap_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn, into_expr
 
 __all__ = ("AVGPRICE", "MEDPRICE", "MIDPRICE", "TYPPRICE", "WCLPRICE")
 
 
-@wrap_indicator
+@expression_factory
 def AVGPRICE(
     *,
     open: IntoExprColumn = "open",
@@ -46,7 +46,7 @@ def AVGPRICE(
     ) / 4.0
 
 
-@wrap_indicator
+@expression_factory
 def MEDPRICE(
     *,
     high: IntoExprColumn = "high",
@@ -64,7 +64,7 @@ def MEDPRICE(
     return (into_expr(high) + into_expr(low)) / 2.0
 
 
-@wrap_indicator
+@expression_factory
 def MIDPRICE(
     period: int = 14,
     *,
@@ -86,7 +86,7 @@ def MIDPRICE(
     return upper.add(lower).truediv(2.0)
 
 
-@wrap_indicator
+@expression_factory
 def TYPPRICE(
     *,
     high: IntoExprColumn = "high",
@@ -105,7 +105,7 @@ def TYPPRICE(
     return (into_expr(high) + into_expr(low) + into_expr(close)) / 3.0
 
 
-@wrap_indicator
+@expression_factory
 def WCLPRICE(
     *,
     high: IntoExprColumn = "high",

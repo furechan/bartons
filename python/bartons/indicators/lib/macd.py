@@ -1,13 +1,13 @@
 import polars as pl
 
-from ...prelude import wrap_src_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn
 from .ema import EMA
 
 __all__ = ("MACD",)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def MACD(
     fast: int = 12,
     slow: int = 26,

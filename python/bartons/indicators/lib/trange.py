@@ -2,13 +2,13 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn
 
 __all__ = ("TRANGE",)
 
 
-@wrap_indicator
+@expression_factory
 def TRANGE(
     high: IntoExprColumn = "high",
     low: IntoExprColumn = "low",

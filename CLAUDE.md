@@ -122,7 +122,8 @@ were both stale and confounded, and the corrected experiment now lives in
 `ty` (Astral's type checker, https://github.com/astral-sh/ty) is the project's
 designated type checker; run it as `uv run ty check`. The expression factories in
 `python/bartons/indicators/lib/` holds the checkable implementations, including the wrapped
-single-source ones — `wrap_src_indicator` returns a `SrcIndicator` protocol
+single-source ones — `expression_factory(positional_src=True)` returns a
+`PositionalSrcFactory` protocol
 declaring both call forms as overloads, so `EMA(20)` and `EMA(pl.col("x"), 20)`
 both type as `pl.Expr`.
 
@@ -158,7 +159,7 @@ EMA and SMA are the reference implementations.
 
 - [bartons/src/kernels/ema.rs](bartons/src/kernels/ema.rs) — reference implementation: the `ema` kernel, `EmaKwargs`, and the `ema_expr` / `ema_py` bindings
 - [python/bartons/indicators/lib/ema.py](python/bartons/indicators/lib/ema.py) — Python-side plugin registration; implementations live under `lib`, while the public facade remains `from bartons.indicators import EMA`
-- [python/bartons/prelude.py](python/bartons/prelude.py) — shared factory machinery: `PLUGIN_PATH` and the `wrap_src_indicator` decorator (mirrors `bearta.prelude`)
+- [python/bartons/support.py](python/bartons/support.py) — shared expression-factory machinery: `PLUGIN_PATH`, `expression_factory`, and its overload protocol
 - [pyproject.toml](pyproject.toml) — Maturin config (module name, python-source, manifest-path)
 - [bartons/Cargo.toml](bartons/Cargo.toml) — Rust dependencies (pyo3, pyo3-polars, polars)
 

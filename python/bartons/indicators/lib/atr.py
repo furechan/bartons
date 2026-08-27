@@ -2,13 +2,13 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn, into_expr
 
 __all__ = ("ATR", "NATR")
 
 
-@wrap_indicator
+@expression_factory
 def ATR(
     period: int,
     *,
@@ -36,7 +36,7 @@ def ATR(
     )
 
 
-@wrap_indicator
+@expression_factory
 def NATR(
     period: int = 14,
     *,

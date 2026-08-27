@@ -2,14 +2,14 @@
 
 import polars as pl
 
-from ...prelude import wrap_src_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn
 from .rsi import RSI
 
 __all__ = ("STOCHRSI",)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def STOCHRSI(
     period: int = 14,
     fastn: int = 3,

@@ -2,13 +2,13 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn
 
 __all__ = ("DMI", "ADX", "PDI", "MDI")
 
 
-@wrap_indicator
+@expression_factory
 def DMI(
     period: int = 14,
     *,
@@ -31,7 +31,7 @@ def DMI(
     )
 
 
-@wrap_indicator
+@expression_factory
 def ADX(
     period: int = 14,
     *,
@@ -43,7 +43,7 @@ def ADX(
     return DMI(period, high=high, low=low, close=close).struct.field("adx")
 
 
-@wrap_indicator
+@expression_factory
 def PDI(
     period: int = 14,
     *,
@@ -55,7 +55,7 @@ def PDI(
     return DMI(period, high=high, low=low, close=close).struct.field("pdi")
 
 
-@wrap_indicator
+@expression_factory
 def MDI(
     period: int = 14,
     *,

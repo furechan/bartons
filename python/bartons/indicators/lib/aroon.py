@@ -1,13 +1,13 @@
 import polars as pl
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn
 
 __all__ = ("AROON", "AROONOSC")
 
 
-@wrap_indicator
+@expression_factory
 def AROON(
     period: int = 14,
     *,
@@ -24,7 +24,7 @@ def AROON(
     )
 
 
-@wrap_indicator
+@expression_factory
 def AROONOSC(
     period: int = 14,
     *,

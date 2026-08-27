@@ -63,8 +63,8 @@ provides the corresponding explicit re-exports to static analyzers.
 Polars names a plugin or arithmetic expression after its leftmost input column,
 so an undecorated factory would return a column called `close` or `high` —
 overwriting the column it read, and colliding with any sibling reading the same
-source. The `_named` step inside `wrap_indicator` and `wrap_src_indicator`
-aliases each result with the factory's own lowercased name.
+source. The `expression_factory` decorator aliases each result with the
+factory's own lowercased name unless an explicit alias is configured.
 
 This lives at the expression layer, not in Rust. The kernels do name their
 output — `run_filter` takes a name and `kernels.ema` returns a series called
@@ -76,7 +76,7 @@ name is a presentation concern of the indicator layer.
 The name is the bare factory name, matching the kernels and bearta, so
 `EMA(20)` and `EMA(50)` still collide and still want an explicit `.alias`. An
 outer alias always wins. The experimental `ExprBundle` utility is left alone by
-the decorators because its members carry their own names and the bundle has
+the decorator because its members carry their own names and the bundle has
 none of its own; shipped indicators no longer return it.
 
 ### Fused struct transport, bundle presentation

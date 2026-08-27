@@ -94,7 +94,7 @@ Implementations live under `bartons.indicators.lib` and are re-exported by the
 public `bartons.indicators` facade. Copy
 [python/bartons/indicators/lib/ema.py](../python/bartons/indicators/lib/ema.py): the
 shared `PLUGIN_PATH` (the `bartons` package dir holding the compiled `.so`) is
-imported from [`bartons.prelude`](../python/bartons/prelude.py), and
+imported from [`bartons.support`](../python/bartons/support.py), and
 `IntoExprColumn` and its runtime counterpart `into_expr` from the parent.
 Use `into_expr` whenever an expression-only implementation needs an actual
 `pl.Expr` for operators or expression methods; do not add a local conversion
@@ -103,14 +103,13 @@ accepts `IntoExprColumn` inputs and owns that conversion boundary.
 Follow the mintalib convention: **period
 first, `src` keyword-only defaulting to `pl.col("close")`**.
 
-Wrap every factory. `@wrap_src_indicator` (also from the prelude) is for
-single-source factories: it accepts the source column as the leading positional
-argument, so the factory composes with `Expr.pipe` (`pl.col("close").pipe(EMA,
-5)`). `@wrap_indicator` is for multi-input factories (TRANGE, ATR, the price
-transforms), which take their columns explicitly. Both name the output after
-the factory — see [Output names](architecture.md#output-names) — and each
-rejects the other's shape at decoration time, so reaching for the wrong one
-fails immediately.
+Decorate every factory with `@expression_factory`. Single-source factories use
+`@expression_factory(positional_src=True)`, which accepts the source column as
+the leading positional argument so the factory composes with `Expr.pipe`
+(`pl.col("close").pipe(EMA, 5)`). Multi-input factories (TRANGE, ATR, and the
+price transforms) use the bare decorator and take their columns explicitly.
+The decorator names the output after the factory unless an explicit `alias` is
+configured — see [Output names](architecture.md#output-names).
 
 An indicator whose extra inputs collapse *elementwise* into one series is
 single-source, not multi-input: build the reduction as its own expression
@@ -124,13 +123,13 @@ apply.
 ```python
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_src_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn
 
 __all__ = ("<NAME>",)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def <NAME>(period: int, *, src: IntoExprColumn | None = None) -> pl.Expr:
     if src is None:
         src = pl.col("close")

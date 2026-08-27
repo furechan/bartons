@@ -2,13 +2,13 @@
 
 import polars as pl
 
-from ...prelude import wrap_src_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn, into_expr
 
 __all__ = ("CMO",)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def CMO(
     period: int = 14,
     *,

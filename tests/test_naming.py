@@ -1,7 +1,7 @@
 """Every factory names its output after itself.
 
 Polars names a plugin or arithmetic expression after its leftmost input column,
-so without the `_named` step in the prelude decorators each factory would return
+so without the expression-factory decorator each factory would return
 a column called `close` or `high` — overwriting the column it read, and
 colliding with any sibling reading the same source.
 """
@@ -13,7 +13,7 @@ import pytest
 
 from bartons import indicators
 from bartons.bundle import ExprBundle
-from bartons.prelude import wrap_indicator, wrap_src_indicator
+from bartons.support import expression_factory
 
 
 def test_indicator_facade_hides_implementation_modules():
@@ -97,19 +97,10 @@ def test_same_indicator_twice_still_needs_an_alias():
     ).columns[-2:] == ["ema2", "ema3"]
 
 
-def test_wrap_indicator_rejects_a_src_factory():
-    """A non-leading `src` needs wrap_src_indicator to route expressions."""
-    with pytest.raises(TypeError, match="wrap_src_indicator"):
-
-        @wrap_indicator
-        def HasSrc(period, *, src=None):
-            return pl.lit(period)
-
-
-def test_wrap_indicator_accepts_a_leading_src():
+def test_expression_factory_accepts_a_leading_src():
     """A source-first factory already has the expression-first grammar."""
 
-    @wrap_indicator
+    @expression_factory
     def HasLeadingSrc(src):
         return src
 
@@ -118,10 +109,10 @@ def test_wrap_indicator_accepts_a_leading_src():
     assert df.select(pl.col("close").pipe(HasLeadingSrc)).columns == ["hasleadingsrc"]
 
 
-def test_named_leaves_bundles_alone():
+def test_expression_factory_leaves_bundles_alone():
     """A bundle has no single name to give its members."""
 
-    @wrap_indicator
+    @expression_factory
     def PAIR():
         return ExprBundle(a=pl.lit(1), b=pl.lit(2))
 
@@ -129,10 +120,18 @@ def test_named_leaves_bundles_alone():
     assert pl.DataFrame({"x": [1]}).select(*PAIR()).columns == ["a", "b"]
 
 
-def test_named_applies_through_the_src_wrapper():
-    """wrap_src_indicator names its output too, on both calling conventions."""
+def test_expression_factory_accepts_an_explicit_alias():
+    @expression_factory(alias="chosen")
+    def THING():
+        return pl.lit(1)
 
-    @wrap_src_indicator
+    assert pl.DataFrame().select(THING()).columns == ["chosen"]
+
+
+def test_expression_factory_names_both_positional_src_call_forms():
+    """Source routing preserves naming through both calling conventions."""
+
+    @expression_factory(positional_src=True)
     def THING(period, *, src=None):
         return (src if src is not None else pl.col("close")) * period
 

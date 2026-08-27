@@ -2,14 +2,14 @@
 
 import polars as pl
 
-from ...prelude import wrap_src_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn
 from .ema import EMA
 
 __all__ = ("TRIX",)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def TRIX(
     period: int = 30,
     *,

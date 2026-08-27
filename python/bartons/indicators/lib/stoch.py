@@ -2,13 +2,13 @@
 
 import polars as pl
 
-from ...prelude import wrap_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn, into_expr
 
 __all__ = ("STOCH",)
 
 
-@wrap_indicator
+@expression_factory
 def STOCH(
     period: int = 14,
     fastn: int = 3,

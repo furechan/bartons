@@ -1,13 +1,13 @@
 import polars as pl
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn
 
 __all__ = ("SAR",)
 
 
-@wrap_indicator
+@expression_factory
 def SAR(
     afs: float = 0.02,
     maxaf: float = 0.2,

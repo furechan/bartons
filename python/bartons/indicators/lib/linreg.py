@@ -2,7 +2,7 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_src_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn
 
 __all__ = ("LINREG", "LINREG_SLOPE", "LINREG_RVALUE", "LINREG_RMSE")
@@ -23,7 +23,7 @@ def _linreg(
     )
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def LINREG(
     period: int = 20,
     offset: int = 0,
@@ -40,7 +40,7 @@ def LINREG(
     return _linreg(period, "forecast", offset, src)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def LINREG_SLOPE(
     period: int = 20,
     *,
@@ -50,7 +50,7 @@ def LINREG_SLOPE(
     return _linreg(period, "slope", 0, src)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def LINREG_RVALUE(
     period: int = 20,
     *,
@@ -60,7 +60,7 @@ def LINREG_RVALUE(
     return _linreg(period, "rvalue", 0, src)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def LINREG_RMSE(
     period: int = 20,
     *,

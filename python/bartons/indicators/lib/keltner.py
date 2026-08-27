@@ -2,7 +2,7 @@
 
 import polars as pl
 
-from ...prelude import wrap_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn
 from .atr import ATR
 from .ema import EMA
@@ -11,7 +11,7 @@ from .price import TYPPRICE
 __all__ = ("KELTNER",)
 
 
-@wrap_indicator
+@expression_factory
 def KELTNER(
     period: int = 20,
     nbatr: float = 2.0,

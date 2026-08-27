@@ -2,13 +2,13 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_src_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn
 
 __all__ = ("RMA",)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def RMA(period: int, *, src: IntoExprColumn = "close") -> pl.Expr:
     """Wilder's moving average (RSI-style smoothing).
 

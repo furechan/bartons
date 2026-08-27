@@ -2,13 +2,13 @@
 
 import polars as pl
 
-from ...prelude import wrap_src_indicator
+from ...support import expression_factory
 from ...typing import IntoExprColumn, into_expr
 
 __all__ = ("ROC", "ROCP", "LROC")
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def ROC(
     period: int = 1,
     *,
@@ -28,7 +28,7 @@ def ROC(
     return 100.0 * source.pct_change(period)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def ROCP(
     period: int = 1,
     *,
@@ -48,7 +48,7 @@ def ROCP(
     return source.pct_change(period)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def LROC(
     period: int = 1,
     *,

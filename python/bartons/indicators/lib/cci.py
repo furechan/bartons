@@ -2,14 +2,14 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_src_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn
 from .price import TYPPRICE
 
 __all__ = ("CCI",)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def CCI(period: int = 20, *, src: IntoExprColumn | None = None) -> pl.Expr:
     """Commodity Channel Index.
 

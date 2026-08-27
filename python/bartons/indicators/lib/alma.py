@@ -2,13 +2,13 @@ import polars as pl
 
 from polars.plugins import register_plugin_function
 
-from ...prelude import PLUGIN_PATH, wrap_src_indicator
+from ...support import PLUGIN_PATH, expression_factory
 from ...typing import IntoExprColumn
 
 __all__ = ("ALMA",)
 
 
-@wrap_src_indicator
+@expression_factory(positional_src=True)
 def ALMA(
     period: int = 9,
     offset: float = 0.85,
