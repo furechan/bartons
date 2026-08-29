@@ -84,7 +84,7 @@ dev = [
     # `ta-lib` bundles its own libta-lib C library in the wheel; preloading it
     # (RTLD_GLOBAL) also resolves polars-talib's undefined TA_* symbols, so no
     # system libta-lib install is required.
-    "polars-talib>=0.1.5",
+    "polars-talib>=0.1.6",
     "ta-lib>=0.6.7",
     "mintalib>=0.0.35",
     "fsdata>=0.0.9",

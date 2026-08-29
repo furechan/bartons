@@ -77,6 +77,7 @@ from bartons.indicators import (
     OBV,
     PPO,
     ROC,
+    ROCP,
     TEMA,
     RSI,
     SAR,
@@ -116,8 +117,8 @@ PAIRS = [
     ("OBV", OBV(), pta.obv()),
     # Timing only: TA-Lib scales the same fractional oscillator by 100.
     ("PPO(12,26)", PPO(12, 26), pta.ppo(fastperiod=12, slowperiod=26)),
-    # Timing only: TA-Lib scales the same fractional change by 100.
     ("ROC(10)", ROC(10), pta.roc(timeperiod=10)),
+    ("ROCP(10)", ROCP(10), pta.rocp(timeperiod=10)),
     (
         "STOCH(14,3,3)",
         STOCH(14, 3, 3),
@@ -189,6 +190,13 @@ def bench_combined(
     return min(times) / number
 
 
+def normalized_talib_expr(name: str, expr: pl.Expr, *, over: bool) -> pl.Expr:
+    """Apply a window before inspecting fields of a struct-valued result."""
+    if over:
+        expr = expr.over("ticker")
+    return fill_nan(name, expr)
+
+
 def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, number: int) -> None:
     hdr = f"  {'indicator':<22}  {'bartons':>10}  {'talib':>10}  {'talib+fill_nan':>14}  {'r(raw)':>7}  {'r(fair)':>7}"
     print(hdr)
@@ -198,7 +206,18 @@ def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, numbe
         try:
             t_b = runner(df, b_expr, repeat=repeat, number=number)
             t_t = runner(df, t_expr, repeat=repeat, number=number)
-            t_n = runner(df, fill_nan(name, t_expr), repeat=repeat, number=number)
+            if over:
+                # Polars cannot group struct.with_fields: its group evaluator
+                # expects the struct's scalar fields to be list-valued. Apply
+                # the window to the TA-Lib result before normalizing its fields.
+                t_n = bench(
+                    df,
+                    normalized_talib_expr(name, t_expr, over=True),
+                    repeat=repeat,
+                    number=number,
+                )
+            else:
+                t_n = runner(df, fill_nan(name, t_expr), repeat=repeat, number=number)
         except Exception as e:
             print(f"  {name:<22}  skipped ({e})")
             continue
@@ -219,11 +238,13 @@ def run(df: pl.DataFrame, pairs: list, *, runner, over: bool, repeat: int, numbe
         # the one-by-one sum above.
         b_exprs = [b.alias(n) for n, b, _ in pairs]
         t_exprs = [t.alias(n) for n, _, t in pairs]
-        n_exprs = [fill_nan(n, t).alias(n) for n, _, t in pairs]
+        n_exprs = [normalized_talib_expr(n, t, over=over).alias(n) for n, _, t in pairs]
         try:
             t_b = bench_combined(df, b_exprs, over=over, repeat=repeat, number=number)
             t_t = bench_combined(df, t_exprs, over=over, repeat=repeat, number=number)
-            t_n = bench_combined(df, n_exprs, over=over, repeat=repeat, number=number)
+            # n_exprs already contain their windows so normalization can happen
+            # outside them; do not apply a second window here.
+            t_n = bench_combined(df, n_exprs, over=False, repeat=repeat, number=number)
             print(f"  {'ALL combined':<22}  {fmt_ms(t_b):>10}  {fmt_ms(t_t):>10}  {fmt_ms(t_n):>14}  {t_b / t_t:>7.2f}  {t_b / t_n:>7.2f}")
         except Exception as e:
             print(f"  {'ALL combined':<22}  skipped ({e})")

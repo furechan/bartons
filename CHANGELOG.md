@@ -2,6 +2,11 @@
 
 ## 0.1.2
 
+- **Fix the TA-Lib comparison benchmark for grouped struct outputs.** NaN
+  normalization now happens after the ticker window, avoiding a Polars panic
+  for indicators such as AROON in the multi-ticker scenario. The comparison
+  also covers unscaled ROCP alongside ROC and uses polars-talib 0.1.6.
+
 - **Add an Altair Supertrend example.** A playground notebook plots bundled
   daily OHLC prices as candlesticks with conditionally colored Supertrend
   markers and stores an SVG output for display on GitHub.
