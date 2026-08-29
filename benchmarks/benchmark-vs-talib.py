@@ -40,6 +40,7 @@ def _import_polars_talib():
     expects the library in the *global* symbol namespace. The `ta-lib` package
     ships that C lib, but Python loads extension modules RTLD_LOCAL, so the
     symbols stay invisible. On ImportError, preload it RTLD_GLOBAL and retry.
+    See docs/polars-talib-linking-workaround.md for diagnosis and scope.
     """
     try:
         import polars_talib as pta
