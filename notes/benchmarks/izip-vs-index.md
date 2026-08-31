@@ -13,7 +13,7 @@ implementation used by `run_filter`. This measures it against the alternatives,
 with the real TRANGE recurrence as the per-element logic and the output path
 held constant — manual `match` into a `PrimitiveChunkedBuilder`, never
 `append_option`, which
-[builder-vs-collect-benchmark.md](builder-vs-collect-benchmark.md) measures at
+[builder-vs-collect.md](builder-vs-collect.md) measures at
 ~1.6x.
 
 | variant | how it reads a row |
@@ -113,7 +113,7 @@ is `chunked`'s hand-rolled `take!` macro rewritten as an `Iterator` behind a
 against 531 at one chunk, 347 against 413 at 64. Carrying a remaining-element
 count gives a cheap exhaustion test and an exact `size_hint`, which the macro's
 `for _ in 0..len` could not supply. So the abstraction is not merely free here,
-in the way `docs/builder-vs-collect-benchmark.md` found for `Filter`; it pays.
+in the way `notes/benchmarks/builder-vs-collect.md` found for `Filter`; it pays.
 `fastpath` therefore dispatches to `fastiter`, not to `chunked`, whenever the
 input has more than one chunk. It branches
 because the two regimes want different loops — the per-element cursor that makes
@@ -154,7 +154,7 @@ native Arrow iterator with `.copied()` are tied at 287µs; neither warrants a
 dispatcher. Both beat `ChunkedArray::iter()` by ~16%, nothing like the ternary
 2.8x, which is the superlinearity above. That leaves the "streaming-filter
 abstraction is free" result in
-[builder-vs-collect-benchmark.md](builder-vs-collect-benchmark.md) untouched:
+[builder-vs-collect.md](builder-vs-collect.md) untouched:
 this gap sits below `Filter`, in how rows are gathered.
 
 ## Divergence under evcxr — unexplained
@@ -193,7 +193,7 @@ direct-index single-chunk dispatch remains unimplemented.
 
 ## Reproduction
 
-The source is [../benchmarks/izip-vs-index.rs](../benchmarks/izip-vs-index.rs),
+The source is [../../benchmarks/izip-vs-index.rs](../../benchmarks/izip-vs-index.rs),
 registered as a Cargo example so it can use bartons' shared `random_prices`
 fixture. Run it with `cargo run --release --manifest-path bartons/Cargo.toml
 --no-default-features --example izip-vs-index`.

@@ -1,12 +1,12 @@
 //! Ternary driver micro-benchmark: `izip!` over three iterators vs a loop over
 //! indexes. Recorded results and the reading of them are in
-//! `docs/izip-vs-index-benchmark.md`.
+//! `notes/benchmarks/izip-vs-index.md`.
 //!
 //! `run_ternary` in `bartons/src/utils.rs` walks three series with `izip!`.
 //! This measures that against the alternatives, with the real TRANGE recurrence
 //! as the per-element logic and the output path held constant (manual `match`
 //! into a `PrimitiveChunkedBuilder` — never `append_option`, which
-//! `docs/builder-vs-collect-benchmark.md` measures at ~1.6x):
+//! `notes/benchmarks/builder-vs-collect.md` measures at ~1.6x):
 //!
 //!   izip       izip!(a.iter(), b.iter(), c.iter())     <- what run_ternary does
 //!   index      for i in 0..len { a.get(i), b.get(i), .. }

@@ -1,6 +1,6 @@
 //! EMA kernel micro-benchmark: what the streaming-filter abstraction costs, and
 //! what the output-construction path costs. Recorded results and the reading of
-//! them are in `docs/builder-vs-collect-benchmark.md`.
+//! them are in `notes/benchmarks/builder-vs-collect.md`.
 //!
 //! Five implementations of one EMA recurrence. Four of them are a 2x2 over the
 //! two independent choices, which is the point — measuring only the diagonal
@@ -145,6 +145,32 @@ fn ema_collect(ca: &Float64Chunked, period: i64) -> Float64Chunked {
         .collect()
 }
 
+/// Same iterator as `ema_collect`, but explicitly selects Polars' TrustedLen
+/// Arrow collector so it can omit per-element capacity checks.
+fn ema_collect_trusted(ca: &Float64Chunked, period: i64) -> Float64Chunked {
+    let alpha = 2.0 / (period as f64 + 1.0);
+    let mut ema = f64::NAN;
+    let mut count: i64 = 0;
+    ca.iter()
+        .map(|opt_val| match opt_val {
+            None => {
+                ema = f64::NAN;
+                count = 0;
+                None
+            }
+            Some(val) => {
+                if count == 0 {
+                    ema = val;
+                } else {
+                    ema += alpha * (val - ema);
+                }
+                count += 1;
+                (count >= period).then_some(ema)
+            }
+        })
+        .collect_ca_trusted(PlSmallStr::EMPTY)
+}
+
 /// The streaming-filter shape the crate actually uses, in miniature.
 struct Ema {
     period: i64,
@@ -273,6 +299,7 @@ fn main() {
             "filter_match",
             "filter",
             "collect",
+            "collect_trusted",
         ]
     } else {
         order.iter().map(|s| s.as_str()).collect()
@@ -281,6 +308,7 @@ fn main() {
         match name {
             "builder" => bench("builder", runs, || ema_builder(&ca, period)),
             "collect" => bench("collect", runs, || ema_collect(&ca, period)),
+            "collect_trusted" => bench("collect_tr", runs, || ema_collect_trusted(&ca, period)),
             "builder_option" => bench("builder_opt", runs, || ema_builder_option(&ca, period)),
             "filter_match" => bench("filter_mat", runs, || ema_filter_match(&ca, period)),
             "filter" => bench("filter", runs, || ema_filter(&ca, period)),

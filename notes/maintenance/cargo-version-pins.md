@@ -1,6 +1,6 @@
 # Cargo.toml Version Pins
 
-How to choose and set the Rust crate versions in [`bartons/Cargo.toml`](../bartons/Cargo.toml) for the plugin. This is the **compile-time** side: these pins fully determine the `.so` that gets built, independent of the polars-py installed in the venv (see [`polars-ffi-version-guard.md`](polars-ffi-version-guard.md) for the separate runtime concern).
+How to choose and set the Rust crate versions in [`bartons/Cargo.toml`](../../bartons/Cargo.toml) for the plugin. This is the **compile-time** side: these pins fully determine the `.so` that gets built, independent of the polars-py installed in the venv (see [`polars-ffi-version-guard.md`](polars-ffi-version-guard.md) for the separate runtime concern).
 
 Facts below are read from `bartons/Cargo.toml`, `bartons/Cargo.lock`, and the crates.io dependencies API.
 
@@ -17,7 +17,7 @@ and the binding skills use:
 
 Borrowed from upstream: the `pola-rs/polars` monorepo dual-tags every release
 `rs-0.54.4` and `py-1.42.1`, and mapping between those tags is exactly how the
-correspondence in [`polars-ffi-version-table.md`](polars-ffi-version-table.md) is
+correspondence in [`polars-ffi-version-table.md`](../../docs/polars-ffi-version-table.md) is
 derived.
 
 Two further distinctions worth keeping straight, since they cut across the above:
@@ -160,16 +160,16 @@ Only then consider whether the polars-py range should move (see *Scope* below).
 The FFI handshake is a separate concern and is **not** part of a routine bump: it
 has been `(0, 1)` since polars-rs `0.37.0`. Check it only if the plugin fails to
 *load* rather than to compile, or if the jump crosses a boundary in
-[`polars-ffi-version-table.md`](polars-ffi-version-table.md) — and if it really has
+[`polars-ffi-version-table.md`](../../docs/polars-ffi-version-table.md) — and if it really has
 changed, stop and treat it as a compatibility event, not a version bump.
 
-The [`check-bindings`](../.claude/commands/check-bindings.md) skill audits these pins for mutual consistency; [`upgrade-bindings`](../.claude/commands/upgrade-bindings.md) derives a newer set from upstream and rebuilds after approval, in the same staged order.
+The [`check-bindings`](../../.claude/commands/check-bindings.md) skill audits these pins for mutual consistency; [`upgrade-bindings`](../../.claude/commands/upgrade-bindings.md) derives a newer set from upstream and rebuilds after approval, in the same staged order.
 
 ## Scope: this is the Cargo side only
 
-This doc covers the compile-time crate pins. The **polars-py range** in [`pyproject.toml`](../pyproject.toml) is a *separate* setting — it governs which polars-py the built `.so` runs against at the FFI guard, not what compiles. The polars-rs ↔ polars-py correspondence is tabulated in [`polars-ffi-version-table.md`](polars-ffi-version-table.md). The current range is `polars>=1.28,<1.44`: the floor is a hard requirement for the eager `bartons.kernels.<name>` pyfunctions (they need `PySeries._export`, first exposed in polars-py 1.28 — see [`test-compat-helpers.md`](test-compat-helpers.md)), and the ceiling is the current test boundary, **not** a hard ABI limit — raise it with `uv run inv raise-ceiling`, which tests the newest polars-py and only moves the number if it passes. The expression path alone works down to polars-py 1.0, but the package floors at 1.28 so its whole public API is usable.
+This doc covers the compile-time crate pins. The **polars-py range** in [`pyproject.toml`](../../pyproject.toml) is a *separate* setting — it governs which polars-py the built `.so` runs against at the FFI guard, not what compiles. The polars-rs ↔ polars-py correspondence is tabulated in [`polars-ffi-version-table.md`](../../docs/polars-ffi-version-table.md). The current range is `polars>=1.28,<1.44`: the floor is a hard requirement for the eager `bartons.kernels.<name>` pyfunctions (they need `PySeries._export`, first exposed in polars-py 1.28 — see [`test-compat-helpers.md`](test-compat-helpers.md)), and the ceiling is the current test boundary, **not** a hard ABI limit — raise it with `uv run inv raise-ceiling`, which tests the newest polars-py and only moves the number if it passes. The expression path alone works down to polars-py 1.0, but the package floors at 1.28 so its whole public API is usable.
 
 ## Related
 
 - [`polars-ffi-version-guard.md`](polars-ffi-version-guard.md) — the runtime FFI handshake the compiled `.so` participates in.
-- [`polars-ffi-version-table.md`](polars-ffi-version-table.md) — FFI ↔ crate ↔ Python-package version data.
+- [`polars-ffi-version-table.md`](../../docs/polars-ffi-version-table.md) — FFI ↔ crate ↔ Python-package version data.

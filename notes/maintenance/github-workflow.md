@@ -6,7 +6,7 @@
 
 | | |
 |---|---|
-| Releases today | built, confirmed and published by `release.yml` — see [CLAUDE.md](../CLAUDE.md) |
+| Releases today | built, confirmed and published by `release.yml` — see [CLAUDE.md](../../CLAUDE.md) |
 | This workflow | active and dispatch-only; nothing runs implicitly on a push, PR or tag |
 | Repository | public, GitHub Free |
 | Server-side config | GitHub confirmation configured; PyPI trusted publisher must be changed to `release.yml` |
@@ -34,7 +34,7 @@ its own artifact. Once all six builds succeed, the protected `pypi` environment
 asks for confirmation; the publish job then downloads, counts and uploads those
 exact six artifacts over OIDC.
 A step-by-step release handoff also existed; it was dropped rather than archived.
-The live procedure is in [CLAUDE.md](../CLAUDE.md); the design and operational
+The live procedure is in [CLAUDE.md](../../CLAUDE.md); the design and operational
 history remain here.
 
 ## Why it was archived at first
@@ -127,7 +127,7 @@ These are properties of the project, not of CI:
 - **`runtime-64` users are unserved.** `IdxSize` is compile-time, one `.so` cannot
   serve both polars engines, and no wheel tag can express the difference. The
   wheels are runtime-32. A `bartons-bigidx` distribution is the answer if it ever
-  matters. See `docs/polars-runtime-libraries.md`.
+  matters. See `notes/maintenance/polars-runtime-libraries.md`.
 - **PyPI never lets a filename be reused.** Deleting a release or file does not
   free its name, so a bad wheel cannot be replaced — only superseded by a new
   version. Yank rather than delete; yanking is per-release, not per-file.

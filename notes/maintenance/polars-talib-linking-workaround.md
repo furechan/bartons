@@ -61,7 +61,7 @@ import polars_talib
 This is application-side wheel-layout discovery, so it should remain a
 workaround rather than a public library API. The benchmark implements a
 try-normal-import-first version in
-[`benchmarks/benchmark-vs-talib.py`](../benchmarks/benchmark-vs-talib.py).
+[`benchmarks/benchmark-vs-talib.py`](../../benchmarks/benchmark-vs-talib.py).
 
 ## Proper upstream fix
 

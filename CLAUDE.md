@@ -110,8 +110,9 @@ and moves the build to kernel startup, past VS Code's launch timeout.
 [evcxr/README.md](evcxr/README.md) records the measurements and the workarounds
 that don't recover it.
 
-Notebooks are for exploration only. Anything worth keeping goes to `docs/` with
-its provenance — date, platform, resolved crate versions — because stored
+Notebooks are for exploration only. User/contributor guidance goes to `docs/`;
+internal conclusions and experiment records go to `notes/` with
+their provenance — date, platform, resolved crate versions — because stored
 notebook outputs carry none of that and read as current long after they aren't.
 `evcxr/builder-vs-collect.ipynb` is the cautionary case: its recorded numbers
 were both stale and confounded, and the corrected experiment now lives in
@@ -175,26 +176,26 @@ links must use absolute public URLs.
 Open work is tracked in [BACKLOG.md](BACKLOG.md).
 
 - [docs/architecture.md](docs/architecture.md) — project layers, boundaries, and source layout
-- [docs/github-workflow.md](docs/github-workflow.md) — the two dispatch-only GitHub Actions
+- [notes/maintenance/github-workflow.md](notes/maintenance/github-workflow.md) — the two dispatch-only GitHub Actions
   workflows that own releases, their operational history and cost analysis, and
   the PyPI facts (immutable `Requires-Dist`, filenames never reusable,
   yank-not-delete)
 - [docs/adding-an-indicator.md](docs/adding-an-indicator.md) — the end-to-end checklist
-- [docs/unified-run-driver.md](docs/unified-run-driver.md) — implemented typed `run_filter` design; new dtypes or source arities add only the concrete `FilterInput` signature they require
-- [docs/builder-vs-collect-benchmark.md](docs/builder-vs-collect-benchmark.md) — recorded kernel micro-benchmark (2026-08-17): the `Filter` abstraction is free, `append_option` costs ~1.6× — read before touching the builder append in `run_filter`
-- [docs/izip-vs-index-benchmark.md](docs/izip-vs-index-benchmark.md) — recorded driver micro-benchmark (2026-08-18): hoisting the per-element downcast beats `ChunkedArray::iter()`; the unified driver's numeric `FilterInput` paths use `FastIter`, which ties the native Arrow iterator in the unary single-chunk case
+- [notes/design/unified-run-driver.md](notes/design/unified-run-driver.md) — implemented typed `run_filter` design; new dtypes or source arities add only the concrete `FilterInput` signature they require
+- [notes/benchmarks/builder-vs-collect.md](notes/benchmarks/builder-vs-collect.md) — recorded kernel micro-benchmark (2026-08-17): the `Filter` abstraction is free, `append_option` costs ~1.6× — read before touching the builder append in `run_filter`
+- [notes/benchmarks/izip-vs-index.md](notes/benchmarks/izip-vs-index.md) — recorded driver micro-benchmark (2026-08-18): hoisting the per-element downcast beats `ChunkedArray::iter()`; the unified driver's numeric `FilterInput` paths use `FastIter`, which ties the native Arrow iterator in the unary single-chunk case
 
 **Two artifacts are both called "polars"**, on unrelated version schemes, so a
 bare "polars 0.54" is ambiguous. These docs say **polars-rs** for the Rust crate
 (`0.5x`, `bartons/Cargo.toml`, compiled into the `.so`) and **polars-py** for the
 Python package (`1.4x`, `[project].dependencies`, resolved into the venv) —
 borrowed from upstream's own `rs-*` / `py-*` release tags. Defined in the Naming
-section of [docs/cargo-version-pins.md](docs/cargo-version-pins.md).
+section of [notes/maintenance/cargo-version-pins.md](notes/maintenance/cargo-version-pins.md).
 
 Version/compatibility mechanics live in that doc plus
 [docs/polars-ffi-version-table.md](docs/polars-ffi-version-table.md),
-[docs/polars-ffi-version-guard.md](docs/polars-ffi-version-guard.md),
-[docs/polars-runtime-libraries.md](docs/polars-runtime-libraries.md) and
-[docs/test-compat-helpers.md](docs/test-compat-helpers.md). The `compat`/`rt32`/`rt64`
+[notes/maintenance/polars-ffi-version-guard.md](notes/maintenance/polars-ffi-version-guard.md),
+[notes/maintenance/polars-runtime-libraries.md](notes/maintenance/polars-runtime-libraries.md) and
+[notes/maintenance/test-compat-helpers.md](notes/maintenance/test-compat-helpers.md). The `compat`/`rt32`/`rt64`
 matrix is driven by `noxfile.py` (`uv run nox -s rt32`), with session envs under
 `.venv/.nox`.

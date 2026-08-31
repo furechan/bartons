@@ -166,7 +166,7 @@ primitives — e.g. `ref_atr` is `ref_rma` of `ref_trange`), then
 Use `assert_series_equal(..., check_exact=False, rel_tol=1e-12)` imported from
 [tests/helpers.py](../tests/helpers.py) — a portable shim, **not**
 `polars.testing`, so the suite runs across the full supported polars range. See
-[test-compat-helpers.md](test-compat-helpers.md) for why.
+[test-compat-helpers.md](../notes/maintenance/test-compat-helpers.md) for why.
 
 ### 5. Build & verify
 
@@ -226,7 +226,7 @@ build is ~20x slower and misleading.
 - **NaN** is used only as the kernel's "unseeded" marker, never as a stand-in for
   a null input (nulls come through the `Option` from `ca.iter()`).
 - **Single polars-py range**: the `polars >=x,<y` range lives only in
-  `[project].dependencies` — see [cargo-version-pins.md](cargo-version-pins.md).
+  `[project].dependencies` — see [cargo-version-pins.md](../notes/maintenance/cargo-version-pins.md).
 - **Release builds**: `inv make` and `inv bench` install an optimized extension.
   Use `maturin develop` directly only when a fast debug install is useful during
   local iteration; never benchmark that debug build.

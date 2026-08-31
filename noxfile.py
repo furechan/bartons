@@ -4,7 +4,7 @@ bartons' indicators exchange only numeric (Float64) data, so the same default
 build runs on polars-runtime-32 (IdxSize=u32) and polars-runtime-64 (bigidx,
 IdxSize=u64) — the FFI boundary carries no IdxSize. These sessions prove that:
 one `maturin build --release` wheel runs in both, differing only in which engine
-is installed and forced via POLARS_FORCE_PKG. See docs/polars-runtime-libraries.md.
+is installed and forced via POLARS_FORCE_PKG. See notes/maintenance/polars-runtime-libraries.md.
 
 The extension is identical for every engine and every polars version under test
 (same polars-rs 0.55.2; the FFI boundary carries no IdxSize), so we compile ONE
@@ -89,7 +89,7 @@ def _wheel(session: nox.Session) -> str:
 # matrix, because it adds no engine coverage.
 #
 # Floor is 1.28: the eager kernels.<name> pyfunctions need PySeries._export, which
-# polars only exposes from 1.28 (see docs/test-compat-helpers.md). 1.28.0 also
+# polars only exposes from 1.28 (see notes/maintenance/test-compat-helpers.md). 1.28.0 also
 # represents engine crate 0.46.0, whose group spans polars 1.22–1.29.
 # version -> crate:  1.28.0→0.46.0  1.30.0→0.48.1  1.32.0→0.49.1  1.32.1→0.50.0
 # 1.34.0→0.51.0  1.38.1→0.52.0  1.39.0→0.53.0  1.42.0→0.54.4

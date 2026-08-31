@@ -2,7 +2,7 @@
 
 Reference data: the **plugin FFI version** (the `(MAJOR, MINOR)` handshake number a `pyo3-polars` plugin and the host polars negotiate at load time) mapped against the **polars-rs version** and the **polars-py version**.
 
-This doc records *what the numbers are* and *how to obtain them*. The guard logic that consumes these numbers is documented separately in [`polars-ffi-version-guard.md`](polars-ffi-version-guard.md).
+This doc records *what the numbers are* and *how to obtain them*. The guard logic that consumes these numbers is documented separately in [`polars-ffi-version-guard.md`](../notes/maintenance/polars-ffi-version-guard.md).
 
 Data verified June 2026 by reading source out of every published `polars-ffi` crate (crates.io) and the relevant polars-py / `polars-runtime-32` sdists (PyPI). Reproducible — see [Method](#method).
 
@@ -74,5 +74,5 @@ Reproducible without GitHub tokens or a build:
 
 ## Related
 
-- [`polars-ffi-version-guard.md`](polars-ffi-version-guard.md) — what the guard does with these numbers, where the code lives, and when it was introduced.
-- [`polars-runtime-libraries.md`](polars-runtime-libraries.md) — the `polars-runtime-32`/`-64`/`-compat` engine split and how it relates (orthogonally) to the FFI version.
+- [`polars-ffi-version-guard.md`](../notes/maintenance/polars-ffi-version-guard.md) — what the guard does with these numbers, where the code lives, and when it was introduced.
+- [`polars-runtime-libraries.md`](../notes/maintenance/polars-runtime-libraries.md) — the `polars-runtime-32`/`-64`/`-compat` engine split and how it relates (orthogonally) to the FFI version.

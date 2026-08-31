@@ -35,7 +35,7 @@ permutations — the gap is not a warmup artifact).
 an `#[inline] fn next(&mut self, Option<f64>) -> Option<f64>` costs nothing
 measurable — the compiler flattens it completely. This is the load-bearing
 result for the crate: the `Filter` trait plus `run_unary`/`run_ternary` in
-[../bartons/src/utils.rs](../bartons/src/utils.rs) buys its readability and code
+[../../bartons/src/utils.rs](../../bartons/src/utils.rs) buys its readability and code
 reuse at no runtime price.
 
 **`append_option` costs ~1.6×, and it is the only thing that does.** It is the
@@ -57,10 +57,33 @@ costs a third of the runtime.
 **`.collect()` (566µs) is not a way out.** It lands with the `append_option`
 group, so there is nothing to gain by restructuring the drivers around it.
 
-No mechanism is established here for *why* `append_option` is slower — plausibly
-the validity bitmap is updated per element rather than in the runs that
-`append_value`/`append_null` permit, but that is a guess and was not verified.
-The measurement is solid; the explanation is not.
+**The mechanism was subsequently isolated to a missing inline annotation.**
+`ChunkedBuilder::append_option` is a default trait method without `#[inline]`,
+while `append_value`, `append_null`, and the underlying Arrow `push` method are
+all explicitly inline. Rebuilding the same Polars 0.55.2 dependency tree with
+only `#[inline]` added to `append_option` changed the result as follows:
+
+| Variant | Unmodified Polars | Patched Polars |
+|---------|-------------------|----------------|
+| manual `match` | 344.5µs | 354.4µs |
+| `append_option` | 544.5µs | 354.1µs |
+
+Both variants were run twice in alternating order over 200 runs. With the
+annotation, `append_option` became indistinguishable from the manual builder;
+the Cargo registry source was restored immediately after the experiment.
+Current Polars `main` still lacks the annotation as of 2026-08-29. This proves
+the cause of the `append_option` result, but not necessarily the separate
+`.collect()` result, whose nullable array construction takes a different path.
+
+The `.collect()` path was tested separately. Explicitly selecting Polars'
+`collect_ca_trusted()` path produced 567.7µs versus 566.9µs for ordinary
+`.collect()`, so the non-trusted capacity check is not material. Adding
+`#[inline]` only to nullable `PrimitiveArray::arr_from_iter` and rebuilding the
+full dependency tree in a fresh target directory likewise produced 565.1µs
+versus a 354.5µs manual builder. Thus the `.collect()` gap is **not** another
+missing-inline issue. It lies within the collector's direct `Vec` plus
+`BitmapBuilder` construction strategy or the optimizer behavior induced by
+that strategy; those were not separated by this experiment.
 
 ## History
 
@@ -88,7 +111,7 @@ CHANGELOG entry for 0.1.0.
 
 ## Reproduction
 
-The source is [../benchmarks/builder-vs-collect.rs](../benchmarks/builder-vs-collect.rs),
+The source is [../../benchmarks/builder-vs-collect.rs](../../benchmarks/builder-vs-collect.rs),
 with the recipe in its header comment: a `cargo new` throwaway crate, `cargo add
 polars`, copy the file to `src/main.rs`, `cargo run --release`. About a minute,
 almost all of it compiling polars.
@@ -99,5 +122,5 @@ crate also emits an `rlib`. Native examples, tests and benchmarks must use
 and links libpython. The standalone script remains convenient for reproducing
 the recorded experiment without changing the production crate.
 
-Match the polars version to the pin in [../bartons/Cargo.toml](../bartons/Cargo.toml)
+Match the polars version to the pin in [../../bartons/Cargo.toml](../../bartons/Cargo.toml)
 when re-running, or the numbers describe a version the crate does not use.

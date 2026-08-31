@@ -362,7 +362,7 @@
 
 - **Install the CI workflows.** `build.yml` and `release.yml` move from
   `archive/github-workflow/` into `.github/workflows/`, and the archive README
-  becomes [docs/github-workflow.md](docs/github-workflow.md). They are
+  becomes [notes/maintenance/github-workflow.md](notes/maintenance/github-workflow.md). They are
   **experimental and have never run** — `just publish` still owns releases. Both
   are **dispatch-only** — no push, pull-request, tag, schedule or `workflow_call`
   trigger — and `release.yml` defaults to a dry run that resolves and reports
@@ -380,7 +380,7 @@
   The GitHub `pypi` environment is gone too (the API reports zero environments),
   so both halves of the server-side configuration are absent rather than
   mismatched.
-  [docs/github-workflow.md](docs/github-workflow.md) now records it as such,
+  [notes/maintenance/github-workflow.md](notes/maintenance/github-workflow.md) now records it as such,
   alongside the pipeline's status (experimental, inactive, private repo, releases
   still local), what public would buy, and the next steps.
 
@@ -507,7 +507,7 @@
   is an internal marker with no effect when set. With the pins gone there is nothing
   left for the checker to compare, and the raised launch timeout is no longer needed.
 - Record a ternary-driver micro-benchmark in
-  [docs/izip-vs-index-benchmark.md](docs/izip-vs-index-benchmark.md), from
+  [notes/benchmarks/izip-vs-index.md](notes/benchmarks/izip-vs-index.md), from
   [benchmarks/izip-vs-index.rs](benchmarks/izip-vs-index.rs). `izip!` beats any index loop
   and the margin grows with fragmentation — 8.4× at 64 chunks — so nothing argues
   for indexing. The finding is what beats `izip!`: both `ChunkedArray::get` and
@@ -543,7 +543,7 @@
   should keep avoiding. The corrected experiment is
   [benchmarks/builder-vs-collect.rs](benchmarks/builder-vs-collect.rs) with results and
   provenance in
-  [docs/builder-vs-collect-benchmark.md](docs/builder-vs-collect-benchmark.md); the
+  [notes/benchmarks/builder-vs-collect.md](notes/benchmarks/builder-vs-collect.md); the
   notebook keeps a pointer to both and no longer carries stored numbers. It cannot
   be a cargo example: `polars-utils` pulls `numpy` -> `pyo3` and the crate enables
   pyo3's `extension-module`, so no example, test or bin target in that package can

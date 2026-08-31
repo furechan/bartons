@@ -2,7 +2,7 @@
 
 The plugin is built once (against polars-rs 0.55.2) and is
 verified to run on **every stable polars-py in `[1.28, 1.44)`** via the nox
-`compat` matrix in [noxfile.py](../noxfile.py). To make the *same* test suite
+`compat` matrix in [noxfile.py](../../noxfile.py). To make the *same* test suite
 run unchanged across that whole range, one small test-only shim exists. It is not
 a hack — it is what keeps old-engine coverage possible. Do not delete it unless
 the supported floor is raised to a polars new enough to make it moot.
@@ -55,7 +55,7 @@ keywords in **polars 1.32.3**. The suite compares floating-point indicator outpu
 with a tolerance, so calling the real function with those kwargs raises
 `TypeError` on the older engines the matrix still covers (polars 1.28–1.32.2).
 
-[tests/helpers.py](../tests/helpers.py) is a drop-in replacement that reproduces
+[tests/helpers.py](../../tests/helpers.py) is a drop-in replacement that reproduces
 the subset of behaviour the suite uses (`check_names` / `check_dtype` /
 `check_exact` / `rel_tol` / `abs_tol`) using only stable Series API (`len`,
 `name`, `dtype`, `to_list`). Tests import it as:
@@ -81,7 +81,7 @@ pinning the dev env to an old engine.
 The eager direct-call tests were once guarded by a `@requires_pyfunction` marker
 (in `tests/helpers.py`) that skipped them when `PySeries._export` was absent —
 i.e. on polars < 1.28. When the supported floor was raised to 1.28 in **both**
-[pyproject.toml](../pyproject.toml) and the `compat` matrix, every tested engine
+[pyproject.toml](../../pyproject.toml) and the `compat` matrix, every tested engine
 gained `_export`, so the marker's `skipif` was permanently false. It and its
 decorators were removed. Earlier still, that marker had itself replaced a
 `conftest.py` hook that grepped each test's source for `kernels.<name>(` to

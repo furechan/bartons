@@ -5,7 +5,7 @@ in polars 1.32.3, so calling it with those kwargs raises `TypeError` on the olde
 engines the `compat` matrix still covers (polars 1.28–1.32.2). This drop-in
 replacement reproduces the subset of its behaviour the suite uses, using only
 stable Series API (`len`, `name`, `dtype`, `to_list`) so it works across the whole
-supported polars range. See docs/test-compat-helpers.md.
+supported polars range. See notes/maintenance/test-compat-helpers.md.
 """
 
 from __future__ import annotations

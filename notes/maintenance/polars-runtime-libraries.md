@@ -66,4 +66,4 @@ A plugin links its **own** static copy of polars-rs; it does not link any `polar
 
 - [`cargo-version-pins.md`](cargo-version-pins.md) — compile-time crate pins, including the `bigidx` option for runtime-64.
 - [`polars-ffi-version-guard.md`](polars-ffi-version-guard.md) — the runtime FFI handshake (identical across runtime variants).
-- [`polars-ffi-version-table.md`](polars-ffi-version-table.md) — FFI ↔ crate ↔ Python-package version data.
+- [`polars-ffi-version-table.md`](../../docs/polars-ffi-version-table.md) — FFI ↔ crate ↔ Python-package version data.

@@ -51,7 +51,7 @@ dependencies = [
     # Supported polars-py range, verified by the noxfile `compat` matrix: the plugin
     # (built against polars-rs 0.55.2) runs correctly on every engine in this range via
     # the stable FFI (0,1) + Arrow C boundary. See docs/polars-ffi-version-table.md and
-    # docs/polars-ffi-version-guard.md. The ceiling is the current test boundary, not a
+    # notes/maintenance/polars-ffi-version-guard.md. The ceiling is the current test boundary, not a
     # hard ABI limit — raise it with `uv run inv raise-ceiling`, which tests the newest
     # polars-py and only moves the number if it passes.
     #
@@ -61,7 +61,7 @@ dependencies = [
     # `AttributeError: 'PySeries' object has no attribute '_export'`. The expression path
     # (`EMA()`) needs no `_export` and would work on older polars, but the
     # package floors at 1.28 so its whole public API is usable; the `compat` matrix tests
-    # `[1.28, 1.44)`. See docs/test-compat-helpers.md.
+    # `[1.28, 1.44)`. See notes/maintenance/test-compat-helpers.md.
     "polars>=1.28,<1.44",
 ]
 

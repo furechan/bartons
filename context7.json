@@ -1,9 +1,0 @@
-{
-  "$schema": "https://context7.com/schema/context7.json",
-  "projectTitle": "bartons",
-  "description": "Financial and technical-analysis expressions for Polars, implemented in Rust",
-  "branch": "main",
-  "folders": [
-    "examples"
-  ]
-}

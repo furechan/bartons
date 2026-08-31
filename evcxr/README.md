@@ -54,4 +54,4 @@ The cache doing that work is `:cache`, set in `~/.config/evcxr/init.evcxr` — m
 ## Notes
 
 - A cell-level `let` needs an explicit type annotation; evcxr persists variables across cells and cannot always infer them. Wrapping work in a `fn` avoids this entirely.
-- Notebooks are for exploration. Conclusions worth keeping go in `docs/` with their provenance — date, platform, and the resolved crate versions — because a notebook's stored outputs carry none of that and read as current long after they stop being true. See [`../docs/builder-vs-collect-benchmark.md`](../docs/builder-vs-collect-benchmark.md) for the format.
+- Notebooks are for exploration. Internal conclusions worth keeping go in `notes/` with their provenance — date, platform, and the resolved crate versions — because a notebook's stored outputs carry none of that and read as current long after they stop being true. See [`../notes/benchmarks/builder-vs-collect.md`](../notes/benchmarks/builder-vs-collect.md) for the format.

@@ -1,6 +1,6 @@
 # Polars Plugin FFI Version Guard
 
-What the runtime guard between a `pyo3-polars` plugin and the host polars actually does, where its code lives, and when it was introduced. The version *numbers* it operates on are tabulated in [`polars-ffi-version-table.md`](polars-ffi-version-table.md).
+What the runtime guard between a `pyo3-polars` plugin and the host polars actually does, where its code lives, and when it was introduced. The version *numbers* it operates on are tabulated in [`polars-ffi-version-table.md`](../../docs/polars-ffi-version-table.md).
 
 Everything below is read from source: `pyo3-polars` / `polars-ffi` crates (crates.io) and the `pola-rs/polars` monorepo (the host check is compiled into polars-py's native binary, not shipped as Python).
 
@@ -94,4 +94,4 @@ Versions present in this machine's caches when the above was verified:
 
 - [`cargo-version-pins.md`](cargo-version-pins.md) — the compile-time side: how the `pyo3-polars` / `polars` / `pyo3` Cargo pins that produce the `.so` are chosen.
 - [`polars-runtime-libraries.md`](polars-runtime-libraries.md) — the `polars-runtime-32`/`-64`/`-compat` engine split; the FFI version is identical across them.
-- [`polars-ffi-version-table.md`](polars-ffi-version-table.md) — the FFI version values across crate and package versions, and the method to regenerate them.
+- [`polars-ffi-version-table.md`](../../docs/polars-ffi-version-table.md) — the FFI version values across crate and package versions, and the method to regenerate them.
