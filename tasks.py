@@ -110,11 +110,6 @@ def info(c: Context) -> None:
     print(f"Latest on PyPI: {pypi_version}")
 
 
-@task
-def publish(c: Context) -> None:
-    """Direct users to the CI-owned release workflow."""
-    raise Exit("publishing is handled by CI; run: gh workflow run release.yml")
-
 
 @task
 def test(c: Context) -> None:
