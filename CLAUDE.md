@@ -54,11 +54,11 @@ or pull request by default.
 ## Release workflow
 
 **GitHub Actions owns releases.** `release.yml` creates and smoke-tests the
-sdist plus a complete five-platform wheel matrix, pauses for confirmation on
-the protected `pypi` environment, then uploads those exact artifacts through
-PyPI trusted publishing. The older local `uv run inv publish` path remains
-available for development but must not publish a version also handled by CI:
-PyPI never frees a filename, so two upload paths cannot safely share a release.
+sdist plus a complete five-platform wheel matrix, verifies the six artifacts,
+then uploads them automatically through PyPI trusted publishing. The older
+local `uv run inv publish` path remains available for development but must not
+publish a version also handled by CI: PyPI never frees a filename, so two upload
+paths cannot safely share a release.
 
 Run releases from a clean `main` branch that is fully synchronized with its
 upstream. Do not publish from a branch that is ahead, behind, or has uncommitted
@@ -75,8 +75,7 @@ work that is not intended for the release.
    nothing changed.
 4. Dispatch `gh workflow run release.yml`, then watch it through the build phase.
    All five wheels and the sdist must build, install, and pass their smoke tests.
-5. Review and approve the protected `pypi` environment deployment. The workflow
-   then downloads and verifies the six artifacts before publishing them.
+5. Wait for the publish job to download, verify and upload the six artifacts.
 6. Verify the complete release on PyPI; workflow failure can occur after some
    immutable files upload, so inspect PyPI rather than assuming failure was atomic.
 7. Tag the released commit and push the tag.

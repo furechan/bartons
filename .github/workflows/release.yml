@@ -1,8 +1,9 @@
-# Build, test, confirm, and publish one complete Bartons release.
+# Build, test, and publish one complete Bartons release.
 #
-# The `pypi` environment must have a required reviewer. GitHub pauses the
-# publish job at that boundary after all six artifacts have passed their smoke
-# tests. PyPI trusted publishing must identify this workflow as `release.yml`.
+# The `pypi` environment is part of the PyPI trusted-publisher identity but has
+# no protection rule: publication proceeds automatically after all six
+# artifacts pass their smoke tests. PyPI trusted publishing must identify this
+# workflow as `release.yml` and environment as `pypi`.
 name: Release
 
 on:
@@ -106,7 +107,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Confirm and publish to PyPI
+    name: Publish to PyPI
     needs: [wheels, sdist]
     runs-on: ubuntu-latest
     environment:

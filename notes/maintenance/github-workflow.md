@@ -6,10 +6,10 @@
 
 | | |
 |---|---|
-| Releases today | built, confirmed and published by `release.yml` — see [CLAUDE.md](../../CLAUDE.md) |
+| Releases today | built, verified and published by `release.yml` — see [CLAUDE.md](../../CLAUDE.md) |
 | This workflow | active and dispatch-only; nothing runs implicitly on a push, PR or tag |
 | Repository | public, GitHub Free |
-| Server-side config | GitHub confirmation configured; PyPI trusted publisher must be changed to `release.yml` |
+| Server-side config | `pypi` environment has no protection rule; PyPI trusted publisher names `release.yml` and environment `pypi` |
 | First publication | `0.1.3` on 2026-08-25; five wheels uploaded, sdist rejected for a missing declared license file |
 
 CI became the sole release path on 2026-08-25. The separate `build.yml` and
@@ -18,7 +18,7 @@ a version also handled by CI: PyPI never frees a filename, and the two paths can
 safely share ownership of one release.
 
 It is **dispatch-only** — nothing runs on a push, a pull request, a tag or a
-schedule — and publication waits for approval on the protected `pypi` environment.
+schedule — and publication proceeds automatically after every artifact passes.
 
 Built 2026-08-17, archived unused the same day, then reworked and installed for
 experimentation on 2026-08-21. The first full matrix and trusted-publishing run
@@ -30,9 +30,8 @@ prototype status.
 A PyPI release pipeline for `bartons`: **`release.yml`** builds five
 `cp311-abi3` wheels (Linux x86_64/aarch64, macOS arm64/x86_64, Windows x64) in
 one complete matrix, alongside one sdist job. Every job installs and smoke-tests
-its own artifact. Once all six builds succeed, the protected `pypi` environment
-asks for confirmation; the publish job then downloads, counts and uploads those
-exact six artifacts over OIDC.
+its own artifact. Once all six builds succeed, the publish job downloads, counts
+and uploads those exact six artifacts over OIDC.
 A step-by-step release handoff also existed; it was dropped rather than archived.
 The live procedure is in [CLAUDE.md](../../CLAUDE.md); the design and operational
 history remain here.
@@ -85,18 +84,16 @@ identical version numbers and different code.
 
 The current design rules that out structurally: all artifacts are uploaded by
 the wheel matrix and sdist job in one run, and the publish job downloads
-artifacts from that same run only after every build succeeds. The approval pause
-does not start another run or rebuild anything, so the files tested are the files
-published.
+artifacts from that same run only after every build succeeds, so the files
+tested are the files published.
 
-**On the approval gate.** `environment: pypi` with required reviewers pauses the
-publish job after the matrix succeeds and before GitHub grants the job access or
-OIDC credentials. It is declared in `release.yml`; the environment requires
-confirmation from `furechan` and permits self-review.
+**The manual approval gate was removed on 2026-09-02.** `environment: pypi`
+remains declared because it is part of the PyPI trusted-publisher identity, but
+the GitHub environment has no required-reviewer or wait-timer protection. The
+publish job therefore starts automatically after the build matrix succeeds.
 
-Artifacts use GitHub's repository-default retention. They normally survive only
-the build-to-approval interval, and a canceled release run is never reused as the
-source for a later publication.
+Artifacts use GitHub's repository-default retention. A canceled release run is
+never reused as the source for a later publication.
 
 **Publishing failure is not atomic.** PyPI accepts files one at a time and never
 frees their names. The first CI publication uploaded all five `0.1.3` wheels, then
@@ -151,8 +148,8 @@ These are properties of the project, not of CI:
 - PyPI trusted publishing still names the retired `publish.yml` workflow. Change
   it to owner `furechan`, repository `bartons`, workflow `release.yml`, and
   environment `pypi` before dispatching a release.
-- GitHub's `pypi` environment requires approval from `furechan`, with self-review
-  allowed, so the workflow pauses for confirmation after the build matrix.
+- GitHub's `pypi` environment has no protection rules, so publishing starts
+  automatically after the build matrix while retaining the OIDC identity.
 - Full build run [`32898960470`](https://github.com/furechan/bartons/actions/runs/32898960470)
   succeeded on 2026-08-25 at commit `8200fbf`, producing and smoke-testing five
   platform wheels plus the sdist.
@@ -168,8 +165,8 @@ The repository became public on 2026-08-25 for these operational benefits:
 - **Runner minutes become free.** Standard runners are unmetered on public repos,
   so the multipliers stop mattering and the full six-target matrix costs nothing.
   The full matrix no longer consumes the private-repository Free allowance.
-- **The approval gate becomes available.** Environment protection rules — required
-  reviewers pausing the publish job — are available on a public Free repository.
+- **Environment protection rules became available.** They were used for manual
+  release confirmation until 2026-09-02, when the approval gate was removed.
 - **Artifact storage becomes free**, which removes the former retention/quota
   tension.
 - **Little is actually hidden today.** The published sdist on PyPI already contains
@@ -183,5 +180,5 @@ gh workflow run release.yml
 gh run watch <run-id>
 ```
 
-After the six build jobs succeed, approve the `pypi` environment deployment in
-GitHub. Approval resumes the same run and publishes its artifacts.
+After the six build jobs succeed, the publish job verifies and uploads their
+artifacts automatically.
