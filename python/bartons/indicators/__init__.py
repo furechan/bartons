@@ -26,6 +26,7 @@ from .lib.atr import *
 from .lib.bbands import *
 from .lib.bop import *
 from .lib.cci import *
+from .lib.clag import *
 from .lib.cmf import *
 from .lib.cmo import *
 from .lib.dema import *
@@ -54,6 +55,7 @@ from .lib.sma import *
 from .lib.stoch import *
 from .lib.stochrsi import *
 from .lib.streak import *
+from .lib.step import *
 from .lib.supertrend import *
 from .lib.tema import *
 from .lib.trange import *

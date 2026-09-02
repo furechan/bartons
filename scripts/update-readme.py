@@ -68,6 +68,7 @@ INDICATORS = {
         "Weighted close price, `(high + low + 2 * close) / 4`",
     ),
     "CCI": ("CCI(period=20)", "Commodity Channel Index"),
+    "CLAG": ("CLAG(period=1)", "Confirmation lag for discrete states"),
     "CMF": ("CMF(period=20)", "Chaikin Money Flow"),
     "CMO": ("CMO(period=14)", "Rolling-window Chande Momentum Oscillator"),
     "KER": ("KER(period=10)", "Kaufman efficiency ratio"),
@@ -89,6 +90,7 @@ INDICATORS = {
         "Stochastic RSI, fast K and fast D",
     ),
     "STREAK": ("STREAK(src)", "Consecutive true count"),
+    "STEP": ("STEP(threshold=1.0)", "Threshold-limited step function"),
     "SUPERTREND": (
         "SUPERTREND(period=10, multiplier=3.0)",
         "Supertrend line and bullish/bearish direction",

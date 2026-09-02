@@ -96,6 +96,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `BBW(period=20, nbdev=2.0)` | Bollinger BandWidth ratio |
 | `BOP()` | Unsmoothed Balance of Power |
 | `CCI(period=20)` | Commodity Channel Index |
+| `CLAG(period=1)` | Confirmation lag for discrete states |
 | `CMF(period=20)` | Chaikin Money Flow |
 | `CMO(period=14)` | Rolling-window Chande Momentum Oscillator |
 | `DEMA(period)` | Double exponential moving average |
@@ -134,6 +135,7 @@ CCI(20, src=TYPPRICE())          # same thing
 | `RSI(period)` | Wilder's relative strength index |
 | `SAR(afs=0.02, maxaf=0.2)` | Parabolic Stop and Reverse |
 | `SMA(period)` | Simple moving average |
+| `STEP(threshold=1.0)` | Threshold-limited step function |
 | `STOCH(period=14, fastn=3, slown=3)` | Slow stochastic oscillator, `%K` and `%D` |
 | `STOCHRSI(period=14, fastn=3, slown=3)` | Stochastic RSI, fast K and fast D |
 | `STREAK(src)` | Consecutive true count |

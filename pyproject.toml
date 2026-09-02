@@ -127,7 +127,9 @@ include = [
 # `evcxr/` holds Rust prototyping notebooks — .ipynb files whose kernelspec is
 # `language = "rust"`. ty parses any .ipynb as Python, so every Rust cell in
 # them lands as a syntax error, drowning the real diagnostics.
-exclude = ["evcxr"]
+# The sample refresh utility belongs to the optional `samples` dependency group;
+# the default development environment intentionally does not install pandas.
+exclude = ["evcxr", "scripts/update-samples.py"]
 
 [tool.pytest.ini_options]
 addopts = ["-p no:cacheprovider"]

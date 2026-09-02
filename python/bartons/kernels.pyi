@@ -76,6 +76,21 @@ def cci(series: pl.Series, *, period: int = 20) -> pl.Series:
     ...
 
 
+def clag(series: pl.Series, *, period: int = 1) -> pl.Series:
+    """
+    Hold the last confirmed discrete state until a candidate repeats.
+
+    Args:
+        series: discrete numeric, integer, or Boolean input states.
+        period: required repeats after the first observation; zero is identity
+            (default 1).
+
+    Returns:
+        A Float64 series; null until the first state is confirmed.
+    """
+    ...
+
+
 def dema(series: pl.Series, *, period: int = 20) -> pl.Series:
     """
     Double exponential moving average.
@@ -306,6 +321,20 @@ def sma(series: pl.Series, *, period: int = 20) -> pl.Series:
 
     Returns:
         A Float64 series; null during the warmup period.
+    """
+    ...
+
+
+def step(series: pl.Series, *, threshold: float = 1.0) -> pl.Series:
+    """
+    Limit the absolute change in a series per row.
+
+    Args:
+        series: input values.
+        threshold: maximum absolute change per row (default 1.0).
+
+    Returns:
+        A Float64 series. The first value after the start or a gap is null.
     """
     ...
 

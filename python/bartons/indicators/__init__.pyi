@@ -33,6 +33,8 @@ from .lib.bop import BOP
 
 from .lib.cci import CCI
 
+from .lib.clag import CLAG
+
 from .lib.cmf import CMF
 
 from .lib.cmo import CMO
@@ -115,6 +117,8 @@ from .lib.stochrsi import STOCHRSI
 
 from .lib.streak import STREAK
 
+from .lib.step import STEP
+
 from .lib.supertrend import SUPERTREND
 
 from .lib.tema import TEMA
@@ -148,6 +152,7 @@ __all__ = [
     "BBW",
     "BOP",
     "CCI",
+    "CLAG",
     "CMF",
     "CMO",
     "DEMA",
@@ -186,6 +191,7 @@ __all__ = [
     "RSI",
     "SAR",
     "SMA",
+    "STEP",
     "STOCH",
     "STOCHRSI",
     "STREAK",

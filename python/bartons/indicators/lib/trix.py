@@ -31,4 +31,5 @@ def TRIX(
     first = EMA(period, src=src)
     second = EMA(period, src=first)
     third = EMA(period, src=second)
-    return third.pct_change().mul(100.0)
+    previous = third.shift(1)
+    return ((third - previous) / previous).mul(100.0)

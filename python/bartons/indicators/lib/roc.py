@@ -25,7 +25,8 @@ def ROC(
     if period <= 0:
         raise ValueError("period must be greater than zero")
     source = into_expr(src)
-    return 100.0 * source.pct_change(period)
+    previous = source.shift(period)
+    return 100.0 * (source - previous) / previous
 
 
 @expression_factory(positional_src=True)
@@ -45,7 +46,8 @@ def ROCP(
     if period <= 0:
         raise ValueError("period must be greater than zero")
     source = into_expr(src)
-    return source.pct_change(period)
+    previous = source.shift(period)
+    return (source - previous) / previous
 
 
 @expression_factory(positional_src=True)

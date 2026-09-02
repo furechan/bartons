@@ -43,6 +43,7 @@ PARAM_TYPES = {
     "afs": "float",
     "maxaf": "float",
     "multiplier": "float",
+    "threshold": "float",
     "n_rows": "int",
     "n_chunks": "int",
     "n_tickers": "int",

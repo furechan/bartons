@@ -789,13 +789,19 @@ wheels = [
 
 [[package]]
 name = "mintalib"
-version = "0.0.35"
+version = "0.1.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
-    { name = "pandas" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f1/b8/297cde94de4bb557ed4b7205b4aa134dc8f4a5b5e44d794d497565e93316/mintalib-0.0.35.tar.gz", hash = "sha256:475e40d837ca6a87d989ac39d35b61a7a28a95ac7c7024f6ff82bd6570f0f51e", size = 837336, upload-time = "2026-06-25T09:18:14.59Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a1/4f/dd3b2eadbd434b54eab4accad3bff3935f3cce9dbfe137a90ccfcadf47ce/mintalib-0.1.10.tar.gz", hash = "sha256:81e1d0ad45790deb9d20a0f60f424dab54d9167572687374b6778da3273c13a7", size = 861384, upload-time = "2026-08-31T21:33:04.532Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/06/eb/2c245e0b1335db32a07491e1a47be0e4723bc6efab3b655c6124c9c8514f/mintalib-0.1.10-cp311-abi3-macosx_10_9_x86_64.whl", hash = "sha256:c2da79caba82f356d26669b584a6a8cb33ac5cd860f11289bd08b34572fa7d61", size = 1075354, upload-time = "2026-08-31T21:32:57.151Z" },
+    { url = "https://files.pythonhosted.org/packages/db/ba/d0ec53f0d79677bb30d1d91fdd67859993aea9b1b14c945679ba8fd082a3/mintalib-0.1.10-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:980545568360246317c062088a43a4cb6e2de6d87ef4d5f8fb52be9c29a442aa", size = 1058062, upload-time = "2026-08-31T21:32:58.734Z" },
+    { url = "https://files.pythonhosted.org/packages/18/1b/063e2f18f887bdefaed065c9fb2e35ee8aad9ef3e64c5d0335d8eb61a0e1/mintalib-0.1.10-cp311-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:925f9c73bea43a0f6ea873613cd0f11944dee97817174f5841b2b8f34894f510", size = 2378434, upload-time = "2026-08-31T21:33:00.198Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/c6/ba038003c24fd15899ddbe5790ac76e0f42b565d1cfa665a0c66ca21ca65/mintalib-0.1.10-cp311-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:62971deb5e28405a16ac66db03ccda1627c0b22d5fcee209571cb88e82bfd0d6", size = 2380643, upload-time = "2026-08-31T21:33:01.886Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/8d/194d3c02bf0673981163e364e30d8c7eeabadd8118f25e4552e6d7c2939e/mintalib-0.1.10-cp311-abi3-win_amd64.whl", hash = "sha256:0138caf4ab8bf8d85bb391c13bad847d58523b814dacf353e812a9662435e2ba", size = 1055232, upload-time = "2026-08-31T21:33:03.209Z" },
+]
 
 [[package]]
 name = "multitasking"

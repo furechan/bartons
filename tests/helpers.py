@@ -10,6 +10,8 @@ supported polars range. See notes/maintenance/test-compat-helpers.md.
 
 from __future__ import annotations
 
+import math
+
 
 def assert_series_equal(
     got,
@@ -31,6 +33,8 @@ def assert_series_equal(
     for i, (a, b) in enumerate(zip(g, e)):
         if a is None or b is None:
             assert a is None and b is None, f"null mismatch at {i}: {a!r} vs {b!r}"
+        elif isinstance(a, float) and isinstance(b, float) and math.isnan(a) and math.isnan(b):
+            continue
         elif check_exact:
             assert a == b, f"mismatch at {i}: {a!r} != {b!r}"
         else:

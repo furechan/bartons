@@ -31,6 +31,7 @@ from bartons.indicators import (
     BBP,
     BBW,
     CCI,
+    CLAG,
     CMF,
     DEMA,
     DONCHIAN,
@@ -53,6 +54,7 @@ from bartons.indicators import (
     SAR,
     SMA,
     STOCH,
+    STEP,
     TRANGE,
     WMA,
 )
@@ -62,10 +64,13 @@ from mintalib.expressions import (
     SMA as M_SMA, EMA as M_EMA, DEMA as M_DEMA, DONCHIAN as M_DONCHIAN, TEMA as M_TEMA,
     HMA as M_HMA, WMA as M_WMA, RMA as M_RMA,
     ROC as M_ROC,
-    RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, NATR as M_NATR, CCI as M_CCI, CMF as M_CMF, MFI as M_MFI,
-    KER as M_KER, KAMA as M_KAMA, KELTNER as M_KELTNER, SAR as M_SAR, TSF as M_TSF,
+    RSI as M_RSI, TRANGE as M_TRANGE, ATR as M_ATR, NATR as M_NATR, CCI as M_CCI, CLAG as M_CLAG, CMF as M_CMF, MFI as M_MFI,
+    KER as M_KER, KAMA as M_KAMA, KELTNER as M_KELTNER, SAR as M_SAR,
     STOCH as M_STOCH,
-    SLOPE as M_SLOPE, RVALUE as M_RVALUE, QSF as M_QSF, CURVE as M_CURVE,
+    STEP as M_STEP,
+    LINREG as M_LINREG, LINREG_SLOPE as M_LINREG_SLOPE,
+    LINREG_RVALUE as M_LINREG_RVALUE,
+    QUADREG as M_QUADREG, QUADREG_CURVE as M_QUADREG_CURVE,
 )
 
 # ── Benchmark pairs ────────────────────────────────────────────────────────────
@@ -90,6 +95,8 @@ PAIRS = [
     # Timing only: mintalib scales the same fractional ratio by 100.
     ("NATR(14)", NATR(14), M_NATR(14)),
     ("CCI(20)", CCI(20),  M_CCI(20)),
+    # Timing pair: bartons carries confirmation state across null/NaN inputs.
+    ("CLAG(2)", CLAG(2), M_CLAG(2)),
     ("CMF(20)", CMF(20), M_CMF(20)),
     ("MFI(14)", MFI(14), M_MFI(14)),
     # KER/KAMA are timing pairs only: mintalib's calc_ker spans period-1 changes
@@ -100,13 +107,13 @@ PAIRS = [
     ("KELTNER(20)", KELTNER(20), M_KELTNER(20)),
     ("SAR", SAR(), M_SAR()),
     ("STOCH(14,3,3)", STOCH(14, 3, 3), M_STOCH(14, 3, 3)),
-    ("LINREG(20)", LINREG(20), M_TSF(20)),
-    ("LINREG_SLOPE(20)", LINREG_SLOPE(20), M_SLOPE(20)),
-    ("LINREG_RVALUE(20)", LINREG_RVALUE(20), M_RVALUE(20)),
-    # The released mintalib baseline lacks LINREG_RMSE and the newer QUADREG
-    # diagnostics; QSF and CURVE are its pre-rename quadratic equivalents.
-    ("QUADREG(20)", QUADREG(20), M_QSF(20)),
-    ("QUADREG_CURVE(20)", QUADREG_CURVE(20), M_CURVE(20)),
+    # Timing pair: bartons carries state across null/NaN inputs; mintalib resets.
+    ("STEP(1.0)", STEP(1.0), M_STEP(1.0)),
+    ("LINREG(20)", LINREG(20), M_LINREG(20)),
+    ("LINREG_SLOPE(20)", LINREG_SLOPE(20), M_LINREG_SLOPE(20)),
+    ("LINREG_RVALUE(20)", LINREG_RVALUE(20), M_LINREG_RVALUE(20)),
+    ("QUADREG(20)", QUADREG(20), M_QUADREG(20)),
+    ("QUADREG_CURVE(20)", QUADREG_CURVE(20), M_QUADREG_CURVE(20)),
 ]
 
 SINGLE_ROWS = 11_006

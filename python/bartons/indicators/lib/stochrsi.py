@@ -34,9 +34,29 @@ def STOCHRSI(
         raise ValueError("period, fastn, and slown must be greater than zero")
 
     rsi = RSI(period, src=src)
-    lowest = rsi.rolling_min(period, min_samples=period)
-    highest = rsi.rolling_max(period, min_samples=period)
+    full_rsi_window = (
+        rsi.is_not_null().cast(pl.Int64).rolling_sum(period, min_samples=period)
+        == period
+    )
+    lowest = pl.when(full_rsi_window).then(
+        rsi.rolling_min(period, min_samples=period)
+    )
+    highest = pl.when(full_rsi_window).then(
+        rsi.rolling_max(period, min_samples=period)
+    )
     raw = 100.0 * (rsi - lowest) / (highest - lowest)
-    fastk = raw.rolling_mean(fastn, min_samples=fastn)
-    fastd = fastk.rolling_mean(slown, min_samples=slown)
+    full_fastk_window = (
+        raw.is_not_null().cast(pl.Int64).rolling_sum(fastn, min_samples=fastn)
+        == fastn
+    )
+    fastk = pl.when(full_fastk_window).then(
+        raw.rolling_mean(fastn, min_samples=fastn)
+    )
+    full_fastd_window = (
+        fastk.is_not_null().cast(pl.Int64).rolling_sum(slown, min_samples=slown)
+        == slown
+    )
+    fastd = pl.when(full_fastd_window).then(
+        fastk.rolling_mean(slown, min_samples=slown)
+    )
     return pl.struct(fastk.alias("fastk"), fastd.alias("fastd"))

@@ -824,3 +824,60 @@ def ref_streak(values):
         count = count + 1 if value is True else 0
         out.append(count)
     return out
+
+
+def ref_step(values, threshold=1.0):
+    """Limit each change from the prior output; null and NaN skip state."""
+    out = []
+    previous = None
+
+    for value in values:
+        if value is None:
+            out.append(None)
+            continue
+        if math.isnan(value):
+            out.append(math.nan)
+            continue
+
+        if previous is None:
+            previous = value
+            out.append(None)
+            continue
+
+        change = value - previous
+        if change > threshold:
+            previous += threshold
+        elif change < -threshold:
+            previous -= threshold
+        else:
+            previous = value
+        out.append(previous)
+
+    return out
+
+
+def ref_clag(values, period=1):
+    """Confirm a discrete state after its first value plus ``period`` repeats."""
+    out = []
+    candidate = confirmed = None
+    repeats = 0
+
+    for value in values:
+        if value is None:
+            out.append(None)
+            continue
+        if math.isnan(value):
+            out.append(math.nan)
+            continue
+
+        if value == candidate:
+            repeats += 1
+        else:
+            candidate = value
+            repeats = 0
+
+        if repeats >= period:
+            confirmed = value
+        out.append(confirmed)
+
+    return out
