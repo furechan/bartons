@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import shlex
 import shutil
 import sys
@@ -20,6 +21,7 @@ ROOT = Path(__file__).resolve().parent
 DIST = ROOT / "dist"
 PYPROJECT = ROOT / "pyproject.toml"
 BUILD_JOBS = max(1, (os.cpu_count() or 2) // 2)
+VERSION_PATTERN = re.compile(r"(\d+)\.(\d+)\.(\d+)(?:\.dev0)?")
 
 
 def cargo_test(c: Context) -> None:
@@ -97,8 +99,49 @@ def build(c: Context, jobs: int = BUILD_JOBS) -> None:
 
 @task
 def bump(c: Context) -> None:
-    """Advance the project to the next patch version without syncing."""
-    c.run("uv version --bump patch --no-sync")
+    """Move a released patch version to the next patch development version."""
+    version = c.run("uv version --short", hide=True).stdout.strip()
+    match = VERSION_PATTERN.fullmatch(version)
+    if match is None or version.endswith(".dev0"):
+        raise Exit(f"expected a plain three-part release version, found {version!r}")
+    major, minor, patch = map(int, match.groups())
+    next_version = f"{major}.{minor}.{patch + 1}.dev0"
+    c.run(f"uv version --no-sync {next_version}")
+    print(f"Started development of {next_version}")
+
+
+@task
+def release(c: Context) -> None:
+    """Preflight, commit, tag, and push the current development release."""
+    branch = c.run("git branch --show-current", hide=True).stdout.strip()
+    if branch != "main":
+        print(f"Nothing to release from {branch!r}; switch to main first")
+        return
+
+    dev_version = c.run("uv version --short", hide=True).stdout.strip()
+    match = VERSION_PATTERN.fullmatch(dev_version)
+    if match is None or not dev_version.endswith(".dev0"):
+        raise Exit(f"expected a three-part .dev0 version, found {dev_version!r}")
+    major, minor, patch = map(int, match.groups())
+    if patch == 0:
+        raise Exit("automatic patch releases require a nonzero patch component")
+    release_version = f"{major}.{minor}.{patch}"
+    next_version = f"{major}.{minor}.{patch + 1}.dev0"
+    tag = f"v{release_version}"
+
+    c.run("nox")
+
+    c.run(f"uv version --no-sync {release_version}")
+    c.run("git add pyproject.toml uv.lock")
+    c.run(f'git commit -m "Release version {release_version}"')
+    c.run(f'git tag -a {tag} -m "Release {release_version}"')
+    c.run(f"git push origin main {tag}")
+
+    c.run(f"uv version --no-sync {next_version}")
+    c.run("git add pyproject.toml uv.lock")
+    c.run(f'git commit -m "Start development of {next_version}"')
+    c.run("git push origin main")
+    print(f"Pushed {tag} for release and advanced main to {next_version}")
 
 
 @task

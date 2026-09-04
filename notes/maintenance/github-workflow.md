@@ -2,12 +2,12 @@
 
 ## Status
 
-**Active. Dispatch-only. The release mechanism.**
+**Active. Reusable build plus tag-driven release.**
 
 | | |
 |---|---|
 | Releases today | built, verified and published by `release.yml` — see [CLAUDE.md](../../CLAUDE.md) |
-| This workflow | active and dispatch-only; nothing runs implicitly on a push, PR or tag |
+| Workflows | `build.yml` is reusable and dispatchable; `release.yml` runs on pushed version tags |
 | Repository | public, GitHub Free |
 | Server-side config | `pypi` environment has no protection rule; PyPI trusted publisher names `release.yml` and environment `pypi` |
 | First publication | `0.1.3` on 2026-08-25; five wheels uploaded, sdist rejected for a missing declared license file |
@@ -17,8 +17,7 @@ CI became the sole release path on 2026-08-25. The separate `build.yml` and
 a version also handled by CI: PyPI never frees a filename, and the two paths cannot
 safely share ownership of one release.
 
-It is **dispatch-only** — nothing runs on a push, a pull request, a tag or a
-schedule — and publication proceeds automatically after every artifact passes.
+Build can be dispatched independently without publishing. A pushed version tag runs Release, which validates the version, calls Build from that tagged commit, and publishes after every artifact passes.
 
 Built 2026-08-17, archived unused the same day, then reworked and installed for
 experimentation on 2026-08-21. The first full matrix and trusted-publishing run
@@ -27,11 +26,7 @@ prototype status.
 
 ## What this is
 
-A PyPI release pipeline for `bartons`: **`release.yml`** builds five
-`cp311-abi3` wheels (Linux x86_64/aarch64, macOS arm64/x86_64, Windows x64) in
-one complete matrix, alongside one sdist job. Every job installs and smoke-tests
-its own artifact. Once all six builds succeed, the publish job downloads, counts
-and uploads those exact six artifacts over OIDC.
+A PyPI release pipeline for `bartons`: **`build.yml`** builds five `cp311-abi3` wheels (Linux x86_64/aarch64, macOS arm64/x86_64, Windows x64) in one complete matrix, alongside one sdist job. Every job installs and smoke-tests its own artifact, and a final job verifies all six. **`release.yml`** validates a pushed version tag, calls Build from that commit, and uploads those exact artifacts over OIDC.
 A step-by-step release handoff also existed; it was dropped rather than archived.
 The live procedure is in [CLAUDE.md](../../CLAUDE.md); the design and operational
 history remain here.
@@ -82,10 +77,7 @@ means pulling artifacts by run ID — and by itself nothing then guarantees they
 came from the commit being released. Wheels from different runs can carry
 identical version numbers and different code.
 
-The current design rules that out structurally: all artifacts are uploaded by
-the wheel matrix and sdist job in one run, and the publish job downloads
-artifacts from that same run only after every build succeeds, so the files
-tested are the files published.
+The current design rules that out structurally: Release calls the reusable Build workflow at the tagged commit, all artifacts are uploaded by its wheel matrix and sdist job, and the publish job downloads those artifacts only after verification succeeds.
 
 **The manual approval gate was removed on 2026-09-02.** `environment: pypi`
 remains declared because it is part of the PyPI trusted-publisher identity, but
@@ -95,11 +87,7 @@ publish job therefore starts automatically after the build matrix succeeds.
 Artifacts use GitHub's repository-default retention. A canceled release run is
 never reused as the source for a later publication.
 
-**Publishing failure is not atomic.** PyPI accepts files one at a time and never
-frees their names. The first CI publication uploaded all five `0.1.3` wheels, then
-rejected the sdist because its metadata declared `LICENSE.txt` while the archive
-omitted it. `skip-existing: true` makes a retry capable of filling missing files,
-but it cannot replace an accepted file. Always inspect PyPI after a failed upload.
+**Publishing failure is not atomic.** PyPI accepts files one at a time and never frees their names. The first CI publication uploaded all five `0.1.3` wheels, then rejected the sdist because its metadata declared `LICENSE.txt` while the archive omitted it. Always inspect PyPI after a failed upload; the current unpublished-version guard deliberately rejects reusing a partially uploaded version, so recovery requires a new version.
 
 **manylinux tags come from the build environment, not the host you want.**
 `maturin build` on the dev machine (glibc 2.41) produced `manylinux_2_34`, which
@@ -131,17 +119,7 @@ These are properties of the project, not of CI:
 - **The old `bartons` on PyPI** (`0.0.0`, `0.0.1`, April 2025) is an unrelated
   stock-price skeleton by the same author, superseded by `bardata`. It should be
   yanked before or alongside the first real release.
-- **Version policy** (kept in the repo, unrelated to CI): `pyproject.toml` is the
-  single authoritative version and the crate's stays at `0.0.0`. The in-repo
-  version names the *next* release, **plain — no `.devN` suffix**, so the tree is
-  publishable at any moment and nothing needs editing before a build. Releasing
-  uploads what the version already says; the publish task's patch bump afterwards
-  names the one after. A `.devN` scheme was tried first and dropped before 0.1.0. This README
-  and `publish.yml` both described that retired scheme until 2026-08-21; the
-  decision to keep stable-only rather than restore it is recorded in
-  `BACKLOG.md`. The CI publisher skips filenames already present on PyPI, making
-  a repeated dispatch idempotent for those files; advancing the version remains
-  the release process's responsibility.
+- **Version policy:** `pyproject.toml` is the single authoritative version and the crate stays at `0.0.0`. `main` carries the next patch's `.dev0` version. `inv release` creates and tags a plain release commit, pushes it, then advances `main` to the following patch's `.dev0` in a separate commit and push.
 
 ## Current server-side setup
 
@@ -173,12 +151,10 @@ The repository became public on 2026-08-25 for these operational benefits:
   every `.rs` and `.py` source file; making the repository public additionally
   exposes its docs, tests, tooling and commit history.
 
-## Release commands
+## Release command
 
 ```sh
-gh workflow run release.yml
-gh run watch <run-id>
+uv run inv release
 ```
 
-After the six build jobs succeed, the publish job verifies and uploads their
-artifacts automatically.
+The pushed tag starts Release. `gh workflow run build.yml` remains available for an independent, non-publishing artifact check.

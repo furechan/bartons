@@ -53,34 +53,11 @@ or pull request by default.
 
 ## Release workflow
 
-**GitHub Actions owns releases.** `release.yml` creates and smoke-tests the
-sdist plus a complete five-platform wheel matrix, verifies the six artifacts,
-then uploads them automatically through PyPI trusted publishing. The older
-local `uv run inv publish` path remains available for development but must not
-publish a version also handled by CI: PyPI never frees a filename, so two upload
-paths cannot safely share a release.
+**GitHub Actions owns releases.** `build.yml` creates and smoke-tests the sdist plus a complete five-platform wheel matrix and verifies all six artifacts. A version tag triggers `release.yml`, which validates the tag against the plain project version and PyPI, calls that reusable build from the tagged commit, then publishes through PyPI trusted publishing.
 
-Run releases from a clean `main` branch that is fully synchronized with its
-upstream. Do not publish from a branch that is ahead, behind, or has uncommitted
-work that is not intended for the release.
+The default branch carries the next patch development version (`X.Y.Z.dev0`). Run `uv run inv release` from `main`: it runs the full Nox matrix, changes the version to `X.Y.Z`, commits and tags it, and pushes `main` plus the tag. Only after that push succeeds does it commit and push the following patch's `.dev0` version. The tag freezes the exact release source while `main` returns immediately to development.
 
-1. Fetch and verify repository state with `git fetch`, `git status`, and
-   `git rev-list --left-right --count @{upstream}...HEAD`. Both counts must be
-   zero before proceeding.
-2. Review `README.md` against the release as it now stands. Update it when the
-   public API, supported versions, examples, installation instructions, or
-   documented indicator set changed.
-3. Review the complete diff and commit and push all intended release changes,
-   including any README update. Do not create an empty checkpoint commit when
-   nothing changed.
-4. Dispatch `gh workflow run release.yml`, then watch it through the build phase.
-   All five wheels and the sdist must build, install, and pass their smoke tests.
-5. Wait for the publish job to download, verify and upload the six artifacts.
-6. Verify the complete release on PyPI; workflow failure can occur after some
-   immutable files upload, so inspect PyPI rather than assuming failure was atomic.
-7. Tag the released commit and push the tag.
-8. Run `uv run inv bump`, review the patch-version change, commit it, and push so
-   `main` names the next release.
+Review and commit all intended release changes, including README or changelog updates, before running the task. Do not create release tags or version commits by hand when the task can perform the transition. `build.yml` may also be dispatched independently as a confidence check, but publication happens only from a pushed version tag.
 
 Never continue past a failed build, test, synchronization check, version guard,
 artifact validation, upload, or PyPI verification. Retain and review the publish
@@ -175,7 +152,7 @@ links must use absolute public URLs.
 Open work is tracked in [BACKLOG.md](BACKLOG.md).
 
 - [docs/architecture.md](docs/architecture.md) — project layers, boundaries, and source layout
-- [notes/maintenance/github-workflow.md](notes/maintenance/github-workflow.md) — the two dispatch-only GitHub Actions
+- [notes/maintenance/github-workflow.md](notes/maintenance/github-workflow.md) — the build and tag-driven GitHub Actions
   workflows that own releases, their operational history and cost analysis, and
   the PyPI facts (immutable `Requires-Dist`, filenames never reusable,
   yank-not-delete)

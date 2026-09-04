@@ -12,11 +12,10 @@ name = "bartons"
 # The one authoritative version for the project. Only the Python distribution is
 # published; the crate's own `version` is unused and stays at 0.0.0. Bump here.
 #
-# This names the *next* release, plain — no `.devN` suffix (same convention as
-# mintalib). Build as often as you like; on publish, commit and push at this
-# version, then publishing bumps the patch and the result is pushed so the repo
-# names the next one.
-version = "0.1.7"
+# The default branch carries the next patch development version. `inv release`
+# removes `.dev0`, commits and tags that release, pushes it, then advances main
+# to the following patch's `.dev0` version in a second commit and push.
+version = "0.1.7.dev0"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE.txt"]
