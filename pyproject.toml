@@ -15,7 +15,7 @@ name = "bartons"
 # The default branch carries the next patch development version. `inv release`
 # removes `.dev0`, commits and tags that release, pushes it, then advances main
 # to the following patch's `.dev0` version in a second commit and push.
-version = "0.1.7"
+version = "0.1.8.dev0"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE.txt"]
