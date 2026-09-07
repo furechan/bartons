@@ -14,3 +14,7 @@ Rename the generic moving-average dispatcher from `MAV` to the conventional
 `MA`. The shorter name makes its relationship to the concrete `SMA`, `EMA`,
 `WMA`, and other moving averages clearer. Consider retaining `MAV` temporarily
 as a deprecated compatibility alias.
+
+## Stub generation
+
+- Review kernel and indicator stub generation; evaluate whether `stubgen` can replace or simplify the custom generators while preserving kernel types, indicator re-exports, and expression-factory overloads.
