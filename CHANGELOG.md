@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.8
+
+- Generate indicator package stubs with mypy's `stubgen` through `inv stubs`, replacing the custom indicator stub generator. Keep the kernel generator for the compiled extension's explicit type mappings.
+
 ## 0.1.2
 
 - Adopt a tag-driven release lifecycle. The reusable build workflow verifies the complete artifact set, pushed version tags validate and publish it, and `inv release` moves `main` from `.dev0` through the tagged release and back to the next patch development version.

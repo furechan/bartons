@@ -111,13 +111,13 @@ extension, which a checker cannot otherwise see into; and `evcxr/` is excluded i
 runtime-registered `.bt` namespace was retired partly because it could not be
 typed at all.
 
-`uv run inv stubs` runs two focused generators. `scripts/generate-kernel-stubs.py`
+`uv run inv stubs` runs two generators. `scripts/generate-kernel-stubs.py`
 introspects the built extension for `python/bartons/kernels.pyi`; pyo3 exposes
 parameter names, defaults and docstrings but **no types**, so those come from a
 small `PARAM_TYPES` map and an unmapped name is a hard error. The indicator
-package uses dynamic runtime `__all__`, so `scripts/generate-indicator-stubs.py`
-reads each implementation module's literal `__all__` and writes explicit typed
-re-exports to `python/bartons/indicators/__init__.pyi`. Commit both generated
+package uses dynamic runtime `__all__`, so `stubgen -m bartons.indicators -o python`
+resolves its exports and preserves the implementation imports in
+`python/bartons/indicators/__init__.pyi`. Commit both generated
 stubs. `python/bartons/py.typed` makes them visible to consumers.
 
 ## Adding a new indicator
@@ -151,6 +151,7 @@ links must use absolute public URLs.
 
 Open work is tracked in [BACKLOG.md](BACKLOG.md).
 
+- [notes/maintenance/polars-plugin-cse.md](notes/maintenance/polars-plugin-cse.md) - expression-plugin CSE regression since polars-py 1.41, upstream issue #29165, recorded version tests, discussion, and intermediate-column workaround.
 - [docs/architecture.md](docs/architecture.md) — project layers, boundaries, and source layout
 - [notes/maintenance/github-workflow.md](notes/maintenance/github-workflow.md) — the build and tag-driven GitHub Actions
   workflows that own releases, their operational history and cost analysis, and

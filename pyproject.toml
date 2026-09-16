@@ -73,6 +73,7 @@ Changelog = "https://github.com/furechan/bartons/blob/main/CHANGELOG.md"
 [dependency-groups]
 dev = [
     "maturin>=1.9",
+    "mypy",
     "pytest",
     "nox",
     "build",

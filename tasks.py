@@ -171,7 +171,7 @@ def stubs(c: Context) -> None:
     """Regenerate kernel and indicator stubs."""
     c.run("maturin develop --release")
     c.run("python scripts/generate-kernel-stubs.py")
-    c.run("python scripts/generate-indicator-stubs.py")
+    c.run("stubgen -m bartons.indicators -o python")
 
 
 @task

@@ -1,32 +1,16 @@
 """Generate `python/bartons/kernels.pyi` from the compiled extension.
 
-The kernels module is a compiled `.so`, so type checkers cannot see into it —
-`ty` reports `Module bartons has no member kernels` for every import. A stub fixes
-that, and this script derives it from the module itself rather than a
-hand-maintained copy that can drift.
-
-pyo3 exposes parameter names, keyword-only markers, defaults and docstrings at
-runtime (from `#[pyo3(signature = ...)]` and the `///` comments), but **no type
-information** — `__annotations__` is absent. Types therefore come from
-`PARAM_TYPES` below, which is small because the whole surface uses five
-parameter names. An unknown name is a hard error rather than a silent `Any`, so
-adding a differently-named parameter forces a deliberate choice here.
-
-(pyo3-stub-gen, the Rust-side generator, cannot be used: every signature is in
-terms of pyo3-polars' `PySeries`, which does not implement its `PyStubType`, and
-the orphan rule prevents supplying that impl. See BACKLOG/CHANGELOG.)
+PyO3 exposes signatures and docstrings but no annotations, so types come from
+the maps below. Unknown parameters fail generation rather than default to Any.
 
 Run via `uv run inv stubs`, which builds first so the introspected module is current.
 """
 
 import inspect
-import subprocess
 from pathlib import Path
 
 from bartons import kernels
 
-# pyo3 carries no type info; supply it here. Keyed by parameter name because the
-# surface is uniform — every price series is a Series, every period an int.
 PARAM_TYPES = {
     "series": "pl.Series",
     "src": "pl.Series",
@@ -51,12 +35,10 @@ PARAM_TYPES = {
     "null_first": "bool",
     "frame": "pl.DataFrame",
 }
-OUTPUT_TYPES = {
-    "linreg": 'Literal["forecast", "slope", "rvalue", "rmse"]',
-    "quadreg": 'Literal["forecast", "curve", "slope", "rvalue", "rmse"]',
-}
 PARAM_OVERRIDES = {
     ("alma", "offset"): "float",
+    ("linreg", "output"): 'Literal["forecast", "slope", "rvalue", "rmse"]',
+    ("quadreg", "output"): 'Literal["forecast", "curve", "slope", "rvalue", "rmse"]',
 }
 RETURN_TYPES = {
     "random_prices": "pl.DataFrame",
@@ -80,11 +62,9 @@ __all__: list[str]
 
 
 def annotate(function_name: str, param: inspect.Parameter) -> str:
-    type_ = PARAM_OVERRIDES.get((function_name, param.name))
-    if type_ is None and param.name == "output":
-        type_ = OUTPUT_TYPES.get(function_name)
-    if type_ is None:
-        type_ = PARAM_TYPES.get(param.name)
+    type_ = PARAM_OVERRIDES.get(
+        (function_name, param.name), PARAM_TYPES.get(param.name)
+    )
     if type_ is None:
         raise SystemExit(
             f"generate-kernel-stubs: no type mapped for parameter {param.name!r}. "
@@ -116,17 +96,9 @@ def render(name: str, func) -> str:
 
 
 def main() -> None:
-    functions = sorted(
-        (name, obj)
-        for name in dir(kernels)
-        if inspect.isbuiltin(obj := getattr(kernels, name))
-    )
+    functions = inspect.getmembers(kernels, inspect.isbuiltin)
     if not functions:
         raise SystemExit("generate-kernel-stubs: no pyfunctions found — is the extension built?")
-
-    body = "\n\n\n".join(render(name, func) for name, func in functions)
-    OUT.write_text(f"{HEADER}\n\n{body}\n")
-    print(f"wrote {OUT.relative_to(Path.cwd())} ({len(functions)} functions)")
 
     # The stub must describe what is actually exported, both ways.
     exported = {n for n in getattr(kernels, "__all__", []) if not n.startswith("__")}
@@ -136,6 +108,10 @@ def main() -> None:
             f"generate-kernel-stubs: __all__ and the stubbed functions disagree — "
             f"only in __all__: {exported - stubbed}, only stubbed: {stubbed - exported}"
         )
+
+    body = "\n\n\n".join(render(name, func) for name, func in functions)
+    OUT.write_text(f"{HEADER}\n\n{body}\n")
+    print(f"wrote {OUT.relative_to(Path.cwd())} ({len(functions)} functions)")
 
 
 if __name__ == "__main__":
