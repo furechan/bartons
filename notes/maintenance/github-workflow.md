@@ -6,7 +6,7 @@
 
 | | |
 |---|---|
-| Releases today | built, verified and published by `release.yml` — see [CLAUDE.md](../../CLAUDE.md) |
+| Releases today | built, verified and published by `release.yml` — see [AGENTS.md](../../AGENTS.md) |
 | Workflows | `build.yml` is reusable and dispatchable; `release.yml` runs on pushed version tags |
 | Repository | public, GitHub Free |
 | Server-side config | `pypi` environment has no protection rule; PyPI trusted publisher names `release.yml` and environment `pypi` |
@@ -28,7 +28,7 @@ prototype status.
 
 A PyPI release pipeline for `bartons`: **`build.yml`** builds five `cp311-abi3` wheels (Linux x86_64/aarch64, macOS arm64/x86_64, Windows x64) in one complete matrix, alongside one sdist job. Every job installs and smoke-tests its own artifact, and a final job verifies all six. **`release.yml`** validates a pushed version tag, calls Build from that commit, and uploads those exact artifacts over OIDC.
 A step-by-step release handoff also existed; it was dropped rather than archived.
-The live procedure is in [CLAUDE.md](../../CLAUDE.md); the design and operational
+The live procedure is in [AGENTS.md](../../AGENTS.md); the design and operational
 history remain here.
 
 ## Why it was archived at first

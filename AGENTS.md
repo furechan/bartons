@@ -151,6 +151,13 @@ links must use absolute public URLs.
 
 Open work is tracked in [BACKLOG.md](BACKLOG.md).
 
+Binding maintenance procedures:
+
+- [Check bindings](notes/maintenance/check-bindings.md) — read-only audit of the Rust pins and Python runtime range.
+- [Upgrade bindings](notes/maintenance/upgrade-bindings.md) — derive and apply compatible versions through staged build and test checks.
+
+Follow the relevant procedure when asked to check or upgrade bindings.
+
 - [notes/maintenance/polars-plugin-cse.md](notes/maintenance/polars-plugin-cse.md) - expression-plugin CSE regression since polars-py 1.41, upstream issue #29165, recorded version tests, discussion, and intermediate-column workaround.
 - [docs/architecture.md](docs/architecture.md) — project layers, boundaries, and source layout
 - [notes/maintenance/github-workflow.md](notes/maintenance/github-workflow.md) — the build and tag-driven GitHub Actions

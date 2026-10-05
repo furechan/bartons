@@ -8,7 +8,7 @@ Facts below are read from `bartons/Cargo.toml`, `bartons/Cargo.lock`, and the cr
 
 Two different artifacts are both called "polars", on unrelated version schemes —
 saying just "polars 0.54" or "polars 1.42" is ambiguous about which. These docs
-and the binding skills use:
+and the binding procedures use:
 
 | term | what | version scheme | declared in | example |
 |---|---|---|---|---|
@@ -163,7 +163,7 @@ has been `(0, 1)` since polars-rs `0.37.0`. Check it only if the plugin fails to
 [`polars-ffi-version-table.md`](../../docs/polars-ffi-version-table.md) — and if it really has
 changed, stop and treat it as a compatibility event, not a version bump.
 
-The [`check-bindings`](../../.claude/commands/check-bindings.md) skill audits these pins for mutual consistency; [`upgrade-bindings`](../../.claude/commands/upgrade-bindings.md) derives a newer set from upstream and rebuilds after approval, in the same staged order.
+The [`check-bindings`](check-bindings.md) procedure audits these pins for mutual consistency; [`upgrade-bindings`](upgrade-bindings.md) derives a newer set from upstream and rebuilds after approval, in the same staged order.
 
 ## Scope: this is the Cargo side only
 
