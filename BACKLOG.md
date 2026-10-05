@@ -18,3 +18,7 @@ as a deprecated compatibility alias.
 ## Stub generation
 
 - Review kernel and indicator stub generation; evaluate whether `stubgen` can replace or simplify the custom generators while preserving kernel types, indicator re-exports, and expression-factory overloads.
+
+## Polars compatibility
+
+- Review polars-py 2.0 version handling: dependency range, compatibility matrix, Rust binding/FFI compatibility, and version checks in tooling and tests.
