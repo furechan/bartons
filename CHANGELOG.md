@@ -2,6 +2,8 @@
 
 ## 0.1.8
 
+- Rechunk sample prices after reading the CSV, avoiding the `read_csv(rechunk=...)` argument removed in Polars 2.0 while preserving contiguous columns.
+
 - Generate indicator package stubs with mypy's `stubgen` through `inv stubs`, replacing the custom indicator stub generator. Keep the kernel generator for the compiled extension's explicit type mappings.
 
 ## 0.1.2

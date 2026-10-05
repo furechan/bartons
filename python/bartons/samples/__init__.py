@@ -85,7 +85,7 @@ def sample_prices(freq: str = "daily", *, max_bars: int = 0) -> pl.DataFrame:
     path = resources.files(__name__).joinpath(fname)
 
     with path.open("rb") as file:
-        prices = pl.read_csv(file, try_parse_dates=True, rechunk=True)
+        prices = pl.read_csv(file, try_parse_dates=True).rechunk()
 
     col = prices.columns[0]  # "date" (daily) or "datetime" (hourly/minute)
 
